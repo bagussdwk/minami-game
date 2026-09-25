@@ -1623,9 +1623,22 @@
             .join("");
           let mc = document.getElementById("mini" + (i + 1));
           mc.innerHTML = "";
-          for (let j = 0; j < Math.min(game.hands[i].length, 7); j++)
-            mc.appendChild(createCard(game.hands[i][j], true));
+          for (let j = 0; j < Math.min(game.hands[i].length, 7); j++) {
+            if (i === 0) {
+              // Kartu Anda tetap terlihat
+              mc.appendChild(createBackCard(true));
+            } else {
+              // Kartu pemain lain hanya tampil bagian belakang
+              mc.appendChild(createBackCard(true));
+            }
+          }
         }
+      }
+
+      function createBackCard(small = false) {
+        const d = document.createElement("div");
+        d.className = "card back" + (small ? " small" : "");
+        return d;
       }
       function renderScores() {
         let s = document.getElementById("scoreboard");
