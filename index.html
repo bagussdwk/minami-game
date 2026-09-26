@@ -1907,6 +1907,115 @@
         }
       }
 
+      /* ===== FINAL MOBILE LAYOUT FIX ===== */
+      @media (max-width: 700px) {
+        html, body {
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        .topbar {
+          position: relative;
+          z-index: 100;
+          width: 100%;
+          height: 52px;
+          min-height: 52px;
+          padding: 5px 8px;
+          flex-wrap: nowrap;
+          overflow: hidden;
+        }
+
+        .game {
+          width: calc(100% - 14px);
+          max-width: none;
+          margin: 18px auto 12px;
+          padding-bottom: 120px;
+          position: relative;
+        }
+
+        .table {
+          width: 100%;
+          max-width: 100%;
+          min-height: 720px;
+          margin: 0 auto;
+          transform: none;
+          overflow: visible;
+        }
+
+        .center {
+          left: 50%;
+          top: 25%;
+          transform: translate(-50%, -50%);
+          max-width: calc(100% - 90px);
+        }
+
+        .table-area {
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          transform: none;
+          padding: 82px 58px 165px;
+          box-sizing: border-box;
+        }
+
+        .player {
+          width: 82px;
+          z-index: 30;
+        }
+
+        .player-name {
+          max-width: 82px;
+          padding: 4px 5px;
+          font-size: 8px;
+          white-space: nowrap;
+        }
+
+        .avatar {
+          width: 30px;
+          height: 30px;
+          font-size: 14px;
+          margin: 2px auto;
+        }
+
+        .player .play-history {
+          max-width: 82px;
+          margin: 0 auto 2px;
+          overflow: visible;
+          font-size: 8px;
+        }
+
+        /* Pemain hanya setengah masuk ke meja agar area tengah tetap luas. */
+        .players-5 .p5 { top: -30px; left: -12px; right: auto; transform: none; }
+        .players-5 .p4 { top: -30px; left: 50%; right: auto; transform: translateX(-50%); }
+        .players-5 .p3 { top: -30px; right: -12px; left: auto; transform: none; }
+        .players-5 .p2 { top: 50%; right: -40px; bottom: auto; left: auto; transform: translateY(-50%); }
+        .players-5 .p1 { bottom: -24px; left: 50%; right: auto; top: auto; transform: translateX(-50%); }
+
+        .players-4 .p4 { top: -30px; left: -12px; right: auto; transform: none; }
+        .players-4 .p3 { top: -30px; right: -12px; left: auto; transform: none; }
+        .players-4 .p2 { top: 50%; right: -40px; bottom: auto; left: auto; transform: translateY(-50%); }
+        .players-4 .p1 { bottom: -24px; left: 50%; right: auto; top: auto; transform: translateX(-50%); }
+
+        /* Geser tangan ke bawah supaya P1 tidak bertabrakan dengan kartu sendiri. */
+        .your-hand {
+          bottom: -96px;
+          z-index: 15;
+          width: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        /* Joker tetap kecil di kiri tengah meja. */
+        .joker-corner {
+          top: 50%;
+          left: 7px;
+          transform: translateY(-50%);
+          z-index: 12;
+        }
+      }
+
       /* Posisi target animasi pembagian dibuat mengikuti susunan mobile. */
       @media (max-width: 700px) {
         .deal-player {
@@ -1919,12 +2028,216 @@
         .players-5 .deal-player.p5 { top: 58px; left: 8px; transform: none; }
         .players-5 .deal-player.p4 { top: 58px; left: 50%; transform: translateX(-50%); }
         .players-5 .deal-player.p3 { top: 58px; right: 8px; left: auto; transform: none; }
-        .players-5 .deal-player.p2 { top: 50%; right: 8px; bottom: auto; left: auto; transform: translateY(-50%); }
-        .players-5 .deal-player.p1 { bottom: 58px; left: 50%; transform: translateX(-50%); }
+        .players-5 .deal-player.p2 { top: auto; right: 8px; bottom: 58px; left: auto; transform: none; }
+        .players-5 .deal-player.p1 { top: auto; bottom: 58px; left: 8px; right: auto; transform: none; }
         .players-4 .deal-player.p4 { top: 58px; left: 8px; transform: none; }
         .players-4 .deal-player.p3 { top: 58px; right: 8px; left: auto; transform: none; }
-        .players-4 .deal-player.p2 { top: 50%; right: 8px; bottom: auto; left: auto; transform: translateY(-50%); }
-        .players-4 .deal-player.p1 { bottom: 58px; left: 50%; transform: translateX(-50%); }
+        .players-4 .deal-player.p2 { top: auto; right: 8px; bottom: 58px; left: auto; transform: none; }
+        .players-4 .deal-player.p1 { top: auto; bottom: 58px; left: 8px; right: auto; transform: none; }
+      }
+
+      /* ===== MOBILE PLAYER 1 DI BAWAH JOKER + HISTORY P2 FULL ===== */
+      @media (max-width: 700px) {
+        /* P1 dan P2 kembali ke pojok bawah meja pada mobile. */
+        .players-5 .p1,
+        .players-4 .p1 {
+          top: auto;
+          bottom: 22px;
+          left: 8px;
+          right: auto;
+          transform: none;
+          z-index: 32;
+        }
+
+        .players-5 .p2,
+        .players-4 .p2 {
+          top: auto;
+          bottom: 22px;
+          right: 8px;
+          left: auto;
+          transform: none;
+          z-index: 32;
+        }
+
+        .players-5 .p2 .play-history,
+        .players-4 .p2 .play-history {
+          width: 120px;
+          max-width: 120px;
+          min-height: 26px;
+          position: relative;
+          left: -78px;
+          margin-left: 0;
+          margin-right: 0;
+          overflow: visible;
+          white-space: normal;
+          z-index: 40;
+        }
+      }
+      /* ===== MOBILE HAND FOOTER ===== */
+      @media (max-width: 700px) {
+        html, body {
+          height: auto !important;
+          min-height: 100%;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+        }
+
+        .game.active {
+          display: flex !important;
+          flex-direction: column;
+          align-items: stretch;
+          width: calc(100% - 12px);
+          max-width: none;
+          height: auto !important;
+          min-height: 0 !important;
+          margin: 12px auto 20px;
+          overflow: visible !important;
+        }
+
+        .game.active > .table {
+          order: 1;
+          width: 100%;
+          height: auto;
+          flex: 0 0 auto;
+          position: relative;
+          overflow: visible;
+        }
+
+        .game.active > .panel {
+          order: 2;
+          width: calc(100% - 12px);
+          max-width: 520px;
+          margin: 10px auto 0;
+          box-sizing: border-box;
+        }
+
+        .game.active > .actions {
+          order: 3;
+          width: calc(100% - 12px);
+          max-width: 520px;
+          margin: 8px auto 0;
+          box-sizing: border-box;
+        }
+
+        .game.active > .your-hand {
+          order: 4;
+          position: relative !important;
+          left: auto;
+          right: auto;
+          top: auto;
+          bottom: auto;
+          transform: none;
+          z-index: 5;
+          width: calc(100% - 12px);
+          max-width: 520px;
+          margin: 10px auto 14px;
+          padding: 7px 5px 9px;
+          flex: 0 0 auto;
+          box-sizing: border-box;
+          background: rgba(6, 46, 32, 0.96);
+          border: 1px solid rgba(255,255,255,.12);
+          border-radius: 10px;
+          overflow: visible;
+        }
+
+        .game.active > .suggestions {
+          order: 5;
+        }
+
+        .your-hand-title {
+          position: relative;
+          margin-bottom: 3px;
+        }
+
+        .hand-actions {
+          display: flex;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
+          gap: 5px;
+          padding: 2px 3px 5px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scrollbar-width: thin;
+        }
+
+        .hand-actions button {
+          flex: 0 0 auto;
+        }
+
+        .your-cards {
+          width: 100%;
+          min-width: 100%;
+          max-width: 100%;
+          min-height: 62px;
+          max-height: 152px;
+          overflow-x: hidden;
+          overflow-y: auto;
+          box-sizing: border-box;
+        }
+      }
+
+      /* ===== MOBILE: KARTU ANDA BENAR-BENAR BAGIAN DARI ALUR HALAMAN ===== */
+      @media (max-width: 700px) {
+        html, body { overflow-x: hidden !important; overflow-y: auto !important; height: auto !important; }
+        .game.active {
+          display: block !important;
+          width: calc(100% - 12px) !important;
+          height: auto !important;
+          min-height: 0 !important;
+          margin: 12px auto 20px !important;
+          padding-bottom: 20px !important;
+          overflow: visible !important;
+        }
+        .game.active > .table {
+          display: block !important;
+          position: relative !important;
+          width: 100% !important;
+          height: auto !important;
+          min-height: 720px !important;
+          overflow: visible !important;
+          margin: 0 !important;
+        }
+        .game.active > .panel,
+        .game.active > .actions,
+        .game.active > .your-hand,
+        .game.active > .suggestions {
+          position: relative !important;
+          left: auto !important;
+          right: auto !important;
+          top: auto !important;
+          bottom: auto !important;
+          transform: none !important;
+          float: none !important;
+          clear: both !important;
+        }
+        .game.active > .panel {
+          width: calc(100% - 12px) !important;
+          max-width: 520px !important;
+          margin: 10px auto 0 !important;
+        }
+        .game.active > .actions {
+          width: calc(100% - 12px) !important;
+          max-width: 520px !important;
+          margin: 8px auto 0 !important;
+        }
+        .game.active > .your-hand {
+          display: block !important;
+          width: calc(100% - 12px) !important;
+          max-width: 520px !important;
+          margin: 10px auto 18px !important;
+          padding: 7px 5px 9px !important;
+          box-sizing: border-box !important;
+          z-index: 5 !important;
+          background: rgba(6, 46, 32, 0.96) !important;
+          border: 1px solid rgba(255,255,255,.12) !important;
+          border-radius: 10px !important;
+          overflow: visible !important;
+        }
+        .game.active > .your-hand .your-cards {
+          overflow-x: auto !important;
+          overflow-y: auto !important;
+          max-height: 152px !important;
+        }
       }
 </style>
   </head>
@@ -2024,7 +2337,20 @@
           <div class="player-name">Pemain 5</div>
           <div class="mini-cards" id="mini5"></div>
         </div>
-        <div class="your-hand">
+        <!-- <div class="drag-note-float">
+          Pilih kartu lalu tarik ke meja / dasar / POT
+        </div> -->
+      </div>
+        
+      <div class="panel">
+        <div class="panel-title">Status Skor</div>
+        <div class="scoreboard" id="scoreboard"></div>
+        <div class="status-note" id="statusNote"></div>
+      </div>
+      <div class="actions">
+        <button class="secondary" id="newGameBtn">↻ Permainan Baru</button>
+      </div>
+<div class="your-hand">
           <div class="your-hand-title">
             Kartu Anda <span id="handValue"></span>
           </div>
@@ -2043,18 +2369,6 @@
           </div>
           <div class="your-cards" id="yourCards"></div>
         </div>
-        <!-- <div class="drag-note-float">
-          Pilih kartu lalu tarik ke meja / dasar / POT
-        </div> -->
-      </div>
-      <div class="panel">
-        <div class="panel-title">Status Skor</div>
-        <div class="scoreboard" id="scoreboard"></div>
-        <div class="status-note" id="statusNote"></div>
-      </div>
-      <div class="actions">
-        <button class="secondary" id="newGameBtn">↻ Permainan Baru</button>
-      </div>
       <div class="suggestions panel" id="suggestions">
         <div class="panel-title">💡 Saran Bantuan</div>
         <div id="suggestionBody"></div>
@@ -4312,3 +4626,43 @@
     </script>
   </body>
 </html>
+<style id="mobile-hand-fixed-footer-final">
+@media (max-width: 700px) {
+  html, body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  /* Kartu Anda seperti form chat: selalu tersedia di bawah layar,
+     terpisah dari meja dan tidak ikut tinggi meja. */
+  .game.active > .your-hand {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
+    width: min(520px, calc(100% - 12px)) !important;
+    max-width: 520px !important;
+    margin: 0 !important;
+    z-index: 1000 !important;
+    box-sizing: border-box !important;
+    padding: 6px 5px 8px !important;
+    background: rgba(6, 46, 32, 0.98) !important;
+    border: 1px solid rgba(255,255,255,.14) !important;
+    border-radius: 10px 10px 0 0 !important;
+    overflow: visible !important;
+  }
+
+  .game.active > .your-hand .your-cards {
+    max-height: 152px !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+  }
+
+  /* Sisakan ruang di halaman supaya footer tidak menutup konten terakhir. */
+  .game.active {
+    padding-bottom: 220px !important;
+  }
+}
+</style>
