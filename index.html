@@ -421,7 +421,6 @@
         }
       }
 
-
       /* Tombol Aturan Aktif di samping logo Putaran */
       .round-rules-wrap {
         position: relative;
@@ -1721,7 +1720,6 @@
           border-radius: 9px;
         }
       }
-    
 
       /* ===== PENYESUAIAN MEJA: JOKER KIRI TENGAH + KARTU MEJA KECIL ===== */
       .joker-corner {
@@ -1873,30 +1871,78 @@
         }
       }
 
-
       /* =========================================
          MOBILE PLAYER EDGE LAYOUT
          ========================================= */
       @media (max-width: 700px) {
         /* Beri jarak dari navbar supaya bagian atas meja/player tidak bertabrakan. */
-        .game { margin-top: 42px; }
-        .table { overflow: visible; }
-        .player { width: 112px; z-index: 30; }
+        .game {
+          margin-top: 42px;
+        }
+        .table {
+          overflow: visible;
+        }
+        .player {
+          width: 112px;
+          z-index: 30;
+        }
 
         /* 5 pemain: P5 - P4 - P3 di atas,
            P2 di tengah kanan, P1 sendiri di bawah. */
-        .players-5 .p5 { top: -34px; left: -18px; transform: none; }
-        .players-5 .p4 { top: -34px; left: 50%; transform: translateX(-50%); }
-        .players-5 .p3 { top: -34px; right: -18px; left: auto; transform: none; }
-        .players-5 .p2 { top: 50%; right: -58px; bottom: auto; left: auto; transform: translateY(-50%); }
-        .players-5 .p1 { bottom: -48px; left: 50%; transform: translateX(-50%); }
+        .players-5 .p5 {
+          top: -34px;
+          left: -18px;
+          transform: none;
+        }
+        .players-5 .p4 {
+          top: -34px;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+        .players-5 .p3 {
+          top: -34px;
+          right: -18px;
+          left: auto;
+          transform: none;
+        }
+        .players-5 .p2 {
+          top: 50%;
+          right: -58px;
+          bottom: auto;
+          left: auto;
+          transform: translateY(-50%);
+        }
+        .players-5 .p1 {
+          bottom: -48px;
+          left: 50%;
+          transform: translateX(-50%);
+        }
 
         /* 4 pemain: P4 - P3 di atas,
            P2 di tengah kanan, P1 sendiri di bawah. */
-        .players-4 .p4 { top: -34px; left: -18px; transform: none; }
-        .players-4 .p3 { top: -34px; right: -18px; left: auto; transform: none; }
-        .players-4 .p2 { top: 50%; right: -58px; bottom: auto; left: auto; transform: translateY(-50%); }
-        .players-4 .p1 { bottom: -48px; left: 50%; transform: translateX(-50%); }
+        .players-4 .p4 {
+          top: -34px;
+          left: -18px;
+          transform: none;
+        }
+        .players-4 .p3 {
+          top: -34px;
+          right: -18px;
+          left: auto;
+          transform: none;
+        }
+        .players-4 .p2 {
+          top: 50%;
+          right: -58px;
+          bottom: auto;
+          left: auto;
+          transform: translateY(-50%);
+        }
+        .players-4 .p1 {
+          bottom: -48px;
+          left: 50%;
+          transform: translateX(-50%);
+        }
 
         .player .play-history {
           position: relative;
@@ -1909,7 +1955,8 @@
 
       /* ===== FINAL MOBILE LAYOUT FIX ===== */
       @media (max-width: 700px) {
-        html, body {
+        html,
+        body {
           width: 100%;
           max-width: 100%;
           overflow-x: hidden;
@@ -1986,17 +2033,66 @@
           font-size: 8px;
         }
 
-        /* Pemain hanya setengah masuk ke meja agar area tengah tetap luas. */
-        .players-5 .p5 { top: -30px; left: -12px; right: auto; transform: none; }
-        .players-5 .p4 { top: -30px; left: 50%; right: auto; transform: translateX(-50%); }
-        .players-5 .p3 { top: -30px; right: -12px; left: auto; transform: none; }
-        .players-5 .p2 { top: 50%; right: -40px; bottom: auto; left: auto; transform: translateY(-50%); }
-        .players-5 .p1 { bottom: -24px; left: 50%; right: auto; top: auto; transform: translateX(-50%); }
+        /* Pemain atas tetap di tepi meja, tetapi seluruh history tidak boleh masuk navbar. */
+        .players-5 .p5 {
+          top: 4px;
+          left: -12px;
+          right: auto;
+          transform: none;
+        }
+        .players-5 .p4 {
+          top: 4px;
+          left: 50%;
+          right: auto;
+          transform: translateX(-50%);
+        }
+        .players-5 .p3 {
+          top: 4px;
+          right: -12px;
+          left: auto;
+          transform: none;
+        }
+        .players-5 .p2 {
+          top: 50%;
+          right: -40px;
+          bottom: auto;
+          left: auto;
+          transform: translateY(-50%);
+        }
+        .players-5 .p1 {
+          bottom: -24px;
+          left: 8px;
+          right: auto;
+          top: auto;
+          transform: none;
+        }
 
-        .players-4 .p4 { top: -30px; left: -12px; right: auto; transform: none; }
-        .players-4 .p3 { top: -30px; right: -12px; left: auto; transform: none; }
-        .players-4 .p2 { top: 50%; right: -40px; bottom: auto; left: auto; transform: translateY(-50%); }
-        .players-4 .p1 { bottom: -24px; left: 50%; right: auto; top: auto; transform: translateX(-50%); }
+        .players-4 .p4 {
+          top: 4px;
+          left: -12px;
+          right: auto;
+          transform: none;
+        }
+        .players-4 .p3 {
+          top: 4px;
+          right: -12px;
+          left: auto;
+          transform: none;
+        }
+        .players-4 .p2 {
+          top: 50%;
+          right: -40px;
+          bottom: auto;
+          left: auto;
+          transform: translateY(-50%);
+        }
+        .players-4 .p1 {
+          bottom: -24px;
+          left: 8px;
+          right: auto;
+          top: auto;
+          transform: none;
+        }
 
         /* Geser tangan ke bawah supaya P1 tidak bertabrakan dengan kartu sendiri. */
         .your-hand {
@@ -2025,15 +2121,61 @@
           font-size: 11px;
           box-sizing: border-box;
         }
-        .players-5 .deal-player.p5 { top: 58px; left: 8px; transform: none; }
-        .players-5 .deal-player.p4 { top: 58px; left: 50%; transform: translateX(-50%); }
-        .players-5 .deal-player.p3 { top: 58px; right: 8px; left: auto; transform: none; }
-        .players-5 .deal-player.p2 { top: auto; right: 8px; bottom: 58px; left: auto; transform: none; }
-        .players-5 .deal-player.p1 { top: auto; bottom: 58px; left: 8px; right: auto; transform: none; }
-        .players-4 .deal-player.p4 { top: 58px; left: 8px; transform: none; }
-        .players-4 .deal-player.p3 { top: 58px; right: 8px; left: auto; transform: none; }
-        .players-4 .deal-player.p2 { top: auto; right: 8px; bottom: 58px; left: auto; transform: none; }
-        .players-4 .deal-player.p1 { top: auto; bottom: 58px; left: 8px; right: auto; transform: none; }
+        .players-5 .deal-player.p5 {
+          top: 58px;
+          left: 8px;
+          transform: none;
+        }
+        .players-5 .deal-player.p4 {
+          top: 58px;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+        .players-5 .deal-player.p3 {
+          top: 58px;
+          right: 8px;
+          left: auto;
+          transform: none;
+        }
+        .players-5 .deal-player.p2 {
+          top: auto;
+          right: 8px;
+          bottom: 58px;
+          left: auto;
+          transform: none;
+        }
+        .players-5 .deal-player.p1 {
+          top: auto;
+          bottom: 58px;
+          left: 8px;
+          right: auto;
+          transform: none;
+        }
+        .players-4 .deal-player.p4 {
+          top: 58px;
+          left: 8px;
+          transform: none;
+        }
+        .players-4 .deal-player.p3 {
+          top: 58px;
+          right: 8px;
+          left: auto;
+          transform: none;
+        }
+        .players-4 .deal-player.p2 {
+          top: auto;
+          right: 8px;
+          bottom: 58px;
+          left: auto;
+          transform: none;
+        }
+        .players-4 .deal-player.p1 {
+          top: auto;
+          bottom: 58px;
+          left: 8px;
+          right: auto;
+          transform: none;
+        }
       }
 
       /* ===== MOBILE PLAYER 1 DI BAWAH JOKER + HISTORY P2 FULL ===== */
@@ -2059,23 +2201,64 @@
           z-index: 32;
         }
 
+        /* History P1/P2 tampil di dalam lebar meja, bukan keluar layar. */
         .players-5 .p2 .play-history,
         .players-4 .p2 .play-history {
-          width: 120px;
-          max-width: 120px;
+          position: absolute;
+          right: 0;
+          left: auto;
+          bottom: calc(100% + 2px);
+          width: 150px;
+          max-width: 150px;
           min-height: 26px;
-          position: relative;
-          left: -78px;
-          margin-left: 0;
-          margin-right: 0;
+          margin: 0;
           overflow: visible;
           white-space: normal;
           z-index: 40;
+          text-align: right;
+        }
+
+        .players-5 .p1 .play-history,
+        .players-4 .p1 .play-history {
+          position: absolute;
+          left: 0;
+          bottom: calc(100% + 2px);
+          width: 150px;
+          max-width: 150px;
+          min-height: 26px;
+          margin: 0;
+          overflow: visible;
+          white-space: normal;
+          z-index: 40;
+          text-align: left;
+        }
+
+        /* History pemain atas diletakkan di bawah panel pemain agar tidak menabrak navbar. */
+        .players-5 .p3 .play-history,
+        .players-5 .p4 .play-history,
+        .players-5 .p5 .play-history,
+        .players-4 .p3 .play-history,
+        .players-4 .p4 .play-history {
+          position: absolute;
+          top: calc(100% + 2px);
+          bottom: auto;
+          left: 50%;
+          right: auto;
+          transform: translateX(-50%);
+          width: 110px;
+          max-width: 110px;
+          min-height: 20px;
+          margin: 0;
+          overflow: visible;
+          white-space: normal;
+          z-index: 40;
+          text-align: center;
         }
       }
       /* ===== MOBILE HAND FOOTER ===== */
       @media (max-width: 700px) {
-        html, body {
+        html,
+        body {
           height: auto !important;
           min-height: 100%;
           overflow-x: hidden !important;
@@ -2135,7 +2318,7 @@
           flex: 0 0 auto;
           box-sizing: border-box;
           background: rgba(6, 46, 32, 0.96);
-          border: 1px solid rgba(255,255,255,.12);
+          border: 1px solid rgba(255, 255, 255, 0.12);
           border-radius: 10px;
           overflow: visible;
         }
@@ -2178,7 +2361,12 @@
 
       /* ===== MOBILE: KARTU ANDA BENAR-BENAR BAGIAN DARI ALUR HALAMAN ===== */
       @media (max-width: 700px) {
-        html, body { overflow-x: hidden !important; overflow-y: auto !important; height: auto !important; }
+        html,
+        body {
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          height: auto !important;
+        }
         .game.active {
           display: block !important;
           width: calc(100% - 12px) !important;
@@ -2229,7 +2417,7 @@
           box-sizing: border-box !important;
           z-index: 5 !important;
           background: rgba(6, 46, 32, 0.96) !important;
-          border: 1px solid rgba(255,255,255,.12) !important;
+          border: 1px solid rgba(255, 255, 255, 0.12) !important;
           border-radius: 10px !important;
           overflow: visible !important;
         }
@@ -2239,7 +2427,7 @@
           max-height: 152px !important;
         }
       }
-</style>
+    </style>
   </head>
   <body>
     <div class="topbar">
@@ -2341,7 +2529,7 @@
           Pilih kartu lalu tarik ke meja / dasar / POT
         </div> -->
       </div>
-        
+
       <div class="panel">
         <div class="panel-title">Status Skor</div>
         <div class="scoreboard" id="scoreboard"></div>
@@ -2350,25 +2538,25 @@
       <div class="actions">
         <button class="secondary" id="newGameBtn">↻ Permainan Baru</button>
       </div>
-<div class="your-hand">
-          <div class="your-hand-title">
-            Kartu Anda <span id="handValue"></span>
-          </div>
-          <div class="hand-actions">
-            <button class="sort-btn" id="sortSuitBtn">↕ Urut Bunga</button
-            ><button class="sort-btn" id="sortRankBtn">↕ Angka Sama</button
-            ><button class="action-btn hint" id="helpBtn">💡 BANTUAN</button
-            ><button class="action-btn primary" id="baseBtn">Turun Dasar</button
-            ><button class="action-btn primary" id="addBtn">
-              Tambahkan ke Meja</button
-            ><button class="action-btn primary" id="potBtn">
-              POT / Angka Sama</button
-            ><button class="action-btn danger" id="discardJokerBtn">
-              Buang Joker
-            </button>
-          </div>
-          <div class="your-cards" id="yourCards"></div>
+      <div class="your-hand">
+        <div class="your-hand-title">
+          Kartu Anda <span id="handValue"></span>
         </div>
+        <div class="hand-actions">
+          <button class="sort-btn" id="sortSuitBtn">↕ Urut Bunga</button
+          ><button class="sort-btn" id="sortRankBtn">↕ Angka Sama</button
+          ><button class="action-btn hint" id="helpBtn">💡 BANTUAN</button
+          ><button class="action-btn primary" id="baseBtn">Turun Dasar</button
+          ><button class="action-btn primary" id="addBtn">
+            Tambahkan ke Meja</button
+          ><button class="action-btn primary" id="potBtn">
+            POT / Angka Sama</button
+          ><button class="action-btn danger" id="discardJokerBtn">
+            Buang Joker
+          </button>
+        </div>
+        <div class="your-cards" id="yourCards"></div>
+      </div>
       <div class="suggestions panel" id="suggestions">
         <div class="panel-title">💡 Saran Bantuan</div>
         <div id="suggestionBody"></div>
@@ -4331,6 +4519,7 @@
 
         function dealNext() {
           if (dealt >= order.length) {
+            // Semua kartu sudah selesai dibagikan
             setTimeout(() => {
               overlay.remove();
 
@@ -4368,7 +4557,6 @@
             dealNext();
           }, 60);
         }
-
         dealNext();
       }
 
@@ -4519,8 +4707,6 @@
         // Saat pembagian kartu: semua kartu mati masih tertutup
         renderDeadCards(deadCards, jokerIndex, false);
 
-        renderDeadCards(deadCards, jokerIndex, false);
-
         document.getElementById("jokerInfo").textContent =
           "Menentukan Joker...";
 
@@ -4539,32 +4725,25 @@
         const totalDealt = playerCount === 4 ? 96 : 100;
 
         showDealAnimation(playerCount, totalDealt, () => {
-          // Pembagian selesai
           renderDeadCards(game.deadCards, game.jokerIndex, true);
 
-          // Baru tampilkan informasi Joker
           document.getElementById("jokerInfo").textContent = "";
-          // "" + game.joker.rank + " = JOKER";
 
           render();
-        });
 
-        // =====================================================
-        // LANJUTKAN GAME SETELAH ANIMASI
-        // =====================================================
+          if (!game || game.over || autoTenho()) return;
 
-        setTimeout(() => {
-          if (autoTenho() || !game || game.over) return;
-
-          if (game.turn === 0 && !humanHasMove()) {
-            markDead(0);
-            game.firstRoundDone[0] = true;
-            return nextTurn();
+          if (game.turn === 0) {
+            if (!humanHasMove()) {
+              markDead(0);
+              game.firstRoundDone[0] = true;
+              nextTurn();
+            }
+            return;
           }
 
-          if (game.turn !== 0)
-            setTimeout(aiTurn, 1000 + Math.floor(Math.random() * 4001));
-        }, 250);
+          setTimeout(aiTurn, 1000 + Math.floor(Math.random() * 4001));
+        });
       }
 
       document.querySelectorAll(".player-btn").forEach(
@@ -4627,42 +4806,43 @@
   </body>
 </html>
 <style id="mobile-hand-fixed-footer-final">
-@media (max-width: 700px) {
-  html, body {
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-  }
+  @media (max-width: 700px) {
+    html,
+    body {
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+    }
 
-  /* Kartu Anda seperti form chat: selalu tersedia di bawah layar,
+    /* Kartu Anda seperti form chat: selalu tersedia di bawah layar,
      terpisah dari meja dan tidak ikut tinggi meja. */
-  .game.active > .your-hand {
-    position: fixed !important;
-    left: 50% !important;
-    right: auto !important;
-    bottom: 0 !important;
-    top: auto !important;
-    transform: translateX(-50%) !important;
-    width: min(520px, calc(100% - 12px)) !important;
-    max-width: 520px !important;
-    margin: 0 !important;
-    z-index: 1000 !important;
-    box-sizing: border-box !important;
-    padding: 6px 5px 8px !important;
-    background: rgba(6, 46, 32, 0.98) !important;
-    border: 1px solid rgba(255,255,255,.14) !important;
-    border-radius: 10px 10px 0 0 !important;
-    overflow: visible !important;
-  }
+    .game.active > .your-hand {
+      position: fixed !important;
+      left: 50% !important;
+      right: auto !important;
+      bottom: 0 !important;
+      top: auto !important;
+      transform: translateX(-50%) !important;
+      width: min(520px, calc(100% - 12px)) !important;
+      max-width: 520px !important;
+      margin: 0 !important;
+      z-index: 1000 !important;
+      box-sizing: border-box !important;
+      padding: 6px 5px 8px !important;
+      background: rgba(6, 46, 32, 0.98) !important;
+      border: 1px solid rgba(255, 255, 255, 0.14) !important;
+      border-radius: 10px 10px 0 0 !important;
+      overflow: visible !important;
+    }
 
-  .game.active > .your-hand .your-cards {
-    max-height: 152px !important;
-    overflow-x: auto !important;
-    overflow-y: auto !important;
-  }
+    .game.active > .your-hand .your-cards {
+      max-height: 152px !important;
+      overflow-x: auto !important;
+      overflow-y: auto !important;
+    }
 
-  /* Sisakan ruang di halaman supaya footer tidak menutup konten terakhir. */
-  .game.active {
-    padding-bottom: 220px !important;
+    /* Sisakan ruang di halaman supaya footer tidak menutup konten terakhir. */
+    .game.active {
+      padding-bottom: 220px !important;
+    }
   }
-}
 </style>
