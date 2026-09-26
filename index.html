@@ -162,21 +162,88 @@
         background: rgba(0, 0, 0, 0.18);
         border-radius: 12px;
       }
+
       .joker-corner .center-title {
         margin-bottom: 5px;
       }
 
       .joker-corner #jokerCard {
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
       }
 
-      .joker-corner .card {
-        width: 48px;
-        height: 68px;
-        font-size: 20px;
+      /* =========================================
+   KARTU MATI / JOKER
+   ========================================= */
+
+      .dead-card-stack {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: max-content;
       }
+
+      /* Kartu saling menutupi */
+      .dead-card-stack .card {
+        position: relative;
+        flex: 0 0 auto;
+        width: 38px;
+        height: 54px;
+        font-size: 16px;
+
+        /* sekitar 1/4 kartu terlihat */
+        margin-left: -40px;
+      }
+
+      /* kartu pertama tidak menutupi kartu sebelumnya */
+      .dead-card-stack .card:first-child {
+        margin-left: 0;
+      }
+
+      /* Kartu belakang */
+      .dead-card-stack .card.back {
+        background: repeating-linear-gradient(
+          45deg,
+          #1d3557,
+          #1d3557 4px,
+          #315785 4px,
+          #315785 8px
+        );
+
+        border: 2px solid white;
+      }
+
+      /* Joker yang dibuka */
+      .dead-card-stack .joker-revealed {
+        z-index: 20;
+
+        transform: translateY(-5px);
+
+        border: 3px solid #f3c33b;
+
+        box-shadow: 0 0 12px rgba(243, 195, 59, 0.8);
+      }
+
+      @media (max-width: 800px) {
+        .joker-corner {
+          top: 12px;
+          left: 10px;
+          padding: 5px 7px;
+        }
+
+        .dead-card-stack .card {
+          width: 31px;
+          height: 45px;
+          font-size: 13px;
+          margin-left: -11px;
+        }
+
+        .dead-card-stack {
+          min-height: 50px;
+        }
+      }
+
       .play-history {
         margin-top: 5px;
         min-height: 26px;
@@ -330,26 +397,93 @@
         left: 12%;
         transform: none;
       }
+
       .p2 {
         bottom: 128px;
         right: 12%;
         transform: none;
       }
+
       .p3 {
         top: 20px;
         right: 12%;
         transform: none;
       }
+
       .p4 {
-        top: 20px;
-        left: 12%;
-        transform: none;
-      }
-      .p5 {
         top: 20px;
         left: 50%;
         transform: translateX(-50%);
       }
+
+      .p5 {
+        top: 58px;
+        left: 7%;
+        transform: none;
+      }
+
+      /* =========================
+   4 PEMAIN
+   ========================= */
+
+      .players-4 .p1 {
+        bottom: 128px;
+        left: 12%;
+        transform: none;
+      }
+
+      .players-4 .p2 {
+        bottom: 128px;
+        right: 12%;
+        transform: none;
+      }
+
+      .players-4 .p3 {
+        top: 20px;
+        right: 12%;
+        transform: none;
+      }
+
+      .players-4 .p4 {
+        top: 20px;
+        left: 12%;
+        transform: none;
+      }
+
+      /* =========================
+   5 PEMAIN
+   ========================= */
+
+      .players-5 .p1 {
+        bottom: 128px;
+        left: 12%;
+        transform: none;
+      }
+
+      .players-5 .p2 {
+        bottom: 128px;
+        right: 12%;
+        transform: none;
+      }
+
+      .players-5 .p3 {
+        top: 20px;
+        right: 12%;
+        transform: none;
+      }
+
+      .players-5 .p4 {
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .players-5 .p5 {
+        top: 20px;
+        left: 12%;
+        transform: none;
+      }
+
       .mini-cards {
         display: flex;
         justify-content: center;
@@ -964,6 +1098,140 @@
       .result-card.joker {
         border: 2px solid #f3c33b;
       }
+
+      /* =====================================================
+   ANIMASI PEMBAGIAN KARTU
+   ===================================================== */
+
+      .deal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.78);
+      }
+
+      .deal-box {
+        position: relative;
+        width: min(90vw, 700px);
+        height: 420px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .deal-title {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: white;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .deal-deck {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 55px;
+        height: 78px;
+        transform: translate(-50%, -50%);
+        border-radius: 7px;
+        background: repeating-linear-gradient(
+          45deg,
+          #1d3557,
+          #1d3557 4px,
+          #315785 4px,
+          #315785 8px
+        );
+        border: 3px solid white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+      }
+
+      .deal-player {
+        position: absolute;
+        min-width: 90px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.12);
+        color: white;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .deal-player.p1 {
+        left: 10px;
+        bottom: 30px;
+      }
+
+      .deal-player.p2 {
+        right: 10px;
+        bottom: 30px;
+      }
+
+      .deal-player.p3 {
+        right: 10px;
+        top: 55px;
+      }
+
+      /* 4 PEMAIN */
+      .players-4 .deal-player.p4 {
+        left: 10px;
+        top: 55px;
+        transform: none;
+      }
+
+      /* 5 PEMAIN */
+      .players-5 .deal-player.p4 {
+        left: 50%;
+        top: 25px;
+        transform: translateX(-50%);
+      }
+
+      .players-5 .deal-player.p5 {
+        left: 10px;
+        top: 55px;
+        transform: none;
+      }
+
+      .deal-flying-card {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 42px;
+        height: 60px;
+        margin-left: -21px;
+        margin-top: -30px;
+        border-radius: 6px;
+        background: repeating-linear-gradient(
+          45deg,
+          #1d3557,
+          #1d3557 4px,
+          #315785 4px,
+          #315785 8px
+        );
+        border: 2px solid white;
+        z-index: 5;
+        pointer-events: none;
+        transition:
+          left 0.06s ease-out,
+          top 0.06s ease-out,
+          transform 0.06s ease-out;
+      }
+
+      .deal-count {
+        position: absolute;
+        bottom: 15px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 14px;
+      }
     </style>
   </head>
   <body>
@@ -1264,7 +1532,10 @@
         if (real.some((c) => c.suit !== suit)) return [];
         const n = cards.length;
         const jokers = cards.filter(isJoker);
-        if (jokers.length > 1) return [];
+
+        // Dasar 3 kartu maksimal 1 Joker.
+        // Dasar 4+ kartu boleh lebih dari 1 Joker.
+        if (n === 3 && jokers.length > 1) return [];
         const candidates = [];
         // Urutan tidak melingkar. A hanya boleh menjadi ujung rendah (A-2-3...)
         // atau ujung tinggi (...-Q-K-A). K-A-2 tidak legal.
@@ -1376,11 +1647,31 @@
             .map((c, i) => (isJoker(c) ? i : -1))
             .filter((i) => i >= 0);
           if (ordered.length >= 4 && jokerIndexes.length) {
+            // Joker yang sudah ada di dasar sebelumnya
+            // tetap mempertahankan posisi/angka yang sudah ditetapkan.
+            //
+            // Contoh:
+            // Joker(A) - 2 - 3
+            // + 4
+            // = Joker(A) - 2 - 3 - 4
+
+            const oldJokerIndexes = m.ordered
+              .map((c, i) => (isJoker(c) ? i : -1))
+              .filter((i) => i >= 0);
+
+            const newJokerIndexes = jokerIndexes.filter(
+              (i) => i >= m.ordered.length,
+            );
+
+            // Joker baru tidak boleh berada di ujung.
             if (
-              jokerIndexes[0] === 0 ||
-              jokerIndexes[jokerIndexes.length - 1] === ordered.length - 1
-            )
+              newJokerIndexes.some((i) => i === 0 || i === ordered.length - 1)
+            ) {
               continue;
+            }
+
+            // Joker lama boleh tetap berada di ujung
+            // karena posisinya sudah ditetapkan saat dasar dibuat.
           }
           out.push({ side, ordered, start: newStart, end: newEnd, add });
         }
@@ -1475,6 +1766,7 @@
               if (Number.isInteger(mi) && game.melds[mi]) {
                 game.targetMeld = mi;
                 addMeld();
+                playCardPlaceSound();
                 return;
               }
             }
@@ -1510,6 +1802,7 @@
             if (!canDrop()) return;
             game.targetMeld = mi;
             addMeld();
+            playCardPlaceSound();
           };
         });
       }
@@ -1521,6 +1814,7 @@
         }
         if (game.round === 1 && !game.hasBase[0]) {
           playBase();
+          playCardPlaceSound();
           return;
         }
         if (game.round === 1) {
@@ -1536,6 +1830,7 @@
         if (pot) {
           removeSelectedFromHand();
           game.melds.push(pot);
+          playCardPlaceSound();
           logMove(0, "POT", cs);
           game.potRanks.add(pot.rank);
           clearSelection();
@@ -1640,6 +1935,40 @@
         d.className = "card back" + (small ? " small" : "");
         return d;
       }
+
+      function renderDeadCards(
+        deadCards,
+        jokerIndex = -1,
+        revealJoker = false,
+      ) {
+        const container = document.getElementById("jokerCard");
+        if (!container) return;
+
+        container.innerHTML = "";
+
+        const stack = document.createElement("div");
+
+        // 8 kartu = 4 atas + 4 bawah
+        // 4 kartu = 1 baris rapat
+        stack.className =
+          "dead-card-stack" + (deadCards.length === 4 ? " four-cards" : "");
+
+        deadCards.forEach((card, index) => {
+          let el;
+
+          if (revealJoker && index === jokerIndex) {
+            el = createCard(card, true);
+            el.classList.add("joker-revealed");
+          } else {
+            el = createBackCard(true);
+          }
+
+          stack.appendChild(el);
+        });
+
+        container.appendChild(stack);
+      }
+
       function renderScores() {
         let s = document.getElementById("scoreboard");
         s.innerHTML = "";
@@ -1854,6 +2183,12 @@
           game.deadOrder[i] = game.deathSeq++;
         }
       }
+      function playerLifeChance(playerIndex) {
+        // Setiap player punya peluang:
+        // 80% tetap hidup
+        // 20% mati
+        return Math.random() < 0.8;
+      }
       function resultCardHtml(c) {
         const cls =
           "result-card" + (c.red ? " red" : "") + (isJoker(c) ? " joker" : "");
@@ -1973,6 +2308,7 @@
         const finish = (m) => {
           removeSelectedFromHand();
           game.melds.push(m);
+          playCardPlaceSound();
           logMove(0, "Dasar", cs);
           game.hasBase[0] = true;
           game.firstRoundDone[0] = true;
@@ -1991,6 +2327,7 @@
         const finish = (m) => {
           removeSelectedFromHand();
           game.melds.push(m);
+          playCardPlaceSound();
           logMove(0, "Dasar", cs);
           game.hasBase[0] = true;
           clearSelection();
@@ -2110,6 +2447,7 @@
         }
         removeSelectedFromHand();
         game.melds.push(m);
+        playCardPlaceSound();
         logMove(0, "POT", cs);
         game.potRanks.add(m.rank);
         clearSelection();
@@ -2127,6 +2465,7 @@
         if (i < 0) return;
         let jc = game.hands[0][i];
         game.hands[0].splice(i, 1);
+        playCardPlaceSound();
         clearSelection();
         logMove(0, "Buang Joker", [jc]);
         game.discardedJoker = true;
@@ -2541,12 +2880,26 @@
           if (best) {
             best.cards.forEach((c) => h.splice(h.indexOf(c), 1));
             game.melds.push(makeBaseCards(best.cards));
+            playCardPlaceSound();
             logMove(i, "Dasar", best.cards);
             game.hasBase[i] = true;
             game.firstRoundDone[i] = true;
           } else {
-            markDead(i);
-            game.firstRoundDone[i] = true;
+            // Tidak menemukan dasar pada ronde pertama.
+            // Setiap player punya peluang sendiri:
+            // 80% tetap hidup
+            // 20% mati
+
+            if (!playerLifeChance(i)) {
+              // 20% = MATI
+              markDead(i);
+              game.firstRoundDone[i] = true;
+            } else {
+              // 80% = HIDUP
+              // Jangan markDead.
+              // AI tetap dianggap hidup.
+              game.firstRoundDone[i] = true;
+            }
           }
         } else if (game.hasBase[i]) {
           const cand = aiCandidates(i)[0];
@@ -2564,10 +2917,12 @@
               });
               if (cand.kind === "base") {
                 game.melds.push(makeBaseCards(cand.cards));
+                playCardPlaceSound();
                 logMove(i, "Dasar", cand.cards);
               } else if (cand.kind === "pot") {
                 const m = potCards(cand.cards);
                 game.melds.push(m);
+                playCardPlaceSound();
                 game.potRanks.add(m.rank);
                 logMove(i, "POT", cand.cards);
               } else {
@@ -2580,8 +2935,12 @@
                     mm.start = o.start;
                     mm.end = o.end;
                     mm.cards = [...o.ordered];
+
+                    playCardPlaceSound();
                   }
                 } else mm.cards.push(...cand.cards);
+
+                playCardPlaceSound();
                 logMove(
                   i,
                   mm.type === "pot" ? "Tambah POT" : "Tambah Dasar",
@@ -2693,22 +3052,228 @@
           '<div class="suggestion">Tidak ada kartu yang bisa diturunkan sekarang.</div>';
         document.getElementById("suggestions").style.display = "block";
       }
+      function showDealAnimation(playerCount, totalCards, onComplete) {
+        const old = document.getElementById("dealOverlay");
+        if (old) old.remove();
+
+        const overlay = document.createElement("div");
+        overlay.id = "dealOverlay";
+        overlay.className = "deal-overlay players-" + playerCount;
+
+        const box = document.createElement("div");
+        box.className = "deal-box";
+
+        const title = document.createElement("div");
+        title.className = "deal-title";
+        title.textContent = "Membagikan Kartu...";
+        box.appendChild(title);
+
+        const deck = document.createElement("div");
+        deck.className = "deal-deck";
+        box.appendChild(deck);
+
+        // Posisi player mengikuti posisi meja
+        const positions = [
+          { cls: "p1", name: "P1" },
+          { cls: "p2", name: "P2" },
+          { cls: "p3", name: "P3" },
+          { cls: "p4", name: "P4" },
+          { cls: "p5", name: "P5" },
+        ];
+
+        for (let i = 0; i < playerCount; i++) {
+          const p = document.createElement("div");
+          p.className = "deal-player " + positions[i].cls;
+          p.textContent = positions[i].name;
+          box.appendChild(p);
+        }
+
+        const count = document.createElement("div");
+        count.className = "deal-count";
+        count.textContent = `0 / ${totalCards}`;
+        box.appendChild(count);
+
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        /*
+         * Posisi tujuan kartu.
+         * Kita ambil posisi elemen player berdasarkan DOM,
+         * sehingga tidak mengubah posisi game sebenarnya.
+         */
+        function getPlayerTarget(index) {
+          const el = box.querySelector(".deal-player." + positions[index].cls);
+
+          const boxRect = box.getBoundingClientRect();
+          const r = el.getBoundingClientRect();
+
+          return {
+            left: r.left - boxRect.left + r.width / 2,
+            top: r.top - boxRect.top + r.height / 2,
+          };
+        }
+
+        let dealt = 0;
+
+        // Dibagikan satu-satu secara bergiliran
+        const order = [];
+
+        for (let i = 0; i < totalCards; i++) {
+          order.push(i % playerCount);
+        }
+
+        function dealNext() {
+          if (dealt >= order.length) {
+            setTimeout(() => {
+              overlay.remove();
+
+              if (typeof onComplete === "function") {
+                onComplete();
+              }
+            }, 250);
+
+            return;
+          }
+
+          const player = order[dealt];
+
+          playDealSound();
+
+          const card = document.createElement("div");
+          card.className = "deal-flying-card";
+
+          box.appendChild(card);
+
+          const target = getPlayerTarget(player);
+
+          requestAnimationFrame(() => {
+            card.style.left = target.left + "px";
+            card.style.top = target.top + "px";
+            card.style.transform = "scale(.55)";
+          });
+
+          dealt++;
+
+          count.textContent = `${dealt} / ${totalCards}`;
+
+          setTimeout(() => {
+            card.remove();
+            dealNext();
+          }, 60);
+        }
+
+        dealNext();
+      }
+
+      function playDealSound() {
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+          if (!window.minamiAudio) {
+            window.minamiAudio = new AudioContext();
+          }
+
+          const ctx = window.minamiAudio;
+
+          if (ctx.state === "suspended") {
+            ctx.resume();
+          }
+
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(420, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(
+            180,
+            ctx.currentTime + 0.045,
+          );
+
+          gain.gain.setValueAtTime(0.08, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start();
+          osc.stop(ctx.currentTime + 0.05);
+        } catch (e) {
+          // Abaikan jika browser tidak mendukung audio
+        }
+      }
+
+      function playCardPlaceSound() {
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+          if (!window.minamiAudio) {
+            window.minamiAudio = new AudioContext();
+          }
+
+          const ctx = window.minamiAudio;
+
+          if (ctx.state === "suspended") {
+            ctx.resume();
+          }
+
+          const now = ctx.currentTime;
+
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = "triangle";
+
+          osc.frequency.setValueAtTime(260, now);
+          osc.frequency.exponentialRampToValueAtTime(70, now + 0.1);
+
+          gain.gain.setValueAtTime(0.45, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.11);
+
+          // Bunyi ketukan kecil
+          const click = ctx.createOscillator();
+          const clickGain = ctx.createGain();
+
+          click.type = "square";
+          click.frequency.setValueAtTime(850, now);
+
+          clickGain.gain.setValueAtTime(0.12, now);
+          clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+          click.connect(clickGain);
+          clickGain.connect(ctx.destination);
+
+          click.start(now);
+          click.stop(now + 0.025);
+        } catch (e) {}
+      }
       function startGame() {
         let d = shuffle(deck()),
           deadCount = playerCount === 4 ? 8 : 4,
-          dead = d.splice(0, deadCount),
-          ji = Math.floor(Math.random() * dead.length),
-          joker = dead.splice(ji, 1)[0],
+          deadCards = d.splice(0, deadCount),
+          jokerIndex = Math.floor(Math.random() * deadCards.length),
+          joker = deadCards[jokerIndex],
           hands = [];
+
         let per = d.length / playerCount;
+
         for (let i = 0; i < playerCount; i++) hands.push(d.splice(0, per));
+
         const prevOrder =
           Array.isArray(window.minamiNextOrder) &&
           window.minamiNextOrder.length === playerCount
             ? window.minamiNextOrder.slice()
             : Array.from({ length: playerCount }, (_, i) => i);
+
         window.minamiNextOrder = null;
+
         const direction = window.minamiDirection === -1 ? -1 : 1;
+
         game = {
           hands,
           jokerRank: joker.rank,
@@ -2732,33 +3297,75 @@
           history: Array.from({ length: playerCount }, () => []),
           over: false,
         };
+
+        game.deadCards = deadCards;
+        game.jokerIndex = jokerIndex;
+
         window.minamiScores = game.scores;
+
         document.getElementById("setup").style.display = "none";
+
         document
           .getElementById("game")
           .classList.add("active", "players-" + playerCount);
-        document.getElementById("jokerCard").innerHTML = "";
-        document
-          .getElementById("jokerCard")
-          .appendChild(createCard(joker, true));
+
+        // Saat pembagian kartu: semua kartu mati masih tertutup
+        renderDeadCards(deadCards, jokerIndex, false);
+
+        renderDeadCards(deadCards, jokerIndex, false);
+
         document.getElementById("jokerInfo").textContent =
-          "Semua Angka " + joker.rank + " = JOKER";
-        document.getElementById("status").textContent =
-          "Game dimulai • Joker = " + joker.rank;
+          "Menentukan Joker...";
+
+        document.getElementById("status").textContent = "Game dimulai";
+
         document.getElementById("resultModal").classList.remove("show");
+
         for (let i = 1; i <= 5; i++)
           document.getElementById("player" + i).style.display =
             i <= playerCount ? "block" : "none";
-        render();
+
+        // =====================================================
+        // ANIMASI PEMBAGIAN KARTU
+        // =====================================================
+
+        const totalDealt = playerCount === 4 ? 96 : 100;
+
+        showDealAnimation(playerCount, totalDealt, () => {
+          // Pembagian selesai
+          renderDeadCards(game.deadCards, game.jokerIndex, true);
+
+          // Baru tampilkan informasi Joker
+          document.getElementById("jokerInfo").textContent =
+            "" + game.joker.rank + " = JOKER";
+
+          render();
+        });
+
+        // =====================================================
+        // LANJUTKAN GAME SETELAH ANIMASI
+        // =====================================================
+
         setTimeout(() => {
           if (autoTenho() || !game || game.over) return;
-          // Putaran pertama wajib dasar. Kalau tidak punya dasar, langsung MATI.
+
+          // Putaran pertama wajib dasar.
+          // Kalau tidak punya dasar, player punya peluang:
+          // 80% tetap hidup
+          // 20% mati
           if (game.turn === 0 && !humanHasMove()) {
-            markDead(0);
-            game.firstRoundDone[0] = true;
-            render();
-            return nextTurn();
+            if (!playerLifeChance(0)) {
+              // Kena 20% = MATI
+              markDead(0);
+              game.firstRoundDone[0] = true;
+              return nextTurn();
+            }
+
+            // Kena 80% = tetap hidup.
+            // Jangan markDead dan jangan nextTurn.
+            // Player tetap mendapat kesempatan bermain.
           }
+
           if (game.turn !== 0)
             setTimeout(aiTurn, 1000 + Math.floor(Math.random() * 4001));
         }, 250);
