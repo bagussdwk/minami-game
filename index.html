@@ -2745,54 +2745,85 @@
       function aiCandidates(i) {
         let h = game.hands[i],
           out = [];
+
         if (game.round <= 1 || !game.hasBase[i]) return out;
+
         const stats = aiVisibleStats(),
           next = aiNextPlayer(i),
           nextCount = next == null ? 99 : game.hands[next].length;
+
         const addCandidate = (cards, kind, mi = null, extra = {}) => {
           const jok = cards.filter(isJoker).length;
           const remaining = h.filter((c) => !cards.includes(c));
           const nextValue = handValue(remaining);
-          let score = nextValue;
-          // Prinsip pro: kartu yang masih fleksibel lebih berharga daripada sekadar
-          // jumlah kartu yang berhasil dikeluarkan.
           const savedFlex = remaining.reduce(
             (n, c) => n + aiCardFlexibility(c, stats),
             0,
           );
+
+          let score = nextValue;
+          let priority = 5;
+
           score -= savedFlex * 1.7;
           score -= Math.min(12, cards.length * 2.2);
-          if (cards.length === 1) score += 1.5;
-          if (jok) score += (h.length > 10 ? 55 : h.length > 6 ? 30 : 10) * jok;
 
-          if (kind === "pot") {
-            // Membuka POT memberi informasi dan jalan baru kepada semua pemain.
-            score += game.turnCount < playerCount * 2 ? 38 : 12;
-            if (nextCount <= 5) score += 24;
-            const alreadySeen =
-              stats.seen.get(cards.find((c) => !isJoker(c))?.rank) || 0;
-            if (alreadySeen === 0) score += 10; // jangan buru-buru membuka angka yang masih tersembunyi
-          }
+          // ======================================================
+          // PRIORITAS AI
+          // 0 = tambah 1 kartu ke DASAR yang sudah ada
+          // 1 = tambah 1 kartu asli ke POT yang sudah ada
+          // 2 = tambah beberapa kartu ke DASAR
+          // 3 = buat DASAR baru
+          // 4 = buat POT baru
+          // 5 = buang Joker
+          // ======================================================
           if (kind === "add") {
             const m = game.melds[mi];
-            if (m?.type === "pot") {
-              // Cicil POT, jangan menghabiskannya sekaligus.
-              score += cards.length > 1 ? 18 : 0;
-              if (nextCount <= 5) score += 8;
-            } else if (m?.type === "base") {
-              // Menyambung dasar lawan/siapa pun membuka jalan untuk kartu lain.
-              if (nextCount <= 5) score += 10;
+
+            if (m?.type === "base") {
+              priority = cards.length === 1 ? 0 : 2;
+
+              // Satu kartu yang langsung menyambung meja sangat diutamakan.
+              if (cards.length === 1) score -= 25;
+              else score -= 10;
+
+              if (nextCount <= 5) score -= 5;
+            } else if (m?.type === "pot") {
+              // POT dicicil satu kartu, tetapi JOKER tidak dipakai ke POT.
+              priority = 1;
+              score -= 18;
+              if (nextCount <= 5) score -= 4;
             }
+          } else if (kind === "base") {
+            priority = 3;
+            score += 8;
+
+            // Dasar baru tanpa Joker lebih disukai daripada dasar baru
+            // yang menghabiskan Joker.
+            if (jok) score += 28 * jok;
+          } else if (kind === "pot") {
+            priority = 4;
+
+            // Membuka POT memberi informasi baru kepada pemain lain.
+            score += game.turnCount < playerCount * 2 ? 38 : 12;
+            if (nextCount <= 5) score += 24;
+
+            const realCard = cards.find((c) => !isJoker(c));
+            const alreadySeen = realCard
+              ? stats.seen.get(realCard.rank) || 0
+              : 0;
+
+            if (alreadySeen === 0) score += 10;
+          } else if (kind === "discardJoker") {
+            priority = 5;
           }
-          if (kind === "base") {
-            // Dasar baru menyembunyikan informasi lebih baik daripada membuka POT,
-            // tetapi jangan membuang kartu yang bisa langsung menyambung meja.
-            if (cards.some((c) => aiCardFlexibility(c, stats) >= 5))
-              score +=
-                cards.filter((c) => aiCardFlexibility(c, stats) >= 5).length *
-                3;
+
+          // Joker bernilai tinggi: jangan digunakan hanya untuk mengurangi jumlah kartu.
+          if (jok) {
+            score += (h.length > 10 ? 55 : h.length > 6 ? 30 : 10) * jok;
           }
+
           if (extra.jokerDiscard) score += extra.jokerDiscard;
+
           out.push({
             cards,
             kind,
@@ -2802,54 +2833,88 @@
             score,
             jok,
             flexSaved: savedFlex,
+            priority,
             ...extra,
           });
         };
 
-        // Sambung dasar/POT. POT umumnya dicicil satu kartu per giliran.
+        // ======================================================
+        // 1. TAMBAH KE MELD YANG SUDAH ADA
+        // ======================================================
         game.melds.forEach((m, mi) => {
+          // POT hanya dicicil 1 kartu.
           const maxAdd = m.type === "pot" ? 1 : 5;
+
           subsets(h, maxAdd).forEach((cards) => {
+            if (!cards.length) return;
             if (m.type === "pot" && cards.length !== 1) return;
+
+            // JANGAN gunakan Joker untuk dibuang ke POT.
+            // POT hanya ditambah dengan kartu angka asli.
+            if (m.type === "pot" && cards.some(isJoker)) return;
+
             const chk = addToMeld(cards, mi);
             if (chk.ok) addCandidate(cards, "add", mi);
           });
         });
-        // POT baru: maksimal 3 kartu, agar Q-Q-Q-Q tidak langsung habis.
+
+        // ======================================================
+        // 2. POT BARU
+        // ======================================================
         subsets(h, 3).forEach((cards) => {
-          if (cards.length === 3) {
-            const m = potCards(cards);
-            if (m) addCandidate(cards, "pot");
-          }
-        });
-        // Dasar baru: tidak harus terpanjang. Cari juga dasar pendek agar kartu fleksibel tersisa.
-        subsets(h, 5).forEach((cards) => {
-          const b = makeBaseCards(cards);
-          if (b && !cards.some((c) => game.potRanks.has(c.rank) && !isJoker(c)))
-            addCandidate(cards, "base");
+          if (cards.length !== 3) return;
+
+          const m = potCards(cards);
+          if (!m) return;
+
+          addCandidate(cards, "pot");
         });
 
-        // Pengorbanan Joker: bukan karena Joker murah, tetapi karena kadang membuka
-        // permainan dengan cara yang lebih buruk daripada menutup satu informasi.
+        // ======================================================
+        // 3. DASAR BARU
+        // ======================================================
+        subsets(h, 5).forEach((cards) => {
+          const b = makeBaseCards(cards);
+
+          if (
+            b &&
+            !cards.some((c) => game.potRanks.has(c.rank) && !isJoker(c))
+          ) {
+            addCandidate(cards, "base");
+          }
+        });
+
+        // ======================================================
+        // 4. JANGAN BUANG JOKER KALAU MASIH PENTING
+        // ======================================================
         const j = h.find((c) => isJoker(c));
+
         if (j) {
           let jscore = 0;
+
           const ranksInHand = new Set(
             h.filter((c) => !isJoker(c)).map((c) => c.rank),
           );
+
           const locked = ranksInHand.size
             ? [...ranksInHand].filter((r) => stats.pot.has(r)).length
             : 0;
+
           if (locked) jscore -= 12;
           if (game.turnCount < playerCount * 2) jscore -= 10;
           if (nextCount <= 5) jscore += 12;
-          addCandidate([j], "discardJoker", null, { jokerDiscard: jscore });
+
+          addCandidate([j], "discardJoker", null, {
+            jokerDiscard: jscore,
+          });
         }
 
-        // Kalau ada opsi tanpa Joker yang masuk akal, jangan memilih Joker hanya karena
-        // nilainya besar. Tetapi Joker tetap boleh menang jika secara posisi lebih baik.
+        // PRIORITAS UTAMA mengalahkan score.
+        // Jadi kartu yang sudah bisa dimainkan ke meja tidak kalah
+        // hanya karena membuat POT/dasar baru punya score lebih bagus.
         return out.sort(
           (a, b) =>
+            a.priority - b.priority ||
             a.score - b.score ||
             a.jok - b.jok ||
             b.flexSaved - a.flexSaved ||
@@ -2862,21 +2927,49 @@
           h = game.hands[i];
         if (game.round === 1 && !game.hasBase[i]) {
           let best = null;
+          let bestNoJoker = null;
+
           subsets(h, 5).forEach((cards) => {
             const m = makeBaseCards(cards);
             if (!m) return;
+
             const stats = aiVisibleStats();
             const remaining = h.filter((c) => !cards.includes(c));
             let score =
               handValue(remaining) -
               remaining.reduce((n, c) => n + aiCardFlexibility(c, stats), 0) *
                 1.8;
-            score += cards.filter(isJoker).length * 45;
-            // Dasar 3 kartu sering lebih strategis daripada menghabiskan seluruh rangkaian.
+
+            // Dasar awal 3 kartu sering lebih fleksibel untuk game berikutnya.
             if (cards.length === 3) score -= 3;
             if (cards.length >= 4) score += 2;
-            if (!best || score < best.score) best = { cards, score };
+
+            const candidate = { cards, score };
+
+            // ==================================================
+            // PRIORITAS DASAR AWAL:
+            // JANGAN PAKAI JOKER kalau ada dasar valid tanpa Joker.
+            // Joker disimpan untuk perkembangan game berikutnya.
+            // ==================================================
+            if (cards.some(isJoker)) {
+              // Joker boleh dipakai hanya jika memang tidak ada
+              // dasar valid tanpa Joker sama sekali.
+              score += 40 * cards.filter(isJoker).length;
+            } else {
+              if (!bestNoJoker || score < bestNoJoker.score) {
+                bestNoJoker = candidate;
+              }
+            }
+
+            if (!best || score < best.score) {
+              best = { cards, score };
+            }
           });
+
+          // Kalau ada dasar tanpa Joker, WAJIB prioritaskan yang tanpa Joker.
+          // Kalau tidak ada, barulah Joker boleh digunakan.
+          if (bestNoJoker) best = bestNoJoker;
+
           if (best) {
             best.cards.forEach((c) => h.splice(h.indexOf(c), 1));
             game.melds.push(makeBaseCards(best.cards));
@@ -2885,21 +2978,8 @@
             game.hasBase[i] = true;
             game.firstRoundDone[i] = true;
           } else {
-            // Tidak menemukan dasar pada ronde pertama.
-            // Setiap player punya peluang sendiri:
-            // 80% tetap hidup
-            // 20% mati
-
-            if (!playerLifeChance(i)) {
-              // 20% = MATI
-              markDead(i);
-              game.firstRoundDone[i] = true;
-            } else {
-              // 80% = HIDUP
-              // Jangan markDead.
-              // AI tetap dianggap hidup.
-              game.firstRoundDone[i] = true;
-            }
+            markDead(i);
+            game.firstRoundDone[i] = true;
           }
         } else if (game.hasBase[i]) {
           const cand = aiCandidates(i)[0];
@@ -3349,21 +3429,10 @@
         setTimeout(() => {
           if (autoTenho() || !game || game.over) return;
 
-          // Putaran pertama wajib dasar.
-          // Kalau tidak punya dasar, player punya peluang:
-          // 80% tetap hidup
-          // 20% mati
           if (game.turn === 0 && !humanHasMove()) {
-            if (!playerLifeChance(0)) {
-              // Kena 20% = MATI
-              markDead(0);
-              game.firstRoundDone[0] = true;
-              return nextTurn();
-            }
-
-            // Kena 80% = tetap hidup.
-            // Jangan markDead dan jangan nextTurn.
-            // Player tetap mendapat kesempatan bermain.
+            markDead(0);
+            game.firstRoundDone[0] = true;
+            return nextTurn();
           }
 
           if (game.turn !== 0)
