@@ -3156,7 +3156,7 @@
           removeSelectedFromHand();
           game.melds.push(pot);
           playCardPlaceSound();
-          logMove(0, "POT", pot.cards);
+          logMove(0, "POT", cs);
           game.potRanks.add(pot.rank);
           clearSelection();
           if (!game.hands[0].length) return endGame(0);
@@ -3896,17 +3896,26 @@
       function nextTurn() {
         if (game.over) return;
 
+        let next = -1;
+
         for (let z = 1; z <= playerCount; z++) {
-          let n = (game.turn + z) % playerCount;
+          const n = (game.turn + z) % playerCount;
 
           if (!game.dead[n]) {
-            game.turn = n;
+            next = n;
             break;
           }
         }
 
+        // Tidak ada pemain yang masih hidup.
+        if (next < 0) {
+          return endGame(null, "ALL_DEAD");
+        }
+
+        game.turn = next;
+
         // Putaran pertama selesai jika semua pemain
-        // sudah punya dasar atau sudah mati
+        // sudah punya dasar atau sudah mati.
         if (
           game.round === 1 &&
           game.firstRoundDone.every((done, i) => done || game.dead[i])
@@ -3914,14 +3923,30 @@
           game.round = 2;
         }
 
+        // Setelah putaran pertama selesai, pemain manusia yang
+        // tidak mempunyai satu pun langkah legal langsung MATI.
+        // Tidak ada tombol LEWAT dan Joker tidak dipakai sebagai jalan keluar.
+        if (game.turn === 0 && game.round >= 2) {
+          if (!humanHasMove()) {
+            markDead(0);
+            game.firstRoundDone[0] = true;
+
+            if (game.dead.every(Boolean)) {
+              return endGame(null, "ALL_DEAD");
+            }
+
+            return nextTurn();
+          }
+        }
+
         render();
 
-        // AI berpikir 2–4 detik sebelum bermain
+        // AI berpikir 2–4 detik sebelum bermain.
         if (game.turn !== 0) {
           const delay = 2000 + Math.floor(Math.random() * 2001);
 
           setTimeout(() => {
-            if (!game.over && game.turn !== 0) {
+            if (!game.over && game.turn !== 0 && !game.dead[game.turn]) {
               aiTurn();
             }
           }, delay);
