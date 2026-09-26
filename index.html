@@ -39,7 +39,6 @@
         color: #d8f5e7;
       }
       .turn-direction {
-        display: flex;
         align-items: center;
         gap: 8px;
         font-size: 15px;
@@ -259,13 +258,210 @@
         margin: 1px 2px;
         padding: 2px 5px;
         border-radius: 5px;
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: #ffffff;
+        border: 1px solid #d9d9d9;
+        color: #111111;
+        font-weight: 800;
       }
+
+      .history-card.history-red {
+        color: #d62828;
+      }
+
+      .history-card.history-black {
+        color: #111111;
+      }
+
+      .history-card.history-joker {
+        background: #f3c33b;
+        border-color: #d6a900;
+        font-weight: 900;
+      }
+
       .center-box {
         text-align: center;
         min-width: 135px;
       }
+
+      /* Tombol Aturan Aktif di samping logo Putaran */
+      .round-rules-wrap {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+      }
+      .active-rules-btn {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 50%;
+        background: linear-gradient(145deg, #f3cf70, #b8872c);
+        color: #173f2d;
+        font-size: 18px;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow:
+          0 4px 10px rgba(0, 0, 0, 0.28),
+          inset 0 1px 0 rgba(255, 255, 255, 0.45);
+        transition:
+          transform 0.15s ease,
+          filter 0.15s ease;
+      }
+      .active-rules-btn:hover {
+        transform: translateY(-2px) scale(1.04);
+        filter: brightness(1.08);
+      }
+      .active-rules-btn:active {
+        transform: scale(0.96);
+      }
+      .active-rules-btn:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+      .rules-modal-box {
+        width: min(680px, calc(100% - 24px));
+        max-height: 84vh;
+        padding: 16px;
+      }
+      .rules-modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      }
+      .rules-modal-title {
+        margin: 0;
+        font-size: 18px;
+      }
+      .rules-subtitle {
+        margin: 3px 0 0;
+        color: #b9d9ca;
+        font-size: 11px;
+      }
+      .rules-close {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        padding: 0;
+        margin: 0;
+
+        border: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-family: Arial, sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 34px;
+
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+      }
+      .rules-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+      }
+      .rule-card {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+        padding: 10px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.055);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+      }
+      .rule-icon {
+        flex: 0 0 34px;
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: rgba(243, 207, 112, 0.14);
+        font-size: 20px;
+      }
+      .rule-card h3 {
+        margin: 0 0 3px;
+        font-size: 12px;
+        color: #f3cf70;
+      }
+      .rule-card p {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.45;
+        color: #d9eee3;
+      }
+      .rules-note {
+        margin-top: 10px;
+        padding: 9px 10px;
+        border-radius: 10px;
+        background: rgba(243, 207, 112, 0.09);
+        border: 1px solid rgba(243, 207, 112, 0.18);
+        color: #f4e6bb;
+        font-size: 11px;
+        line-height: 1.45;
+      }
+      @media (max-width: 700px) {
+        .active-rules-btn {
+          width: 30px;
+          height: 30px;
+          font-size: 16px;
+        }
+        .rules-modal-box {
+          width: calc(100% - 16px);
+          max-height: 82vh;
+          padding: 11px;
+          border-radius: 14px;
+        }
+        .rules-modal-title {
+          font-size: 15px;
+        }
+        .rules-subtitle {
+          font-size: 9px;
+        }
+        .rules-close {
+          width: 30px;
+          height: 30px;
+          min-width: 30px;
+          font-size: 21px;
+          line-height: 30px;
+        }
+        .rules-grid {
+          grid-template-columns: 1fr;
+          gap: 6px;
+        }
+        .rule-card {
+          padding: 8px;
+          border-radius: 10px;
+          gap: 8px;
+        }
+        .rule-icon {
+          flex-basis: 30px;
+          width: 30px;
+          height: 30px;
+          font-size: 17px;
+        }
+        .rule-card h3 {
+          font-size: 11px;
+        }
+        .rule-card p,
+        .rules-note {
+          font-size: 10px;
+        }
+      }
+
       .center-title {
         font-size: 11px;
         text-transform: uppercase;
@@ -645,6 +841,65 @@
         border-radius: 18px;
         padding: 20px;
         box-shadow: 0 30px 80px #000;
+      }
+
+      /* Modal khusus Saran Bantuan - tidak mengubah tampilan game lain */
+      .help-modal-box {
+        width: min(620px, calc(100% - 24px));
+        max-height: 78vh;
+        padding: 14px;
+      }
+      .help-modal-box h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        text-align: center;
+      }
+      .help-modal-box .suggestion {
+        font-size: 12px;
+        line-height: 1.45;
+        margin: 5px 0;
+      }
+      .help-close {
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        margin: 0;
+        border: none;
+        border-radius: 50%;
+
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1;
+        cursor: pointer;
+        transform: translateY(-1px);
+      }
+      @media (max-width: 700px) {
+        .help-modal-box {
+          width: calc(100% - 20px);
+          max-height: 76vh;
+          padding: 11px;
+          border-radius: 12px;
+        }
+        .help-modal-box h2 {
+          font-size: 15px;
+          margin-bottom: 8px;
+        }
+        .help-modal-box .suggestion {
+          font-size: 11px;
+          line-height: 1.35;
+          padding: 7px;
+        }
+        .help-close {
+          font-size: 11px;
+          padding: 7px 10px;
+        }
       }
       .result-row {
         display: flex;
@@ -1325,12 +1580,16 @@
     <div class="topbar">
       <div class="logo">MINAMI</div>
       <div class="status" id="status">MINAMI GAME</div>
-      <div
-        class="turn-direction"
-        id="turnDirection"
-        title="Arah putaran giliran"
-      >
-        <span>B-GAME</span>
+      <div>
+        <button
+          type="button"
+          class="active-rules-btn"
+          id="activeRulesBtn"
+          title="Lihat aturan aktif"
+          aria-label="Lihat aturan aktif"
+        >
+          📜
+        </button>
       </div>
     </div>
     <section class="setup" id="setup">
@@ -1367,8 +1626,17 @@
         </div>
         <div class="center">
           <div class="center-box">
-            <div class="center-title">Putaran</div>
-            <div class="basic-rule" id="roundInfo">1</div>
+            <div class="round-rules-wrap">
+              <div>
+                <div class="center-title">Putaran</div>
+                <div class="basic-rule" id="roundInfo">1</div>
+              </div>
+            </div>
+            <div
+              class="turn-direction"
+              id="turnDirection"
+              title="Arah putaran giliran"
+            ></div>
             <small id="turnInfo">Menunggu...</small>
           </div>
         </div>
@@ -1494,6 +1762,151 @@
         <div id="resultBody"></div>
         <br /><button class="start-btn" id="nextGameBtn">
           Lanjut Game Berikutnya
+        </button>
+      </div>
+    </div>
+
+    <div class="modal" id="activeRulesModal">
+      <div class="modal-box rules-modal-box">
+        <div class="rules-modal-head">
+          <div>
+            <h2 class="rules-modal-title">📜 Aturan Aktif</h2>
+            <div class="rules-subtitle">
+              Panduan cepat aturan MINAMI yang sedang digunakan
+            </div>
+          </div>
+          <button
+            type="button"
+            class="rules-close"
+            id="activeRulesClose"
+            aria-label="Tutup aturan"
+          >
+            ×
+          </button>
+        </div>
+        <div class="rules-grid">
+          <div class="rule-card">
+            <div class="rule-icon">🎴</div>
+            <div>
+              <h3>Putaran 1 — Wajib Dasar</h3>
+              <p>
+                Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu,
+                berurutan, dan satu bunga. Jika tidak punya Dasar legal, pemain
+                mati.
+              </p>
+            </div>
+          </div>
+          <div class="rule-card">
+            <div class="rule-icon">🃏</div>
+            <div>
+              <h3>Joker</h3>
+              <p>
+                Joker mengisi angka yang hilang. Pada Dasar 3 kartu, Joker boleh
+                di awal, tengah, atau akhir. Pada Dasar 4+ kartu, Joker tidak
+                boleh di ujung.
+              </p>
+            </div>
+          </div>
+          <div class="rule-card">
+            <div class="rule-icon">↔️</div>
+            <div>
+              <h3>Arah Urutan</h3>
+              <p>
+                A dapat menjadi rendah seperti A-2-3 atau tinggi seperti Q-K-A.
+                Satu Dasar tetap mengikuti satu bunga dan urutan yang sah.
+              </p>
+            </div>
+          </div>
+          <div class="rule-card">
+            <div class="rule-icon">⭕</div>
+            <div>
+              <h3>POT / Angka Sama</h3>
+              <p>
+                POT baru minimal 3 kartu dengan rank sama dan bunga bebas. Joker
+                boleh dipakai, tetapi harus ada minimal 1 kartu asli penentu
+                rank.
+              </p>
+            </div>
+          </div>
+          <div class="rule-card">
+            <div class="rule-icon">➕</div>
+            <div>
+              <h3>Setelah Dasar Awal</h3>
+              <p>
+                Setelah putaran pertama selesai, pemain dapat membuat Dasar
+                baru, menambah ke Dasar siapa pun, membuat POT, atau menambah
+                POT.
+              </p>
+            </div>
+          </div>
+          <div class="rule-card">
+            <div class="rule-icon">💡</div>
+            <div>
+              <h3>BANTUAN</h3>
+              <p>
+                Saran hanya menunjukkan langkah legal yang ditemukan. Kamu tetap
+                bebas memilih kartu dan strategi sendiri.
+              </p>
+            </div>
+          </div>
+          <div class="rule-card">
+            <div class="rule-icon">🛡️</div>
+            <div>
+              <h3>Joker sebagai Nyawa</h3>
+              <p>
+                Jika setelah punya Dasar tidak ada langkah legal, Joker dapat
+                dibuang sebagai nyawa giliran. Ini tidak sama dengan mati karena
+                gagal Dasar awal.
+              </p>
+            </div>
+          </div>
+          <div class="rule-card">
+            <div class="rule-icon">🏆</div>
+            <div>
+              <h3>WIN / TENHO</h3>
+              <p>
+                Pemain yang menghabiskan semua kartu dapat mengakhiri game.
+                Bonus WIN/TENHO mengikuti aturan skor aktif.
+              </p>
+            </div>
+          </div>
+          <div class="rule-card">
+            <div class="rule-icon">💯</div>
+            <div>
+              <h3>Nilai Kartu</h3>
+              <p>
+                2–10 sesuai angka, J/Q/K = 10, A = 15, dan Joker = 25. Pemain
+                yang mati sebelum pernah Turun Dasar mendapat −2.
+              </p>
+            </div>
+          </div>
+          <div class="rule-card">
+            <div class="rule-icon">🔄</div>
+            <div>
+              <h3>Putaran Berikutnya</h3>
+              <p>
+                Permainan baru melanjutkan giliran sesuai sistem arah dan hasil
+                putaran sebelumnya. Perhatikan jumlah kartu lawan dan susunan di
+                meja.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="rules-note">
+          💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar yang sah. Setelah itu
+          permainan terbuka untuk Dasar, tambahan, dan POT. Joker fleksibel,
+          tetapi jangan digunakan tanpa alasan karena nilainya tinggi jika
+          tersisa.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="helpModal">
+      <div class="modal-box help-modal-box">
+        <h2>💡 Bantuan</h2>
+        <div id="helpModalBody"></div>
+        <button type="button" class="help-close" id="helpCloseBtn">
+          Tutup
         </button>
       </div>
     </div>
@@ -1765,7 +2178,9 @@
         return out;
       }
       function selected() {
-        return game.selected.map((i) => game.hands[0][i]);
+        return [...game.selected]
+          .sort((a, b) => a - b)
+          .map((i) => game.hands[0][i]);
       }
       function clearSelection() {
         game.selected = [];
@@ -1918,7 +2333,7 @@
           removeSelectedFromHand();
           game.melds.push(pot);
           playCardPlaceSound();
-          logMove(0, "POT", cs);
+          logMove(0, "POT", pot.cards);
           game.potRanks.add(pot.rank);
           clearSelection();
           if (!game.hands[0].length) return endGame(0);
@@ -1970,27 +2385,65 @@
       }
       function logMove(i, label, cards) {
         if (!game.history[i]) game.history[i] = [];
-        game.history[i].unshift({ label, cards: cards.map((c) => c.text) });
-        game.history[i] = game.history[i].slice(0, 4);
+
+        let orderedCards = [...cards];
+
+        // Dasar: urutkan mengikuti susunan dasar yang benar
+        if (label === "Dasar" || label === "Tambah Dasar") {
+          const tempMeld = {
+            type: "base",
+            cards: [...cards],
+          };
+
+          orderedCards = arrangeMeldCards(tempMeld);
+        }
+
+        // POT: kartu asli dulu, Joker di belakang
+        if (label === "POT" || label === "Tambah POT") {
+          const tempMeld = {
+            type: "pot",
+            cards: [...cards],
+          };
+
+          orderedCards = arrangeMeldCards(tempMeld);
+        }
+
+        game.history[i].unshift({
+          label,
+          cards: orderedCards.map((c) => ({
+            text: c.text,
+            red: c.red,
+            joker: isJoker(c),
+          })),
+        });
+
+        // Hanya tampilkan 1 aksi terakhir
+        game.history[i] = game.history[i].slice(0, 1);
       }
       function renderPlayers() {
         for (let i = 0; i < playerCount; i++) {
           let el = document.getElementById("player" + (i + 1));
+
           el.classList.toggle("dead", game.dead[i]);
           el.classList.toggle("active-turn", game.turn === i && !game.over);
+
           let n = el.querySelector(".player-name");
+
           let st = game.dead[i]
             ? " • MATI"
             : game.turn === i
               ? " • GILIRAN"
               : "";
+
           n.textContent =
             (i === 0 ? "Anda" : "Pemain " + (i + 1)) +
             " (" +
             game.hands[i].length +
             ")" +
             st;
+
           let hi = document.getElementById("history" + (i + 1));
+
           hi.innerHTML = (game.history[i] || [])
             .map(
               (x) =>
@@ -1998,20 +2451,35 @@
                 x.label +
                 ":</b> " +
                 x.cards
-                  .map((c) => '<span class="history-card">' + c + "</span>")
+                  .map((c) => {
+                    let colorClass = c.red ? "history-red" : "history-black";
+
+                    if (c.joker) {
+                      colorClass += " history-joker";
+                    }
+
+                    return (
+                      '<span class="history-card ' +
+                      colorClass +
+                      '">' +
+                      c.text +
+                      "</span>"
+                    );
+                  })
                   .join("") +
                 "</div>",
             )
             .join("");
+
           let mc = document.getElementById("mini" + (i + 1));
           mc.innerHTML = "";
+
           for (let j = 0; j < Math.min(game.hands[i].length, 7); j++) {
-            // Desktop/tablet tetap menampilkan mini kartu seperti tampilan web sebelumnya.
+            // Desktop/tablet tetap menampilkan mini kartu.
             mc.appendChild(createBackCard(true));
           }
         }
       }
-
       function createBackCard(small = false) {
         const d = document.createElement("div");
         d.className = "card back" + (small ? " small" : "");
@@ -2388,22 +2856,29 @@
         if (game.round !== 1 || game.hasBase[0]) {
           if (game.round !== 1 && !game.hasBase[0]) game.hasBase[0] = true;
         }
+
         let cs = selected();
+
         if (!cs.length) {
           alert("Pilih kartu dulu.");
           return;
         }
+
         const finish = (m) => {
           removeSelectedFromHand();
           game.melds.push(m);
           playCardPlaceSound();
+
           logMove(0, "Dasar", cs);
+
           game.hasBase[0] = true;
           game.firstRoundDone[0] = true;
           clearSelection();
+
           if (!game.hands[0].length) return endGame(0);
           nextTurn();
         };
+
         chooseBaseForHuman(cs, finish);
       }
       function createNewBase() {
@@ -2416,7 +2891,7 @@
           removeSelectedFromHand();
           game.melds.push(m);
           playCardPlaceSound();
-          logMove(0, "Dasar", cs);
+          logMove(0, "DASAR", chk.ordered);
           game.hasBase[0] = true;
           clearSelection();
           if (!game.hands[0].length) return endGame(0);
@@ -2536,7 +3011,7 @@
         removeSelectedFromHand();
         game.melds.push(m);
         playCardPlaceSound();
-        logMove(0, "POT", cs);
+        logMove(0, "POT", pot.cards);
         game.potRanks.add(m.rank);
         clearSelection();
         if (!game.hands[0].length) return endGame(0);
@@ -3033,20 +3508,41 @@
         let h = game.hands[0],
           arr = [];
         if (game.round === 1 && !game.hasBase[0]) {
-          subsets(h, 5).forEach((cards) => {
-            baseOptions(cards).forEach((m) =>
+          // Putaran 1: cari SEMUA pilihan dasar yang legal dari 3–5 kartu.
+          // Tidak memakai subsets() karena batas 8000 kombinasi bisa membuat
+          // kombinasi dasar yang memakai Joker terlewat.
+          const addBaseSuggestions = (cards) => {
+            baseOptions(cards).forEach((m) => {
+              const ji = m.ordered.findIndex((c) => isJoker(c));
+              const jokerInfo =
+                ji >= 0 ? " | Joker = " + rankAtPosition(m.start + ji) : "";
               arr.push({
                 txt:
                   "Turunkan dasar: " +
                   m.ordered.map((c) => c.text).join(" → ") +
-                  " | Joker = " +
-                  rankAtPosition(m.start + m.ordered.findIndex(isJoker)),
+                  jokerInfo,
                 left: handValue(h) - handValue(cards),
                 type: "base",
                 cards,
-              }),
-            );
-          });
+              });
+            });
+          };
+
+          for (let size = 3; size <= 5; size++) {
+            const pick = [];
+            const walk = (start) => {
+              if (pick.length === size) {
+                addBaseSuggestions([...pick]);
+                return;
+              }
+              for (let i = start; i < h.length; i++) {
+                pick.push(h[i]);
+                walk(i + 1);
+                pick.pop();
+              }
+            };
+            walk(0);
+          }
         } else {
           game.melds.forEach((m, mi) => {
             let target =
@@ -3125,7 +3621,8 @@
             )
             .join("") ||
           '<div class="suggestion">Tidak ada kartu yang bisa diturunkan sekarang.</div>';
-        document.getElementById("suggestions").style.display = "block";
+        document.getElementById("helpModalBody").innerHTML = body.innerHTML;
+        document.getElementById("helpModal").classList.add("show");
       }
       function showDealAnimation(playerCount, totalCards, onComplete) {
         const old = document.getElementById("dealOverlay");
@@ -3463,7 +3960,27 @@
       document.getElementById("addBtn").onclick = addMeld;
       document.getElementById("potBtn").onclick = makePot;
       document.getElementById("discardJokerBtn").onclick = discardJoker;
+      document.getElementById("activeRulesBtn").onclick = () => {
+        document.getElementById("activeRulesModal").classList.add("show");
+      };
+      document.getElementById("activeRulesClose").onclick = () => {
+        document.getElementById("activeRulesModal").classList.remove("show");
+      };
+      document.getElementById("activeRulesModal").onclick = (e) => {
+        if (e.target.id === "activeRulesModal") {
+          document.getElementById("activeRulesModal").classList.remove("show");
+        }
+      };
+
       document.getElementById("helpBtn").onclick = suggest;
+      document.getElementById("helpCloseBtn").onclick = () => {
+        document.getElementById("helpModal").classList.remove("show");
+      };
+      document.getElementById("helpModal").onclick = (e) => {
+        if (e.target.id === "helpModal") {
+          document.getElementById("helpModal").classList.remove("show");
+        }
+      };
       document.getElementById("newGameBtn").onclick = () => {
         location.reload();
       };
