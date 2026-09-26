@@ -1232,6 +1232,93 @@
         color: rgba(255, 255, 255, 0.75);
         font-size: 14px;
       }
+
+      /* ===== MOBILE COMPACT - hanya untuk HP ===== */
+      @media (max-width: 700px) {
+        .your-cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
+          justify-items: center;
+          align-items: end;
+          min-height: 62px;
+          max-height: 152px;
+          overflow-x: hidden;
+          overflow-y: auto;
+          gap: 3px 2px;
+          padding: 5px 6px;
+        }
+        .your-cards .card,
+        .your-cards .card:first-child {
+          width: 34px;
+          height: 48px;
+          font-size: 14px;
+          border-radius: 5px;
+          margin-left: 0;
+        }
+        .your-cards .card:hover {
+          transform: translateY(-4px);
+        }
+        .mini-cards {
+          display: none !important;
+        }
+        #jokerCard .single-joker-card {
+          width: 30px;
+          height: 42px;
+          font-size: 13px;
+          margin: 0 !important;
+        }
+        .card.selected {
+          transform: translateY(-6px);
+        }
+        .drag-note {
+          font-size: 9px;
+        }
+
+        .hand-actions {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 5px;
+          padding: 2px 5px;
+        }
+        #baseBtn,
+        #addBtn,
+        #potBtn {
+          display: none !important;
+        }
+        .sort-btn,
+        .action-btn {
+          min-height: 34px;
+          padding: 5px 4px;
+          font-size: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        #sortSuitBtn::after {
+          content: "↕ Bunga";
+          font-size: 11px;
+        }
+        #sortRankBtn::after {
+          content: "↕ Angka";
+          font-size: 11px;
+        }
+        #helpBtn::after {
+          content: "💡";
+          font-size: 17px;
+        }
+        #discardJokerBtn::after {
+          content: "🃏";
+          font-size: 17px;
+        }
+        #helpBtn,
+        #discardJokerBtn {
+          font-size: 0;
+        }
+        .panel {
+          padding: 8px 9px;
+          border-radius: 9px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -1524,35 +1611,31 @@
         return null;
       }
       function baseOptions(cards) {
-        if (!cards || cards.length < 3 || cards.length > ranks.length) return [];
+        if (!cards || cards.length < 3 || cards.length > ranks.length)
+          return [];
         const real = cards.filter((c) => !isJoker(c));
         if (!real.length) return [];
         const suit = real[0].suit;
         if (real.some((c) => c.suit !== suit)) return [];
-
         const n = cards.length;
         const jokers = cards.filter(isJoker);
+
+        // Dasar 3 kartu maksimal 1 Joker.
+        // Dasar 4+ kartu boleh lebih dari 1 Joker.
         if (n === 3 && jokers.length > 1) return [];
-
         const candidates = [];
-
-        // DASAR 3 KARTU:
-        // Joker boleh berada di awal, tengah, atau akhir.
-        // Contoh valid: Joker-7-8, 7-Joker-9, 8-9-Joker.
-        // Artinya Joker boleh mengisi angka yang hilang, termasuk di luar
-        // rentang dua kartu asli selama hasil akhirnya tetap 3 angka berurutan.
-        // DASAR 4+ KARTU:
-        // Joker WAJIB mengisi posisi tengah, tidak boleh menjadi ujung.
-        const maxStart = 14 - n + 1;
-        for (let start = 1; start <= maxStart; start++) {
+        // Urutan tidak melingkar. A hanya boleh menjadi ujung rendah (A-2-3...)
+        // atau ujung tinggi (...-Q-K-A). K-A-2 tidak legal.
+        // Posisi 14 adalah A tinggi.
+        for (let start = 1; start <= 14 - n + 1; start++) {
           const wanted = Array.from({ length: n }, (_, i) => start + i);
           const byPos = new Map();
           let possible = true;
-
           for (const c of real) {
-            const pos = wanted.find(
-              (x) => rankAtPosition(x) === c.rank && !byPos.has(x),
+            const positions = wanted.filter(
+              (pos) => rankAtPosition(pos) === c.rank,
             );
+            const pos = positions.find((pos) => !byPos.has(pos));
             if (pos == null) {
               possible = false;
               break;
@@ -1560,24 +1643,22 @@
             byPos.set(pos, c);
           }
           if (!possible) continue;
-
           const missing = wanted.filter((pos) => !byPos.has(pos));
           if (missing.length !== jokers.length) continue;
-
           const ordered = [];
           let ji = 0;
-          for (const pos of wanted) {
+          for (const pos of wanted)
             ordered.push(byPos.get(pos) || jokers[ji++]);
-          }
-
           const jokerIndexes = ordered
             .map((c, i) => (isJoker(c) ? i : -1))
             .filter((i) => i >= 0);
-
-          // Untuk dasar 4 kartu atau lebih, Joker tidak boleh di ujung.
-          if (n >= 4 && jokerIndexes.some((i) => i === 0 || i === n - 1))
-            continue;
-
+          if (n >= 4 && jokerIndexes.length) {
+            if (
+              jokerIndexes[0] === 0 ||
+              jokerIndexes[jokerIndexes.length - 1] === n - 1
+            )
+              continue;
+          }
           candidates.push({
             type: "base",
             suit,
@@ -1587,7 +1668,6 @@
             ordered,
           });
         }
-
         const seen = new Set();
         return candidates.filter((o) => {
           const key = o.start + "|" + o.ordered.map((c) => c.id).join(",");
@@ -1926,13 +2006,8 @@
           let mc = document.getElementById("mini" + (i + 1));
           mc.innerHTML = "";
           for (let j = 0; j < Math.min(game.hands[i].length, 7); j++) {
-            if (i === 0) {
-              // Kartu Anda tetap terlihat
-              mc.appendChild(createBackCard(true));
-            } else {
-              // Kartu pemain lain hanya tampil bagian belakang
-              mc.appendChild(createBackCard(true));
-            }
+            // Desktop/tablet tetap menampilkan mini kartu seperti tampilan web sebelumnya.
+            mc.appendChild(createBackCard(true));
           }
         }
       }
@@ -1953,26 +2028,32 @@
 
         container.innerHTML = "";
 
-        const stack = document.createElement("div");
+        // HP: cukup tampilkan satu kartu sebagai penanda Joker.
+        // Web/desktop: pertahankan tampilan kartu mati bertumpuk seperti sebelumnya.
+        const isMobile =
+          window.matchMedia && window.matchMedia("(max-width: 700px)").matches;
+        if (isMobile) {
+          const card =
+            revealJoker && jokerIndex >= 0 ? deadCards[jokerIndex] : null;
+          const el = card ? createCard(card, true) : createBackCard(true);
+          el.classList.add("single-joker-card");
+          container.appendChild(el);
+          return;
+        }
 
-        // 8 kartu = 4 atas + 4 bawah
-        // 4 kartu = 1 baris rapat
+        const stack = document.createElement("div");
         stack.className =
           "dead-card-stack" + (deadCards.length === 4 ? " four-cards" : "");
-
         deadCards.forEach((card, index) => {
           let el;
-
           if (revealJoker && index === jokerIndex) {
             el = createCard(card, true);
             el.classList.add("joker-revealed");
           } else {
             el = createBackCard(true);
           }
-
           stack.appendChild(el);
         });
-
         container.appendChild(stack);
       }
 
@@ -2083,13 +2164,6 @@
         if (!cards.length) return { ok: false, msg: "Pilih kartu dulu." };
         if (m.type === "pot") {
           let r = m.rank;
-          // Joker tidak boleh masuk POT sendirian. Minimal harus ada satu
-          // kartu asli dengan angka POT sebagai penentu.
-          if (!cards.some((c) => !isJoker(c) && c.rank === r))
-            return {
-              ok: false,
-              msg: "Tambah POT harus membawa minimal 1 kartu asli angka " + r + ".",
-            };
           if (cards.some((c) => !isJoker(c) && c.rank !== r))
             return {
               ok: false,
@@ -2241,28 +2315,14 @@
               : a.turn - b.turn),
         );
         const scoreDelta = Array(playerCount).fill(0);
-        const basePoints =
-          playerCount === 5 ? [-1, 0, 1, 2, 3] : [-1, 0, 1, 2];
-        const deadCount = deadPlayers.length;
-
-        if (winner !== null) {
-          // Pemain mati selalu -2. Poin pemain hidup non-pemenang mengambil
-          // posisi setelah jumlah pemain mati dilewati.
-          const nonWinnerPoints = basePoints.slice(
-            deadCount,
-            basePoints.length - 1,
-          );
-          let k = 0;
-          alive.forEach((x) => {
-            if (x.i === winner) return;
-            scoreDelta[x.i] = nonWinnerPoints[k++] ?? 0;
-          });
-          scoreDelta[winner] = reason === "TENHO" ? 7 : playerCount;
-        } else {
-          // Tanpa WIN/TENHO, poin hidup juga bergeser sesuai jumlah pemain mati.
-          const alivePoints = basePoints.slice(deadCount);
-          alive.forEach((x, k) => (scoreDelta[x.i] = alivePoints[k] ?? 0));
-        }
+        const winnerBonus =
+          reason === "TENHO" ? 7 : winner !== null ? playerCount : 0;
+        if (winner !== null) scoreDelta[winner] = winnerBonus;
+        // Jika ada pemain yang mati sebelum dasar, tidak ada -1. Pemain hidup lainnya mulai dari 0.
+        const ptsNoDead = [-1, 0, 1, 2, 3].slice(0, alive.length);
+        const ptsWithDead = [0, 1, 2, 3, 4].slice(0, alive.length);
+        const pts = deadPlayers.length ? ptsWithDead : ptsNoDead;
+        alive.forEach((x, k) => (scoreDelta[x.i] = pts[k]));
         deadPlayers.forEach((i) => (scoreDelta[i] = -2));
         for (let i = 0; i < playerCount; i++) game.scores[i] += scoreDelta[i];
         prepareNextTurnOrder(winner);
@@ -2545,21 +2605,8 @@
           game.firstRoundDone.every((done, i) => done || game.dead[i])
         )
           game.round = 2;
-        // Round 1: wajib turun dasar. Jika gagal, tetap mati sesuai aturan dasar awal.
-        // Round 2+: jika tidak ada langkah tetapi punya Joker, jangan matikan pemain.
-        // Pemain dapat memilih tombol BUANG JOKER untuk melewati giliran dengan
-        // mengorbankan Joker dan tetap hidup.
+        // Tidak ada tombol LEWAT. Kalau pemain tidak punya jalan, langsung MATI.
         if (game.turn === 0 && !humanHasMove()) {
-          if (game.round === 1 && !game.hasBase[0]) {
-            markDead(0);
-            game.firstRoundDone[0] = true;
-            if (game.dead.every(Boolean)) return endGame(null, "ALL_DEAD");
-            return nextTurn();
-          }
-          if (game.hands[0].some(isJoker)) {
-            render();
-            return;
-          }
           markDead(0);
           game.firstRoundDone[0] = true;
           if (game.dead.every(Boolean)) return endGame(null, "ALL_DEAD");
@@ -2805,13 +2852,6 @@
           score -= Math.min(12, cards.length * 2.2);
           if (cards.length === 1) score += 1.5;
           if (jok) score += (h.length > 10 ? 55 : h.length > 6 ? 30 : 10) * jok;
-          // Joker harus dihemat jika masih ada kartu lain yang belum selesai.
-          // Tetapi bila langkah ini menghabiskan seluruh tangan, gunakan semua Joker
-          // yang diperlukan karena menang lebih bernilai daripada menyimpannya.
-          if (jok > 1) {
-            if (remaining.length === 0) score -= 120;
-            else score += (jok - 1) * 32;
-          }
 
           if (kind === "pot") {
             // Membuka POT memberi informasi dan jalan baru kepada semua pemain.
@@ -2854,15 +2894,11 @@
           });
         };
 
-        // Sambung dasar/POT. Untuk POT, cari hanya kartu yang memang bisa masuk
-        // ke POT tersebut. AI boleh membawa beberapa kartu sekaligus jika itu
-        // menghabiskan tangan; kalau tidak, scoring akan menghemat Joker.
+        // Sambung dasar/POT. POT umumnya dicicil satu kartu per giliran.
         game.melds.forEach((m, mi) => {
-          const pool = m.type === "pot"
-            ? h.filter((c) => isJoker(c) || c.rank === m.rank)
-            : h;
-          const maxAdd = m.type === "pot" ? Math.min(5, pool.length) : 5;
-          subsets(pool, maxAdd).forEach((cards) => {
+          const maxAdd = m.type === "pot" ? 1 : 5;
+          subsets(h, maxAdd).forEach((cards) => {
+            if (m.type === "pot" && cards.length !== 1) return;
             const chk = addToMeld(cards, mi);
             if (chk.ok) addCandidate(cards, "add", mi);
           });
@@ -2909,31 +2945,12 @@
         );
       }
       function aiTurn() {
-        if (game.over || game.turn === 0 || game.dealing) return;
+        if (game.over || game.turn === 0) return;
         let i = game.turn,
           h = game.hands[i];
-
         if (game.round === 1 && !game.hasBase[i]) {
           let best = null;
-          // Cari dasar awal dengan pemeriksaan kombinasi 3 kartu secara penuh.
-          // Jangan memakai subsets(h, 5) karena fungsi itu dibatasi 8000 hasil dan
-          // kombinasi valid seperti Q♠-K♠-A♠ bisa berada setelah batas tersebut.
-          // Setiap dasar valid 4+ kartu juga selalu mempunyai setidaknya satu
-          // subset 3 kartu yang valid, sehingga pemeriksaan triple cukup untuk
-          // memastikan pemain tidak salah dianggap MATI.
-          const initialBases = [];
-          for (let a = 0; a < h.length; a++) {
-            for (let b = a + 1; b < h.length; b++) {
-              for (let c = b + 1; c < h.length; c++) {
-                const cards = [h[a], h[b], h[c]];
-                const m = makeBaseCards(cards);
-                if (m) initialBases.push(cards);
-              }
-            }
-          }
-          // Jika ada dasar 3 kartu, pilih dari semua kandidat yang benar-benar ada.
-          // Ini mencakup Q-K-A dan Joker di ujung untuk dasar 3 kartu.
-          initialBases.forEach((cards) => {
+          subsets(h, 5).forEach((cards) => {
             const m = makeBaseCards(cards);
             if (!m) return;
             const stats = aiVisibleStats();
@@ -2942,13 +2959,12 @@
               handValue(remaining) -
               remaining.reduce((n, c) => n + aiCardFlexibility(c, stats), 0) *
                 1.8;
-            // Hindari memakai Joker jika ada dasar normal yang sama-sama baik.
             score += cards.filter(isJoker).length * 45;
+            // Dasar 3 kartu sering lebih strategis daripada menghabiskan seluruh rangkaian.
             if (cards.length === 3) score -= 3;
             if (cards.length >= 4) score += 2;
             if (!best || score < best.score) best = { cards, score };
           });
-
           if (best) {
             best.cards.forEach((c) => h.splice(h.indexOf(c), 1));
             game.melds.push(makeBaseCards(best.cards));
@@ -2957,70 +2973,58 @@
             game.hasBase[i] = true;
             game.firstRoundDone[i] = true;
           } else {
-            // Round 1 tetap wajib punya dasar. Buang Joker tidak menyelamatkan
-            // pemain yang belum pernah turun dasar.
             markDead(i);
             game.firstRoundDone[i] = true;
           }
         } else if (game.hasBase[i]) {
-          // Buang Joker BUKAN langkah biasa. Joker hanya dibuang jika benar-benar
-          // tidak ada satu pun langkah legal yang bisa dilakukan pada giliran ini.
-          const cand = aiCandidates(i).find((c) => c.kind !== "discardJoker");
-
+          const cand = aiCandidates(i)[0];
           if (cand) {
-            cand.cards.forEach((c) => {
-              const idx = h.indexOf(c);
+            if (cand.kind === "discardJoker") {
+              const jc = cand.cards[0],
+                idx = h.indexOf(jc);
               if (idx >= 0) h.splice(idx, 1);
-            });
-
-            if (cand.kind === "base") {
-              game.melds.push(makeBaseCards(cand.cards));
-              playCardPlaceSound();
-              logMove(i, "Dasar", cand.cards);
-            } else if (cand.kind === "pot") {
-              const m = potCards(cand.cards);
-              game.melds.push(m);
-              playCardPlaceSound();
-              game.potRanks.add(m.rank);
-              logMove(i, "POT", cand.cards);
-            } else {
-              const mm = game.melds[cand.mi];
-              if (mm.type === "base") {
-                const opts = extendBaseOptions(mm, cand.cards);
-                if (opts.length) {
-                  const o = opts[0];
-                  mm.ordered = o.ordered;
-                  mm.start = o.start;
-                  mm.end = o.end;
-                  mm.cards = [...o.ordered];
-                  playCardPlaceSound();
-                }
-              } else {
-                mm.cards.push(...cand.cards);
-                playCardPlaceSound();
-              }
-              logMove(
-                i,
-                mm.type === "pot" ? "Tambah POT" : "Tambah Dasar",
-                cand.cards,
-              );
-            }
-          } else {
-            // Tidak ada langkah legal. Jika punya Joker, relakan Joker dan
-            // tetap hidup untuk menunggu perubahan meja pada putaran berikutnya.
-            const ji = h.findIndex(isJoker);
-            if (ji >= 0) {
-              const jc = h.splice(ji, 1)[0];
-              playCardPlaceSound();
               logMove(i, "Buang Joker", [jc]);
               game.discardedJoker = true;
-              // TIDAK markDead(i).
             } else {
-              markDead(i);
-            }
-          }
-        }
+              cand.cards.forEach((c) => {
+                const idx = h.indexOf(c);
+                if (idx >= 0) h.splice(idx, 1);
+              });
+              if (cand.kind === "base") {
+                game.melds.push(makeBaseCards(cand.cards));
+                playCardPlaceSound();
+                logMove(i, "Dasar", cand.cards);
+              } else if (cand.kind === "pot") {
+                const m = potCards(cand.cards);
+                game.melds.push(m);
+                playCardPlaceSound();
+                game.potRanks.add(m.rank);
+                logMove(i, "POT", cand.cards);
+              } else {
+                const mm = game.melds[cand.mi];
+                if (mm.type === "base") {
+                  const opts = extendBaseOptions(mm, cand.cards);
+                  if (opts.length) {
+                    const o = opts[0];
+                    mm.ordered = o.ordered;
+                    mm.start = o.start;
+                    mm.end = o.end;
+                    mm.cards = [...o.ordered];
 
+                    playCardPlaceSound();
+                  }
+                } else mm.cards.push(...cand.cards);
+
+                playCardPlaceSound();
+                logMove(
+                  i,
+                  mm.type === "pot" ? "Tambah POT" : "Tambah Dasar",
+                  cand.cards,
+                );
+              }
+            }
+          } else markDead(i);
+        }
         if (!h.length) return endGame(i);
         if (game.dead.every(Boolean)) return endGame(null, "ALL_DEAD");
         nextTurn();
@@ -3093,7 +3097,7 @@
           let j = h.find((c) => isJoker(c));
           if (j)
             arr.push({
-              txt: "Tidak ada langkah. Buang " + j.text + " untuk tetap hidup dan menunggu giliran berikutnya",
+              txt: "Buang " + j.text + " sebagai nyawa giliran",
               left: handValue(h) - 25,
               type: "joker",
               cards: [j],
@@ -3367,7 +3371,6 @@
           firstRoundDone: Array(playerCount).fill(false),
           history: Array.from({ length: playerCount }, () => []),
           over: false,
-          dealing: true,
         };
 
         game.deadCards = deadCards;
@@ -3404,28 +3407,24 @@
         const totalDealt = playerCount === 4 ? 96 : 100;
 
         showDealAnimation(playerCount, totalDealt, () => {
-          // Selama animasi pembagian berlangsung, TIDAK ADA giliran yang diproses.
-          // Baru setelah callback ini dipanggil, game boleh berjalan.
-          if (!game || game.over) return;
-          game.dealing = false;
-
+          // Pembagian selesai
           renderDeadCards(game.deadCards, game.jokerIndex, true);
-          document.getElementById("jokerInfo").textContent =
-            "" + game.joker.rank + " = JOKER";
-          render();
 
+          // Baru tampilkan informasi Joker
+          document.getElementById("jokerInfo").textContent = "";
+          // "" + game.joker.rank + " = JOKER";
+
+          render();
+        });
+
+        // =====================================================
+        // LANJUTKAN GAME SETELAH ANIMASI
+        // =====================================================
+
+        setTimeout(() => {
           if (autoTenho() || !game || game.over) return;
 
           if (game.turn === 0 && !humanHasMove()) {
-            if (game.round === 1 && !game.hasBase[0]) {
-              markDead(0);
-              game.firstRoundDone[0] = true;
-              return nextTurn();
-            }
-            if (game.hands[0].some(isJoker)) {
-              render();
-              return;
-            }
             markDead(0);
             game.firstRoundDone[0] = true;
             return nextTurn();
@@ -3433,7 +3432,7 @@
 
           if (game.turn !== 0)
             setTimeout(aiTurn, 1000 + Math.floor(Math.random() * 4001));
-        });
+        }, 250);
       }
 
       document.querySelectorAll(".player-btn").forEach(
