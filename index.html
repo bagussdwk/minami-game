@@ -282,6 +282,133 @@
         text-align: center;
         min-width: 135px;
       }
+      /* Mode mobile sempit: semua pemain lawan di sisi atas, Anda sendiri di bawah */
+      @media (max-width: 700px) {
+        .player {
+          width: 78px;
+        }
+
+        .player-name {
+          padding: 4px 5px;
+          font-size: 8px;
+        }
+
+        .avatar {
+          width: 28px;
+          height: 28px;
+          font-size: 13px;
+          margin: 2px auto;
+        }
+
+        /* 5 pemain: 5 - 4 - 3 - 2 di atas, Anda (1) sendiri di bawah */
+        .players-5 .p1 {
+          bottom: 8px;
+          left: 50%;
+          top: auto;
+          transform: translateX(-50%);
+        }
+        .players-5 .p2 {
+          top: 50%;
+          right: 2%;
+          bottom: auto;
+          left: auto;
+          transform: translateY(-50%);
+        }
+        .players-5 .p3 {
+          top: 8px;
+          right: 2%;
+          left: auto;
+          bottom: auto;
+          transform: none;
+        }
+        .players-5 .p4 {
+          top: 8px;
+          left: 50%;
+          right: auto;
+          bottom: auto;
+          transform: translateX(-50%);
+        }
+        .players-5 .p5 {
+          top: 8px;
+          left: 2%;
+          right: auto;
+          bottom: auto;
+          transform: none;
+        }
+
+        /* 4 pemain: 4 - 3 - 2 di atas, Anda (1) sendiri di bawah */
+        .players-4 .p1 {
+          bottom: 8px;
+          left: 50%;
+          top: auto;
+          transform: translateX(-50%);
+        }
+        .players-4 .p2 {
+          top: 50%;
+          right: 2%;
+          bottom: auto;
+          left: auto;
+          transform: translateY(-50%);
+        }
+        .players-4 .p3 {
+          top: 8px;
+          right: 18%;
+          left: auto;
+          bottom: auto;
+          transform: none;
+        }
+        .players-4 .p4 {
+          top: 8px;
+          left: 18%;
+          right: auto;
+          bottom: auto;
+          transform: none;
+        }
+      }
+
+      /* Posisi animasi pembagian mengikuti posisi pemain mobile */
+      @media (max-width: 700px) {
+        .deal-player.p1 {
+          left: 50%;
+          right: auto;
+          bottom: 18px;
+          top: auto;
+          transform: translateX(-50%);
+        }
+        .deal-player.p2 {
+          right: 2%;
+          left: auto;
+          top: 50%;
+          bottom: auto;
+          transform: translateY(-50%);
+        }
+        .deal-player.p3 {
+          right: 2%;
+          left: auto;
+          top: 28px;
+          bottom: auto;
+          transform: none;
+        }
+        .players-4 .deal-player.p4,
+        .players-5 .deal-player.p5 {
+          left: 2%;
+          right: auto;
+          top: 28px;
+          bottom: auto;
+          transform: none;
+        }
+        .players-5 .deal-player.p4 {
+          left: 50%;
+          right: auto;
+          top: 28px;
+          bottom: auto;
+          transform: translateX(-50%);
+        }
+        .players-4 .deal-player.p4 {
+          left: 18%;
+        }
+      }
+
 
       /* Tombol Aturan Aktif di samping logo Putaran */
       .round-rules-wrap {
