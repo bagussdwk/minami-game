@@ -368,6 +368,18 @@
 
       /* Posisi animasi pembagian mengikuti posisi pemain mobile */
       @media (max-width: 700px) {
+        /* Label tujuan animasi dibuat compact agar tidak menjadi panel panjang */
+        .deal-player {
+          min-width: 0;
+          width: 46px;
+          height: 28px;
+          box-sizing: border-box;
+          padding: 4px 6px;
+          border-radius: 7px;
+          font-size: 10px;
+          line-height: 20px;
+          white-space: nowrap;
+        }
         .deal-player.p1 {
           left: 50%;
           right: auto;
@@ -1859,6 +1871,60 @@
           align-content: center;
           z-index: 3;
         }
+      }
+
+
+      /* =========================================
+         MOBILE PLAYER EDGE LAYOUT
+         ========================================= */
+      @media (max-width: 700px) {
+        /* Beri jarak dari navbar supaya bagian atas meja/player tidak bertabrakan. */
+        .game { margin-top: 42px; }
+        .table { overflow: visible; }
+        .player { width: 112px; z-index: 30; }
+
+        /* 5 pemain: P5 - P4 - P3 di atas,
+           P2 di tengah kanan, P1 sendiri di bawah. */
+        .players-5 .p5 { top: -34px; left: -18px; transform: none; }
+        .players-5 .p4 { top: -34px; left: 50%; transform: translateX(-50%); }
+        .players-5 .p3 { top: -34px; right: -18px; left: auto; transform: none; }
+        .players-5 .p2 { top: 50%; right: -58px; bottom: auto; left: auto; transform: translateY(-50%); }
+        .players-5 .p1 { bottom: -48px; left: 50%; transform: translateX(-50%); }
+
+        /* 4 pemain: P4 - P3 di atas,
+           P2 di tengah kanan, P1 sendiri di bawah. */
+        .players-4 .p4 { top: -34px; left: -18px; transform: none; }
+        .players-4 .p3 { top: -34px; right: -18px; left: auto; transform: none; }
+        .players-4 .p2 { top: 50%; right: -58px; bottom: auto; left: auto; transform: translateY(-50%); }
+        .players-4 .p1 { bottom: -48px; left: 50%; transform: translateX(-50%); }
+
+        .player .play-history {
+          position: relative;
+          z-index: 31;
+          max-width: 112px;
+          margin: 0 auto 2px;
+          overflow: visible;
+        }
+      }
+
+      /* Posisi target animasi pembagian dibuat mengikuti susunan mobile. */
+      @media (max-width: 700px) {
+        .deal-player {
+          min-width: 72px;
+          max-width: 72px;
+          padding: 6px 7px;
+          font-size: 11px;
+          box-sizing: border-box;
+        }
+        .players-5 .deal-player.p5 { top: 58px; left: 8px; transform: none; }
+        .players-5 .deal-player.p4 { top: 58px; left: 50%; transform: translateX(-50%); }
+        .players-5 .deal-player.p3 { top: 58px; right: 8px; left: auto; transform: none; }
+        .players-5 .deal-player.p2 { top: 50%; right: 8px; bottom: auto; left: auto; transform: translateY(-50%); }
+        .players-5 .deal-player.p1 { bottom: 58px; left: 50%; transform: translateX(-50%); }
+        .players-4 .deal-player.p4 { top: 58px; left: 8px; transform: none; }
+        .players-4 .deal-player.p3 { top: 58px; right: 8px; left: auto; transform: none; }
+        .players-4 .deal-player.p2 { top: 50%; right: 8px; bottom: auto; left: auto; transform: translateY(-50%); }
+        .players-4 .deal-player.p1 { bottom: 58px; left: 50%; transform: translateX(-50%); }
       }
 </style>
   </head>
