@@ -3848,7 +3848,7 @@
         removeSelectedFromHand();
         game.melds.push(m);
         playCardPlaceSound();
-        logMove(0, "POT", pot.cards);
+        logMove(0, "POT", cs);
         game.potRanks.add(m.rank);
         clearSelection();
         if (!game.hands[0].length) return endGame(0);
