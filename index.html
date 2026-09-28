@@ -3398,6 +3398,75 @@
       function makeBaseCards(cards) {
         return baseOptions(cards)[0] || null;
       }
+
+      // Cari Dasar awal langsung berdasarkan slot urutan 3–5 kartu.
+      // Tidak memakai subsets(), sehingga pencarian tidak terhenti karena
+      // batas kombinasi 8000 saat kartu di tangan banyak.
+      function initialBaseCandidates(h) {
+        const out = [];
+        const jokerCards = h.filter((c) => isJoker(c));
+        const bySuitRank = new Map();
+
+        h.forEach((c) => {
+          if (isJoker(c)) return;
+          const key = c.suit + "|" + c.rank;
+          if (!bySuitRank.has(key)) bySuitRank.set(key, c);
+        });
+
+        for (let n = 3; n <= 5; n++) {
+          for (let start = 1; start <= 14 - n + 1; start++) {
+            const wanted = Array.from({ length: n }, (_, k) => start + k);
+            for (const suit of suits.map((s) => s.symbol)) {
+              const cards = [];
+              const usedJokers = [];
+              let ok = true;
+
+              for (let posIndex = 0; posIndex < wanted.length; posIndex++) {
+                const rank = rankAtPosition(wanted[posIndex]);
+                const real = bySuitRank.get(suit + "|" + rank);
+
+                if (real) {
+                  cards.push(real);
+                  continue;
+                }
+
+                // Dasar 4+ tidak boleh memakai Joker sebagai kartu ujung.
+                if (n >= 4 && (posIndex === 0 || posIndex === n - 1)) {
+                  ok = false;
+                  break;
+                }
+
+                const joker = jokerCards[usedJokers.length];
+                if (!joker) {
+                  ok = false;
+                  break;
+                }
+
+                usedJokers.push(joker);
+                cards.push(joker);
+              }
+
+              if (!ok) continue;
+
+              const m = makeBaseCards(cards);
+              if (m) out.push({ cards, base: m });
+            }
+          }
+        }
+
+        // Buang kandidat yang identik; satu contoh kartu nyata per rank sudah cukup.
+        const seen = new Set();
+        return out.filter((x) => {
+          const key =
+            x.base.start +
+            "|" +
+            x.base.ordered.map((c) => c.id).join(",");
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
       function fixedBasePositions(m) {
         if (!m || m.type !== "base" || !m.ordered) return null;
         return m.ordered.map((c, i) => m.start + i);
@@ -4494,12 +4563,7 @@
         }
       }
       function hasAnyBase(h) {
-        for (let a = 0; a < h.length; a++)
-          for (let b = a + 1; b < h.length; b++)
-            for (let c = b + 1; c < h.length; c++) {
-              if (makeBaseCards([h[a], h[b], h[c]])) return true;
-            }
-        return false;
+        return initialBaseCandidates(h).length > 0;
       }
       function canFullyArrange(h) {
         let memo = new Map();
@@ -4827,20 +4891,23 @@
           h = game.hands[i];
         if (game.round === 1 && !game.hasBase[i]) {
           let best = null;
-          subsets(h, 5).forEach((cards) => {
-            const m = makeBaseCards(cards);
-            if (!m) return;
-            const stats = aiVisibleStats();
+          const stats = aiVisibleStats();
+
+          initialBaseCandidates(h).forEach(({ cards, base }) => {
             const remaining = h.filter((c) => !cards.includes(c));
             let score =
               handValue(remaining) -
               remaining.reduce((n, c) => n + aiCardFlexibility(c, stats), 0) *
                 1.8;
+
             score += cards.filter(isJoker).length * 45;
+
             // Dasar 3 kartu sering lebih strategis daripada menghabiskan seluruh rangkaian.
             if (cards.length === 3) score -= 3;
             if (cards.length >= 4) score += 2;
-            if (!best || score < best.score) best = { cards, score };
+
+            if (!best || score < best.score)
+              best = { cards, base, score };
           });
           if (best) {
             best.cards.forEach((c) => h.splice(h.indexOf(c), 1));
