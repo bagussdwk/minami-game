@@ -1097,40 +1097,8 @@
         }
       }
 
-      /* Posisi teks animasi dipisahkan dari label pemain. */
-      .deal-title {
-        top: 50%;
-        transform: translateY(-104px);
-        z-index: 20;
-        font-size: 20px;
-        pointer-events: none;
-      }
-
-      .deal-count {
-        top: 50%;
-        bottom: auto;
-        transform: translateY(72px);
-        z-index: 20;
-        pointer-events: none;
-      }
-
       /* Posisi animasi pembagian mengikuti posisi pemain mobile */
       @media (max-width: 700px) {
-        /* Teks deal tetap di sekitar deck tengah, bukan di jalur label pemain. */
-        .deal-title {
-          top: 50%;
-          transform: translateY(-104px);
-          font-size: 16px;
-          line-height: 1.2;
-        }
-
-        .deal-count {
-          top: 50%;
-          bottom: auto;
-          transform: translateY(72px);
-          font-size: 12px;
-        }
-
         /* Label tujuan animasi dibuat compact agar tidak menjadi panel panjang */
         .deal-player {
           min-width: 0;
@@ -5116,12 +5084,6 @@
         // POT 3,3,3 sehingga kartu residual yang dihitung hanya 4.
         for (let i = 0; i < playerCount; i++) {
           if (i === winner) continue;
-
-          // Begitu ada pemain yang habis, semua pemain lain otomatis mati.
-          // Yang sudah punya dasar tetap dihitung dari residual hand-nya;
-          // hanya yang mati sebelum dasar yang mendapat penalti -2.
-          if (!game.dead[i]) markDead(i);
-
           if (game.dead[i] && !game.hasBase[i]) continue;
           const arranged = autoArrangeResidualHand(game.hands[i]);
           game.hands[i] = arranged.residual;
@@ -6441,11 +6403,6 @@
         document
           .getElementById("game")
           .classList.add("active", "players-" + playerCount);
-
-        // Bersihkan sisa visual game sebelumnya sebelum animasi deal tampil.
-        // Jangan biarkan meld/kartu lama terlihat di bawah overlay.
-        const tableArea = document.getElementById("tableArea");
-        if (tableArea) tableArea.innerHTML = "";
 
         // Saat pembagian kartu: semua kartu mati masih tertutup
         renderDeadCards(deadCards, jokerIndex, false);
