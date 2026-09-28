@@ -3977,6 +3977,9 @@
         </div>
       </div>
     </div>
+    <button type="button" class="quick-chat-fab" id="quickChatBtn" title="Quick Chat" aria-label="Quick Chat" style="display:none">💬</button>
+    <div class="modal" id="quickChatModal"><div class="modal-box quick-chat-box"><div class="score-modal-head"><div><h2 class="score-modal-title">💬 Quick Chat</h2><div class="score-modal-subtitle">Kirim reaksi tanpa mengganggu permainan</div></div><button type="button" class="score-modal-close" id="quickChatClose">×</button></div><div class="quick-chat-grid" id="quickChatGrid"></div></div></div>
+    <div class="modal" id="featureModal"><div class="modal-box feature-modal-box"><div class="score-modal-head"><div><h2 class="score-modal-title">📊 Statistik & Achievement</h2><div class="score-modal-subtitle">Perjalanan Anda di MINAMI</div></div><button type="button" class="score-modal-close" id="featureModalClose">×</button></div><div class="feature-tabs"><button type="button" class="feature-tab active" data-feature-tab="stats">Statistik</button><button type="button" class="feature-tab" data-feature-tab="achievements">Achievement</button></div><div id="featureStatsPanel"></div><div id="featureAchievementsPanel" style="display:none"></div></div></div>
     <div class="modal" id="resultModal">
       <div class="modal-box">
         <h2 id="resultTitle">Hasil Game</h2>
@@ -4008,6 +4011,7 @@
           <div class="menu-music-row"><div class="menu-music-label">🎵 Musik</div><div class="music-inline-options"><button type="button" class="music-choice" id="musicOnBtn">ON <span class="music-check">✓</span></button><button type="button" class="music-choice" id="musicOffBtn">OFF <span class="music-check">✓</span></button></div></div>
           <button class="menu-action" id="menuRestartBtn">⟳ Restart Pertandingan <span>›</span></button>
           <button class="menu-action" id="menuRulesBtn">📜 Aturan Permainan <span>›</span></button>
+          <button class="menu-action" id="menuStatsBtn">📊 Statistik & Achievement <span>›</span></button>
         </div>
         <div class="menu-section">
           <div class="menu-section-title">Background Meja</div>
@@ -4016,6 +4020,7 @@
             <button class="table-theme-btn theme-midnight" data-table-theme="midnight">🌌 Midnight</button>
             <button class="table-theme-btn theme-burgundy" data-table-theme="burgundy">🍷 Burgundy</button>
             <button class="table-theme-btn theme-royal" data-table-theme="royal">💜 Royal</button>
+            <button class="table-theme-btn theme-ocean" data-table-theme="ocean">🌊 Ocean</button><button class="table-theme-btn theme-ember" data-table-theme="ember">🔥 Ember</button><button class="table-theme-btn theme-slate" data-table-theme="slate">🩶 Slate</button><button class="table-theme-btn theme-neon" data-table-theme="neon">✨ Neon</button>
           </div>
         </div>
       </div>
@@ -5095,6 +5100,7 @@
         });
 
         const hasJoker = orderedCards.some((c) => isJoker(c));
+        if(game.stats){game.stats.moves[i]=(game.stats.moves[i]||0)+1;game.stats.cardsPlayed[i]=(game.stats.cardsPlayed[i]||0)+orderedCards.length;if(["Dasar","DASAR","Tambah Dasar"].includes(label))game.stats.bases[i]=(game.stats.bases[i]||0)+1;if(["POT","Tambah POT"].includes(label))game.stats.pots[i]=(game.stats.pots[i]||0)+1;if(hasJoker)game.stats.jokers[i]=(game.stats.jokers[i]||0)+1;game.stats.maxCombo[i]=Math.max(game.stats.maxCombo[i]||0,orderedCards.length)} animateTableAction(label,hasJoker);playMinamiSfx(hasJoker?"joker":label.toLowerCase().includes("pot")?"pot":"card");if(i>0)setAIReaction(i,label,hasJoker);
         if (orderedCards.length >= 2) {
           showPlayFeedback(
             "COMBO ×" + orderedCards.length + " • " + label.toUpperCase(),
@@ -5142,6 +5148,8 @@
       }
 
       function renderPlayers() {
+        const mvp=getGameMVP();
+        if(mvp){const mv=document.createElement("div");mv.className="result-mvp";mv.innerHTML="<b>⭐ MVP GAME</b><span>"+mvp.name+" • kontribusi "+mvp.value+"</span>";b.appendChild(mv)}
         for (let i = 0; i < playerCount; i++) {
           let el = document.getElementById("player" + (i + 1));
 
@@ -5194,6 +5202,8 @@
           (game.history[i] || []).forEach((x) => (x.latest = false));
 
           let alert = el.querySelector(".player-alert");
+          const reaction=game.reactions?.[i];
+          if(reaction&&reaction.until>Date.now()){alert.textContent=reaction.text;el.classList.add("reaction-flash")}else{el.classList.remove("reaction-flash")}
           if (!alert) {
             alert = document.createElement("div");
             alert.className = "player-alert";
@@ -5471,6 +5481,9 @@
         if (!game.dead[i]) {
           game.dead[i] = true;
           game.deadOrder[i] = game.deathSeq++;
+          if(game.stats)game.stats.dead[i]=true;
+          setAIReaction(i,"Mati",false);
+          playMinamiSfx("dead");
         }
       }
       function playerLifeChance(playerIndex) {
@@ -5569,6 +5582,9 @@
           reason,
           delta: scoreDelta.slice(),
         };
+        if(game.stats){game.stats.winner=winner;game.stats.reason=reason;game.stats.delta=scoreDelta.slice()}
+        window.minamiWinStreak=winner===0?(Number(localStorage.getItem("minamiWinStreak"))||0)+1:0;localStorage.setItem("minamiWinStreak",String(window.minamiWinStreak));
+        updateLifetimeStatsFromGame();updateAchievements();playMinamiSfx(reason==="TENHO"?"tenho":winner!==null?"win":"dead");
         saveGameState();
         showMatchEffect(winner, reason);
 
@@ -6334,6 +6350,11 @@
                 3;
           }
           if (extra.jokerDiscard) score += extra.jokerDiscard;
+          const personality=game.aiProfiles?.[i]||"balanced";
+          if(personality==="aggressive"){score-=cards.length*1.7;if(kind==="pot")score-=7}
+          else if(personality==="saver"){score+=cards.length*1.35;if(kind==="base")score+=3}
+          else if(personality==="potHunter")score+=kind==="pot"?-12:3;
+          else if(personality==="jokerHunter"){score+=jok?-15:2;if(kind==="discardJoker")score+=20}
           out.push({
             cards,
             kind,
@@ -6913,6 +6934,8 @@
               : 0) + 1,
           currentDelta: Array(playerCount).fill(0),
           aiSpeed: Number(window.minamiAISpeed) || 1,
+          aiProfiles: Array.from({ length: playerCount }, (_, i) => i === 0 ? "human" : (["aggressive","saver","potHunter","jokerHunter","balanced"][i-1] || "balanced")),
+          stats: { moves:Array(playerCount).fill(0), cardsPlayed:Array(playerCount).fill(0), bases:Array(playerCount).fill(0), pots:Array(playerCount).fill(0), jokers:Array(playerCount).fill(0), maxCombo:Array(playerCount).fill(0), dead:Array(playerCount).fill(false) },
           over: false,
         };
 
@@ -7109,7 +7132,7 @@
         document.getElementById("activeRulesModal").classList.add("show");
       };
       const applyTableTheme = (theme) => {
-        ["midnight","burgundy","royal"].forEach(t => document.body.classList.remove("table-theme-"+t));
+        ["midnight","burgundy","royal","ocean","ember","slate","neon"].forEach(t => document.body.classList.remove("table-theme-"+t));
         if (theme !== "standard") document.body.classList.add("table-theme-"+theme);
         localStorage.setItem("minamiTableTheme", theme);
         document.querySelectorAll(".table-theme-btn").forEach(btn =>
@@ -7186,6 +7209,30 @@
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
 
+      const MINAMI_FEATURE_KEY="minamiFeatureStatsV1", MINAMI_ACH_KEY="minamiAchievementsV1";
+      function featureStats(){try{const x=JSON.parse(localStorage.getItem(MINAMI_FEATURE_KEY)||"null");return x&&typeof x==="object"?x:{games:0,wins:0,tenho:0,pots:0,cards:0,jokers:0,bestCombo:0,dead:0,cardsPerGame:0}}catch(e){return{games:0,wins:0,tenho:0,pots:0,cards:0,jokers:0,bestCombo:0,dead:0,cardsPerGame:0}}}
+      function saveFeatureStats(s){try{localStorage.setItem(MINAMI_FEATURE_KEY,JSON.stringify(s))}catch(e){}}
+      function updateLifetimeStatsFromGame(){if(!game?.stats||game._lifetimeCounted)return;game._lifetimeCounted=true;const s=featureStats(),st=game.stats;s.games++;if(game.lastResult?.winner===0)s.wins++;if(game.lastResult?.reason==="TENHO")s.tenho++;s.pots+=st.pots.reduce((a,b)=>a+(b||0),0);s.cards+=st.cardsPlayed.reduce((a,b)=>a+(b||0),0);s.jokers+=st.jokers.reduce((a,b)=>a+(b||0),0);s.bestCombo=Math.max(s.bestCombo||0,...st.maxCombo);s.dead+=game.dead.filter(Boolean).length;s.cardsPerGame=s.games?Math.round(s.cards/s.games):0;saveFeatureStats(s)}
+      function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAMI_ACH_KEY)||"[]")}catch(e){return[]}}
+      function updateAchievements(){const s=featureStats(),u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menang 1 game",s.wins>=1],["tenho","🃏","TENHO!","Mendapatkan TENHO",s.tenho>=1],["pot-master","♟️","POT Hunter","Membuat 5 POT",s.pots>=5],["joker-master","🃏","Joker Master","Memainkan Joker 5 kali",s.jokers>=5],["combo-master","🔥","Combo Master","Menurunkan 5 kartu sekaligus",s.bestCombo>=5],["marathon","🎴","Marathon","Menyelesaikan 10 game",s.games>=10],["streak-3","⚡","Winning Streak","Menang 3 game berturut-turut",(Number(localStorage.getItem("minamiWinStreak"))||0)>=3]];let ch=false;a.forEach(x=>{if(x[4]&&!u.has(x[0])){u.add(x[0]);ch=true;showPlayFeedback(x[1]+" ACHIEVEMENT: "+x[2],false)}});if(ch)localStorage.setItem(MINAMI_ACH_KEY,JSON.stringify([...u]))}
+      function getGameMVP(){if(!game?.stats)return null;let best=null;for(let i=0;i<playerCount;i++){const st=game.stats,v=(st.cardsPlayed[i]||0)+(st.pots[i]||0)*3+(st.jokers[i]||0)*2+(st.bases[i]||0)+(game.lastResult?.winner===i?10:0),x={i,value:v,name:i===0?"Anda":"Pemain "+(i+1)};if(!best||v>best.value)best=x}return best}
+      function renderFeatureStats(){const b=document.getElementById("featureStatsPanel");if(!b)return;const s=featureStats(),m=getGameMVP();b.innerHTML='<div class="feature-stat-grid">'+[['games','Game selesai'],['wins','WIN'],['tenho','TENHO'],['pots','POT'],['jokers','Joker dimainkan'],['bestCombo','Combo terbesar'],['streak','Win streak'],['cardsPerGame','Kartu/game']].map(x=>'<div><b>'+(x[0]==="streak"?(Number(localStorage.getItem("minamiWinStreak"))||0):(s[x[0]]||0))+'</b><span>'+x[1]+'</span></div>').join('')+'</div>'+(m?'<div class="feature-current-card"><b>⭐ MVP game ini</b><span>'+m.name+' • skor aksi '+m.value+'</span></div>':'')}
+      function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menang 1 game"],["tenho","🃏","TENHO!","Mendapatkan TENHO"],["pot-master","♟️","POT Hunter","Membuat 5 POT"],["joker-master","🃏","Joker Master","Memainkan Joker 5 kali"],["combo-master","🔥","Combo Master","Menurunkan 5 kartu sekaligus"],["marathon","🎴","Marathon","Menyelesaikan 10 game"],["streak-3","⚡","Winning Streak","Menang 3 game berturut-turut"]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
+      function renderFeaturePanels(){renderFeatureStats();renderAchievements()}
+      function getAIReactionText(i,label,joker){const p=game?.aiProfiles?.[i]||"balanced";if(label==="Mati")return"💀 MATI";if(joker)return p==="jokerHunter"?"😎 JOKER!":"🃏 Joker!";if(label.includes("POT"))return p==="potHunter"?"🔥 POT!":"😏 POT";if(label.includes("Dasar"))return p==="aggressive"?"⚔️ Gas!":"🎴 Turun";return"👍 Jalan"}
+      function setAIReaction(i,label,joker=false){if(!game||i===0)return;if(!game.reactions)game.reactions=Array(playerCount).fill(null);game.reactions[i]={text:getAIReactionText(i,label,joker),until:Date.now()+1800}}
+      function animateTableAction(label,joker=false){const t=document.querySelector(".table");if(!t)return;t.classList.remove("action-pop","joker-action","pot-action");void t.offsetWidth;t.classList.add(joker?"joker-action":label.toLowerCase().includes("pot")?"pot-action":"action-pop");setTimeout(()=>t.classList.remove("action-pop","joker-action","pot-action"),500)}
+      function playMinamiSfx(type){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!window.minamiSfxCtx)window.minamiSfxCtx=new AC();const x=window.minamiSfxCtx;if(x.state==="suspended")x.resume();const q={card:[420,.045],pot:[520,.08],joker:[760,.14],dead:[150,.18],win:[660,.22],tenho:[900,.3]}[type]||[360,.05],o=x.createOscillator(),g=x.createGain(),n=x.currentTime;o.type=type==="joker"||type==="tenho"?"sine":"triangle";o.frequency.setValueAtTime(q[0],n);o.frequency.exponentialRampToValueAtTime(Math.max(70,q[0]*.72),n+q[1]);g.gain.setValueAtTime(.0001,n);g.gain.exponentialRampToValueAtTime(.13,n+.008);g.gain.exponentialRampToValueAtTime(.0001,n+q[1]);o.connect(g);g.connect(x.destination);o.start(n);o.stop(n+q[1]+.02)}catch(e){}}
+      function showQuickChat(){const p=["😏 Giliranmu!","🔥 Gas!","🃏 Joker!","😮 Waduh...","👏 Mantap!","😂 Hampir!"],g=document.getElementById("quickChatGrid");if(!g)return;g.innerHTML=p.map(x=>'<button type="button" class="quick-chat-option">'+x+'</button>').join("");g.querySelectorAll(".quick-chat-option").forEach(b=>b.onclick=()=>{showPlayFeedback(b.textContent,false);playMinamiSfx("card");document.getElementById("quickChatModal").classList.remove("show")});document.getElementById("quickChatModal").classList.add("show")}
+      window.minamiWinStreak=Number(localStorage.getItem("minamiWinStreak"))||0;
+      document.getElementById("quickChatBtn").onclick=showQuickChat;
+      document.getElementById("quickChatClose").onclick=()=>document.getElementById("quickChatModal").classList.remove("show");
+      document.getElementById("quickChatModal").onclick=e=>{if(e.target.id==="quickChatModal")e.currentTarget.classList.remove("show")};
+      document.getElementById("menuStatsBtn").onclick=()=>{closeMenu();setYourHandOverlayHidden(true);renderFeaturePanels();document.getElementById("featureModal").classList.add("show")};
+      document.getElementById("featureModalClose").onclick=()=>{document.getElementById("featureModal").classList.remove("show");setYourHandOverlayHidden(false)};
+      document.getElementById("featureModal").onclick=e=>{if(e.target.id==="featureModal"){e.currentTarget.classList.remove("show");setYourHandOverlayHidden(false)}};
+      document.querySelectorAll(".feature-tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".feature-tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");const s=b.dataset.featureTab==="stats";document.getElementById("featureStatsPanel").style.display=s?"":"none";document.getElementById("featureAchievementsPanel").style.display=s?"none":""});
+      
       // Saat pertama kali membuka halaman:
       // jika ada game tersimpan, lanjutkan game tersebut.
       restoreSavedGame();
@@ -7517,4 +7564,8 @@
       padding-top: 52px !important;
     }
   }
+</style>
+<style id="minami-extra-features">
+.quick-chat-fab{position:fixed;right:14px;bottom:112px;z-index:1100;width:42px;height:42px;padding:0;border-radius:50%;background:rgba(243,207,112,.14);border:1px solid rgba(243,207,112,.32);color:#f3cf70;font-size:19px;box-shadow:0 8px 24px rgba(0,0,0,.3)}.quick-chat-box{width:min(420px,calc(100% - 20px))}.quick-chat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.quick-chat-option{min-height:46px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);color:#dff3e9;font-size:12px}.feature-modal-box{width:min(620px,calc(100% - 18px));max-height:82vh;overflow:auto}.feature-tabs{display:flex;gap:6px;margin-bottom:12px}.feature-tab{flex:1;padding:9px;background:rgba(255,255,255,.05);color:#9fb8ad;border:1px solid rgba(255,255,255,.08);font-size:10px}.feature-tab.active{background:rgba(243,207,112,.11);border-color:rgba(243,207,112,.28);color:#f3cf70}.feature-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.feature-stat-grid>div{padding:10px 7px;border-radius:10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);text-align:center}.feature-stat-grid b{display:block;color:#f3cf70;font-size:18px}.feature-stat-grid span{display:block;margin-top:3px;color:#aacdc0;font-size:8px}.feature-current-card{margin-top:9px;padding:10px;border-radius:10px;background:rgba(243,207,112,.055);border:1px solid rgba(243,207,112,.12);font-size:10px;color:#d8eee3}.feature-current-card b{display:block;color:#f3cf70;margin-bottom:3px}.achievement-grid{display:grid;gap:7px}.achievement-card{display:grid;grid-template-columns:38px 1fr 28px;align-items:center;gap:9px;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.04)}.achievement-card.locked{opacity:.46;filter:saturate(.4)}.achievement-icon{font-size:23px;text-align:center}.achievement-card b{display:block;color:#f3cf70;font-size:11px}.achievement-card span{display:block;margin-top:2px;color:#aacdc0;font-size:9px}.achievement-card em{text-align:center;color:#7ff0b0;font-style:normal}.table.action-pop{animation:minamiTablePop .38s ease}.table.pot-action{animation:minamiPotPop .48s ease}.table.joker-action{animation:minamiJokerPop .52s ease}@keyframes minamiTablePop{0%{transform:scale(1)}45%{transform:scale(1.006)}100%{transform:scale(1)}}@keyframes minamiPotPop{0%{filter:brightness(1)}35%{filter:brightness(1.18)}100%{filter:brightness(1)}}@keyframes minamiJokerPop{0%{box-shadow:0 0 0 rgba(243,207,112,0)}40%{box-shadow:0 0 38px rgba(243,207,112,.28)}100%{box-shadow:0 0 0 rgba(243,207,112,0)}}.player.reaction-flash .player-alert{opacity:1!important}body.table-theme-ocean{background:radial-gradient(circle at center,#176b83 0%,#0b4255 48%,#062832 100%)}body.table-theme-ember{background:radial-gradient(circle at center,#813d2b 0%,#4c2119 48%,#2b110d 100%)}body.table-theme-slate{background:radial-gradient(circle at center,#56616b 0%,#303a43 48%,#171d23 100%)}body.table-theme-neon{background:radial-gradient(circle at center,#164f4c 0%,#152c58 48%,#0b1328 100%)}.result-mvp{margin:10px 0;padding:10px;border-radius:10px;background:rgba(243,207,112,.08);border:1px solid rgba(243,207,112,.18);text-align:center}.result-mvp b,.result-mvp span{display:block}.result-mvp b{color:#f3cf70;font-size:11px}.result-mvp span{margin-top:3px;color:#d8eee3;font-size:10px}
+@media(max-width:700px),(hover:none) and (pointer:coarse){.quick-chat-fab{right:8px;bottom:105px;width:36px;height:36px;font-size:16px}.feature-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
