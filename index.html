@@ -3466,9 +3466,7 @@
             Tambahkan ke Meja</button
           ><button class="action-btn primary" id="potBtn">
             POT / Angka Sama</button
-          ><button class="action-btn danger" id="discardJokerBtn">
-            Buang Joker
-          </button>
+          >
         </div>
         <div class="your-cards" id="yourCards"></div>
       </div>
@@ -4486,6 +4484,18 @@
           alert("Pilih kartu dulu.");
           return;
         }
+
+        // Satu Joker yang sengaja di-drag ke area meja berarti membuang Joker.
+        // Tidak ada lagi tombol khusus "Buang Joker".
+        if (
+          cs.length === 1 &&
+          isJoker(cs[0]) &&
+          game.round > 1 &&
+          game.hasBase[0]
+        ) {
+          discardJoker();
+          return;
+        }
         if (game.round === 1 && !game.hasBase[0]) {
           playBase();
           playCardPlaceSound();
@@ -4771,11 +4781,6 @@
         document.getElementById("baseBtn").disabled = !my;
         document.getElementById("potBtn").disabled = !my || game.round === 1;
         document.getElementById("addBtn").disabled = !my || game.round === 1;
-        document.getElementById("discardJokerBtn").disabled =
-          !my ||
-          game.round === 1 ||
-          !game.hasBase[0] ||
-          !game.hands[0].some(isJoker);
         document.getElementById("turnInfo").textContent = game.over
           ? "Selesai"
           : game.turn === 0
@@ -6333,7 +6338,6 @@
         game.round === 1 && !game.hasBase[0] ? playBase() : createNewBase();
       document.getElementById("addBtn").onclick = addMeld;
       document.getElementById("potBtn").onclick = makePot;
-      document.getElementById("discardJokerBtn").onclick = discardJoker;
       document.getElementById("activeRulesBtn").onclick = () => {
         setYourHandOverlayHidden(true);
         document.getElementById("activeRulesModal").classList.add("show");
