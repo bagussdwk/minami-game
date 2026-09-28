@@ -4003,11 +4003,7 @@
         </div>
         <div class="menu-section">
           <div class="menu-section-title">Permainan</div>
-          <button class="menu-action" id="menuMusicBtn">🎵 Musik <span>›</span></button>
-      <div class="music-submenu" id="musicSubmenu">
-        <button type="button" class="music-choice" id="musicOnBtn">🔊 Musik ON</button>
-        <button type="button" class="music-choice" id="musicOffBtn">🔇 Musik OFF</button>
-      </div>
+          <div class="menu-music-row"><div class="menu-music-label">🎵 Musik</div><div class="music-inline-options"><button type="button" class="music-choice" id="musicOnBtn">ON <span class="music-check">✓</span></button><button type="button" class="music-choice" id="musicOffBtn">OFF <span class="music-check">✓</span></button></div></div>
           <button class="menu-action" id="menuRestartBtn">⟳ Restart Pertandingan <span>›</span></button>
           <button class="menu-action" id="menuRulesBtn">📜 Aturan Permainan <span>›</span></button>
         </div>
@@ -7079,23 +7075,26 @@
       };
       document.getElementById("menuClose").onclick = closeMenu;
       menuModal.onclick = (e) => { if (e.target === menuModal) closeMenu(); };
-      document.getElementById("menuMusicBtn").onclick = () => {
-        document.getElementById("musicSubmenu").classList.toggle("show");
+      const updateMenuMusicChoices = () => {
+        const muted = !!window.minamiMusicMuted;
+        document.getElementById("musicOnBtn").classList.toggle("active", !muted);
+        document.getElementById("musicOffBtn").classList.toggle("active", muted);
       };
       document.getElementById("musicOnBtn").onclick = () => {
         window.minamiMusicMuted = false;
         localStorage.setItem("minamiMusicMuted", "0");
         if (game && !game.over) startMinamiMusic();
         updateMusicToggle();
-        closeMenu();
+        updateMenuMusicChoices();
       };
       document.getElementById("musicOffBtn").onclick = () => {
         window.minamiMusicMuted = true;
         localStorage.setItem("minamiMusicMuted", "1");
         stopMinamiMusic(250);
         updateMusicToggle();
-        closeMenu();
+        updateMenuMusicChoices();
       };
+      updateMenuMusicChoices();
       document.getElementById("menuRestartBtn").onclick = () => {
         closeMenu();
         if (game && !game.over && !confirm("Restart pertandingan? Semua poin pertandingan saat ini akan direset.")) return;
@@ -7330,26 +7329,14 @@
     -webkit-backdrop-filter: blur(3px);
   }
   #menuModal .menu-modal-box { z-index: 5001; }
-  .music-submenu {
-    display: none;
-    margin: -4px 0 8px 28px;
-    gap: 6px;
-  }
-  .music-submenu.show { display: grid; }
-  .music-choice {
-    padding: 9px 12px;
-    border-radius: 9px;
-    text-align: left;
-    color: #d8eee3;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.09);
-    font-size: 10px;
-    font-weight: 800;
-  }
-  .music-choice:hover {
-    background: rgba(243,207,112,.1);
-    color: #f3cf70;
-  }
+  .menu-music-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin-bottom:8px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
+  .menu-music-label{color:#d8eee3;font-size:11px;font-weight:800}
+  .music-inline-options{display:flex;gap:5px}
+  .music-choice{padding:6px 9px;border-radius:7px;color:#9fb8ad;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);font-size:9px;font-weight:900}
+  .music-choice.active{color:#f3cf70;background:rgba(243,207,112,.1);border-color:rgba(243,207,112,.28)}
+  .music-check{display:none;margin-left:3px}
+  .music-choice.active .music-check{display:inline}
+  .music-choice:hover{background:rgba(243,207,112,.1);color:#f3cf70}
 </style>
 <style id="menu-hide-hand-only">
   /* Saat menu hamburger terbuka, hanya footer kartu milik kita yang disembunyikan.
