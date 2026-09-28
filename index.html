@@ -3496,7 +3496,108 @@
         }
       }
     </style>
-  </head>
+  
+<style id="mobile-table-adaptive">
+  @media (max-width: 700px) {
+    /* Player dibuat lebih ringkas agar koridor kartu meja tetap luas. */
+    .player {
+      width: 72px !important;
+    }
+    .player-name {
+      max-width: 72px !important;
+      padding: 3px 4px !important;
+      font-size: 7.5px !important;
+    }
+    .avatar {
+      width: 26px !important;
+      height: 26px !important;
+      font-size: 12px !important;
+      border-width: 2px !important;
+      margin: 1px auto !important;
+    }
+    .player .play-history {
+      width: 72px !important;
+      max-width: 72px !important;
+      max-height: 30px !important;
+      min-height: 12px !important;
+      overflow: hidden !important;
+      font-size: 6.5px !important;
+      line-height: 1 !important;
+      margin: 0 auto 1px !important;
+      box-sizing: border-box !important;
+    }
+    .player .play-history > div {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: center !important;
+      align-items: center !important;
+      gap: 1px !important;
+    }
+    .player .history-card {
+      margin: 0 !important;
+      padding: 1px 2px !important;
+      font-size: 6.5px !important;
+      line-height: 1 !important;
+      border-radius: 3px !important;
+    }
+    .player .mini-cards {
+      max-width: 72px !important;
+    }
+
+    /* Koridor tengah selalu lebih rendah dari player atas dan lebih tinggi
+       dari player bawah. Meja akan bertambah tinggi sendiri jika meld banyak. */
+    .table-area {
+      padding: 125px 50px 145px !important;
+      align-content: center !important;
+      justify-content: center !important;
+      gap: 5px !important;
+      overflow: visible !important;
+    }
+    .meld {
+      padding: 3px 4px !important;
+      min-width: 48px !important;
+      max-width: 46% !important;
+      border-radius: 6px !important;
+    }
+    .meld-title {
+      font-size: 6.5px !important;
+      margin-bottom: 1px !important;
+    }
+    .meld-cards .card {
+      width: 25px !important;
+      height: 36px !important;
+      font-size: 10px !important;
+      border-radius: 4px !important;
+      margin-left: -6px !important;
+    }
+    .meld-cards .card:first-child {
+      margin-left: 0 !important;
+    }
+
+    /* Jika susunan makin banyak, kartu dibuat sedikit lebih rapat lagi. */
+    .table.many-melds .meld-cards .card {
+      width: 23px !important;
+      height: 33px !important;
+      font-size: 9px !important;
+      margin-left: -6px !important;
+    }
+    .table.many-melds .meld {
+      min-width: 44px !important;
+    }
+    .table.crowded-melds .meld-cards .card {
+      width: 21px !important;
+      height: 30px !important;
+      font-size: 8px !important;
+      margin-left: -5px !important;
+    }
+    .table.crowded-melds .table-area {
+      padding-left: 42px !important;
+      padding-right: 42px !important;
+    }
+  }
+</style>
+
+</head>
   <body>
     <div class="topbar">
       <div class="logo">MINAMI</div>
@@ -4784,6 +4885,21 @@
       function renderTable() {
         let a = document.getElementById("tableArea");
         a.innerHTML = "";
+
+        // Meja mobile memanjang otomatis ketika susunan sudah banyak,
+        // sehingga meld tidak dipaksa masuk ke koridor player/history.
+        const table = a.closest(".table");
+        if (table && window.matchMedia("(max-width: 700px)").matches) {
+          const meldCount = game.melds.length;
+          const rows = Math.max(2, Math.ceil(meldCount / 2));
+          const minHeight = Math.max(720, 560 + rows * 105);
+          table.style.minHeight = minHeight + "px";
+          table.classList.toggle("many-melds", meldCount >= 5);
+          table.classList.toggle("crowded-melds", meldCount >= 8);
+        } else if (table) {
+          table.style.removeProperty("min-height");
+          table.classList.remove("many-melds", "crowded-melds");
+        }
         game.melds.forEach((m, mi) => {
           let box = document.createElement("div");
           box.className = "meld";
@@ -5487,6 +5603,12 @@
 
         if (!cs.length) {
           alert("Pilih kartu dulu.");
+          return;
+        }
+
+        const potBlock = baseBlockedByPot(cs);
+        if (potBlock) {
+          alert(potBlock);
           return;
         }
 
