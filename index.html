@@ -7117,16 +7117,42 @@
 
           document.getElementById("jokerInfo").textContent = "";
 
+          // =====================================================
+          // CEK DASAR AWAL UNTUK SEMUA PEMAIN
+          // =====================================================
+          // Setiap pemain yang sejak awal tidak mempunyai satu pun
+          // kombinasi DASAR yang legal langsung dianggap MATI TANGAN.
+          // Aturan ini berlaku sama untuk Anda maupun AI.
+          // Jangan menunggu giliran pemain untuk melakukan pengecekan,
+          // agar player pertama pun tidak bisa membuat permainan macet.
+          for (let i = 0; i < playerCount; i++) {
+            if (!game.hasBase[i] && !hasAnyBase(game.hands[i])) {
+              markDead(i);
+              game.firstRoundDone[i] = true;
+            }
+          }
+
+          // Cari pemain hidup pertama sesuai urutan giliran yang sedang aktif.
+          const firstAlive = game.turnOrder.find((i) => !game.dead[i]);
+          if (firstAlive === undefined) {
+            render();
+            return endGame(null, "ALL_DEAD");
+          }
+          game.turn = firstAlive;
+
           render();
 
           if (!game || game.over || autoTenho()) return;
 
+          // Kalau Anda sendiri mati tangan pada pengecekan awal,
+          // langsung lanjut ke pemain hidup berikutnya.
+          if (game.turn === 0 && game.dead[0]) {
+            return nextTurn();
+          }
+
           if (game.turn === 0) {
-            if (!humanHasMove()) {
-              markDead(0);
-              game.firstRoundDone[0] = true;
-              nextTurn();
-            }
+            // Dasar awal sudah diverifikasi di atas. Player yang masih hidup
+            // boleh masuk ke giliran normal untuk menurunkan dasar pilihannya.
             return;
           }
 
@@ -7134,7 +7160,7 @@
           // Jalankan langsung satu kali setelah animasi.
           setTimeout(
             () => {
-              if (!game.over && game.turn !== 0) {
+              if (!game.over && game.turn !== 0 && !game.dead[game.turn]) {
                 aiTurn();
               }
             },
