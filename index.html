@@ -1506,7 +1506,20 @@
       }
       .danger {
         background: #9d2d2d;
-        color: #fff;
+        color: #fff !important;
+      }
+      #jokerChoiceCancel {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 82px;
+        min-height: 38px;
+        color: #fff !important;
+        font-size: 13px !important;
+        font-weight: 800 !important;
+        line-height: 1.2;
+        opacity: 1 !important;
+        visibility: visible !important;
       }
       .hint {
         background: #4f8fdd;
@@ -3399,8 +3412,8 @@
         </div>
         <div id="jokerChoiceOptions" class="joker-choice-options"></div>
         <div style="text-align: center">
-          <button id="jokerChoiceCancel" class="action-btn danger">
-            Batal
+          <button id="jokerChoiceCancel" class="action-btn danger" type="button">
+            <span style="color:#fff !important;display:inline-block;">Batal</span>
           </button>
         </div>
       </div>
