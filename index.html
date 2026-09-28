@@ -4694,6 +4694,7 @@
               .getElementById("jokerChoiceModal")
               .classList.remove("show");
             window._jokerChoiceCallback = null;
+            setYourHandOverlayHidden(false);
             onChoose(o);
           };
           box.appendChild(item);
