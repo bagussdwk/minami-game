@@ -5084,6 +5084,12 @@
         // POT 3,3,3 sehingga kartu residual yang dihitung hanya 4.
         for (let i = 0; i < playerCount; i++) {
           if (i === winner) continue;
+
+          // Begitu ada pemain yang habis, semua pemain lain otomatis mati.
+          // Yang sudah punya dasar tetap dihitung dari residual hand-nya;
+          // hanya yang mati sebelum dasar yang mendapat penalti -2.
+          if (!game.dead[i]) markDead(i);
+
           if (game.dead[i] && !game.hasBase[i]) continue;
           const arranged = autoArrangeResidualHand(game.hands[i]);
           game.hands[i] = arranged.residual;
