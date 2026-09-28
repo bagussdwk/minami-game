@@ -7118,46 +7118,34 @@
           document.getElementById("jokerInfo").textContent = "";
 
           // =====================================================
-          // CEK DASAR AWAL UNTUK SEMUA PEMAIN
+          // CEK MATI TANGAN SESUAI GILIRAN
           // =====================================================
-          // Setiap pemain yang sejak awal tidak mempunyai satu pun
-          // kombinasi DASAR yang legal langsung dianggap MATI TANGAN.
-          // Aturan ini berlaku sama untuk Anda maupun AI.
-          // Jangan menunggu giliran pemain untuk melakukan pengecekan,
-          // agar player pertama pun tidak bisa membuat permainan macet.
-          for (let i = 0; i < playerCount; i++) {
-            if (!game.hasBase[i] && !hasAnyBase(game.hands[i])) {
-              markDead(i);
-              game.firstRoundDone[i] = true;
-            }
-          }
-
-          // Cari pemain hidup pertama sesuai urutan giliran yang sedang aktif.
-          const firstAlive = game.turnOrder.find((i) => !game.dead[i]);
-          if (firstAlive === undefined) {
-            render();
-            return endGame(null, "ALL_DEAD");
-          }
-          game.turn = firstAlive;
-
+          // Jangan mengecek semua pemain sekaligus.
+          // Setiap pemain baru dicek ketika benar-benar sampai gilirannya.
+          // Dengan begitu urutan tetap mengikuti turnOrder.
           render();
 
           if (!game || game.over || autoTenho()) return;
 
-          // Kalau Anda sendiri mati tangan pada pengecekan awal,
-          // langsung lanjut ke pemain hidup berikutnya.
-          if (game.turn === 0 && game.dead[0]) {
-            return nextTurn();
-          }
-
           if (game.turn === 0) {
-            // Dasar awal sudah diverifikasi di atas. Player yang masih hidup
-            // boleh masuk ke giliran normal untuk menurunkan dasar pilihannya.
+            // P1 hanya mati tangan jika pada saat gilirannya tiba
+            // ternyata tidak mempunyai DASAR awal yang legal.
+            if (!game.hasBase[0] && !hasAnyBase(game.hands[0])) {
+              markDead(0);
+              game.firstRoundDone[0] = true;
+
+              if (game.dead.every(Boolean)) {
+                return endGame(null, "ALL_DEAD");
+              }
+
+              return nextTurn();
+            }
+
+            // P1 hidup dan memang mendapat giliran pertama.
             return;
           }
 
-          // Pemain pertama adalah AI.
-          // Jalankan langsung satu kali setelah animasi.
+          // Jika pemain pertama adalah AI, cek DASAR saat giliran AI tersebut.
           setTimeout(
             () => {
               if (!game.over && game.turn !== 0 && !game.dead[game.turn]) {
