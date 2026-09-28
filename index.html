@@ -4004,6 +4004,10 @@
         <div class="menu-section">
           <div class="menu-section-title">Permainan</div>
           <button class="menu-action" id="menuMusicBtn">🎵 Musik <span>›</span></button>
+      <div class="music-submenu" id="musicSubmenu">
+        <button type="button" class="music-choice" id="musicOnBtn">🔊 Musik ON</button>
+        <button type="button" class="music-choice" id="musicOffBtn">🔇 Musik OFF</button>
+      </div>
           <button class="menu-action" id="menuRestartBtn">⟳ Restart Pertandingan <span>›</span></button>
           <button class="menu-action" id="menuRulesBtn">📜 Aturan Permainan <span>›</span></button>
         </div>
@@ -7070,7 +7074,20 @@
       document.getElementById("menuClose").onclick = closeMenu;
       menuModal.onclick = (e) => { if (e.target === menuModal) closeMenu(); };
       document.getElementById("menuMusicBtn").onclick = () => {
-        musicToggle.click();
+        document.getElementById("musicSubmenu").classList.toggle("show");
+      };
+      document.getElementById("musicOnBtn").onclick = () => {
+        window.minamiMusicMuted = false;
+        localStorage.setItem("minamiMusicMuted", "0");
+        if (game && !game.over) startMinamiMusic();
+        updateMusicToggle();
+        closeMenu();
+      };
+      document.getElementById("musicOffBtn").onclick = () => {
+        window.minamiMusicMuted = true;
+        localStorage.setItem("minamiMusicMuted", "1");
+        stopMinamiMusic(250);
+        updateMusicToggle();
         closeMenu();
       };
       document.getElementById("menuRestartBtn").onclick = () => {
@@ -7276,9 +7293,9 @@
 <style id="menu-clean-interface">
   /* Saat menu hamburger terbuka, meja/kartu tidak terlihat di belakangnya. */
   #menuModal {
-    background: rgba(4, 25, 18, 0.985) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    background: rgba(4, 25, 18, 0.38) !important;
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
   }
 
   /* Kontrol yang sudah dipindahkan ke hamburger tidak tampil lagi di topbar. */
@@ -7296,5 +7313,35 @@
   #menuModal .menu-modal-box {
     position: relative;
     z-index: 5001;
+  }
+</style>
+
+<style id="menu-correct-overlay">
+  /* Menu menutupi UI permainan saja; background/meja tetap menjadi backdrop. */
+  #menuModal {
+    background: rgba(4, 25, 18, 0.38) !important;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+  #menuModal .menu-modal-box { z-index: 5001; }
+  .music-submenu {
+    display: none;
+    margin: -4px 0 8px 28px;
+    gap: 6px;
+  }
+  .music-submenu.show { display: grid; }
+  .music-choice {
+    padding: 9px 12px;
+    border-radius: 9px;
+    text-align: left;
+    color: #d8eee3;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.09);
+    font-size: 10px;
+    font-weight: 800;
+  }
+  .music-choice:hover {
+    background: rgba(243,207,112,.1);
+    color: #f3cf70;
   }
 </style>
