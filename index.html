@@ -281,9 +281,17 @@
       }
       .player-buttons {
         display: flex;
-        gap: 14px;
+        gap: 10px;
         justify-content: center;
-        margin: 25px 0;
+        align-items: stretch;
+        width: 100%;
+        max-width: 440px;
+        margin: 0 auto 12px;
+      }
+      .setup .player-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        text-align: center;
       }
       button {
         border: 0;
