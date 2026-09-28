@@ -3382,7 +3382,8 @@
           Target pertandingan: 25 poin.
         </div>
         <div class="score-history-wrap">
-          <div class="score-history-title">Perjalanan Poin</div>
+          <div class="score-history-title">Perolehan Poin per Game</div>
+      <div class="score-history-subtitle">Angka di bawah adalah poin game tersebut. Total pertandingan ada di atas.</div>
           <div class="score-history-list" id="scoreHistoryBoard"></div>
         </div>
       </div>
@@ -3701,17 +3702,49 @@
         const history = Array.isArray(window.minamiScoreHistory)
           ? window.minamiScoreHistory
           : [];
-        const current = {
-          game: game.gameNumber || history.length + 1,
-          scores: Array.isArray(game.scores) ? game.scores : [],
+
+        // Riwayat menampilkan POIN YANG DIDAPAT PADA GAME TERSEBUT,
+        // bukan total akumulasi pertandingan. Jadi saat Game 2 dimulai,
+        // baris Game 2 kembali 0, 0, 0, 0, 0.
+        const pointsForRow = (row, index) => {
+          if (Array.isArray(row.delta)) return row.delta;
+
+          // Kompatibilitas dengan save lama yang masih menyimpan total skor.
+          if (Array.isArray(row.scores)) {
+            const prev = history[index - 1];
+            const prevScores =
+              prev && Array.isArray(prev.scores)
+                ? prev.scores
+                : Array(playerCount).fill(0);
+            return Array.from({ length: playerCount }, (_, p) =>
+              (Number(row.scores[p]) || 0) - (Number(prevScores[p]) || 0),
+            );
+          }
+
+          return Array(playerCount).fill(0);
         };
-        const rows = history.concat([current]);
+
+        const rows = history.map((row, index) => ({
+          game: row.game,
+          points: pointsForRow(row, index),
+          current: false,
+        }));
+
+        // Game yang sedang berjalan ditampilkan sebagai baris 0 terlebih dahulu.
+        // Setelah game selesai, hasilnya sudah masuk ke history sehingga tidak diduplikasi.
+        if (!game.over) {
+          rows.push({
+            game: game.gameNumber || history.length + 1,
+            points: Array(playerCount).fill(0),
+            current: true,
+          });
+        }
 
         box.innerHTML = rows
           .map(
-            (row, idx) =>
+            (row) =>
               '<div class="score-history-row ' +
-              (idx === rows.length - 1 ? "score-history-current" : "") +
+              (row.current ? "score-history-current" : "") +
               '">' +
               '<div class="score-history-game">Game ' +
               row.game +
@@ -3722,7 +3755,7 @@
                 '"><b>' +
                 (p === 0 ? "Anda" : "P" + (p + 1)) +
                 "</b><br>" +
-                (Number(row.scores[p]) || 0) +
+                (Number(row.points[p]) || 0) +
                 "</div>",
               ).join("") +
               "</div>",
@@ -4852,7 +4885,8 @@
           window.minamiScoreHistory = [];
         window.minamiScoreHistory.push({
           game: game.gameNumber || window.minamiScoreHistory.length + 1,
-          scores: game.scores.slice(),
+          delta: scoreDelta.slice(),
+          total: game.scores.slice(),
         });
 
         game.lastResult = {
@@ -6268,6 +6302,67 @@
     /* Sisakan ruang di halaman supaya footer tidak menutup konten terakhir. */
     .game.active {
       padding-bottom: 220px !important;
+    }
+  }
+</style>
+
+
+<style id="mobile-table-safe-zone">
+  .score-history-subtitle {
+    margin: -2px 0 8px;
+    color: #9fc6b7;
+    font-size: 9px;
+    line-height: 1.35;
+  }
+
+  @media (max-width: 700px) {
+    /* Sisakan koridor tengah khusus untuk kartu yang sudah dimainkan. */
+    .table-area {
+      padding: 132px 120px 150px 55px !important;
+      align-content: center !important;
+      z-index: 20 !important;
+    }
+
+    /* Player tetap di layer atas, tetapi history tidak boleh melebar
+       masuk ke koridor kartu meja. */
+    .player {
+      width: 82px !important;
+      z-index: 30 !important;
+    }
+
+    .player .play-history {
+      width: 100% !important;
+      max-width: 82px !important;
+      max-height: 46px !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      padding-right: 2px;
+      box-sizing: border-box;
+      scrollbar-width: thin;
+    }
+
+    .player .mini-cards {
+      max-width: 82px !important;
+      overflow: hidden !important;
+    }
+
+    .player .history-card {
+      margin: 1px 1px !important;
+      padding: 2px 3px !important;
+      font-size: 7px !important;
+    }
+
+    /* Di layar sangat sempit, koridor tengah dibuat sedikit lebih lebar
+       dengan mengurangi padding kanan tanpa menggeser player kanan. */
+    @media (max-width: 360px) {
+      .table-area {
+        padding-left: 48px !important;
+        padding-right: 112px !important;
+      }
+    }
+
+    .score-history-subtitle {
+      font-size: 8px;
     }
   }
 </style>
