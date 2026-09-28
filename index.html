@@ -7190,6 +7190,29 @@
       restoreSavedGame();
     </script>
   </body>
+<style id="topbar-fixed-final">
+  /* Topbar selalu terlihat saat halaman di-scroll. */
+  body {
+    padding-top: 64px !important;
+  }
+  .topbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 64px !important;
+    z-index: 10000 !important;
+  }
+  @media (max-width: 800px) {
+    body {
+      padding-top: 52px !important;
+    }
+    .topbar {
+      height: 52px !important;
+    }
+  }
+</style>
 </html>
 <style id="mobile-hand-fixed-footer-final">
   @media (max-width: 700px) {
