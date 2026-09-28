@@ -5363,7 +5363,13 @@
       function endGame(winner = null, reason = "NORMAL") {
         if (game.over) return;
         game.over = true;
-        playMinamiVictoryMusic();
+        // Jangan biarkan efek suara mengganggu proses skor/akhir game.
+        // Fungsi audio kemenangan bersifat opsional dan tidak boleh menghentikan endGame.
+        if (typeof playMinamiVictoryMusic === "function") {
+          try {
+            playMinamiVictoryMusic();
+          } catch (e) {}
+        }
         const yourHand = document.querySelector(".your-hand");
         if (yourHand)
           yourHand.style.setProperty("display", "none", "important");
