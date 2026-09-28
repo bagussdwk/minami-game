@@ -7069,8 +7069,14 @@
       };
 
       const menuModal = document.getElementById("menuModal");
-      const closeMenu = () => menuModal.classList.remove("show");
-      document.getElementById("menuBtn").onclick = () => menuModal.classList.add("show");
+      const closeMenu = () => {
+        menuModal.classList.remove("show");
+        document.body.classList.remove("menu-open");
+      };
+      document.getElementById("menuBtn").onclick = () => {
+        menuModal.classList.add("show");
+        document.body.classList.add("menu-open");
+      };
       document.getElementById("menuClose").onclick = closeMenu;
       menuModal.onclick = (e) => { if (e.target === menuModal) closeMenu(); };
       document.getElementById("menuMusicBtn").onclick = () => {
@@ -7343,5 +7349,21 @@
   .music-choice:hover {
     background: rgba(243,207,112,.1);
     color: #f3cf70;
+  }
+</style>
+<style id="menu-hide-game-ui">
+  /* Saat menu terbuka, UI kartu/player disembunyikan sementara.
+     Meja/background tetap terlihat sebagai backdrop. */
+  body.menu-open .game.active > *:not(.table) {
+    visibility: hidden !important;
+  }
+  body.menu-open .game.active > .table {
+    visibility: visible !important;
+  }
+  body.menu-open .game.active > .your-hand {
+    visibility: hidden !important;
+  }
+  body.menu-open .menu-modal-box {
+    visibility: visible !important;
   }
 </style>
