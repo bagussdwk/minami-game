@@ -4419,6 +4419,7 @@
         document.getElementById("setup").style.display = "none";
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
+        document.getElementById("quickChatBtn").style.display = game.over ? "none" : "block";
         document
           .getElementById("game")
           .classList.add("active", "players-" + playerCount);
@@ -5148,8 +5149,6 @@
       }
 
       function renderPlayers() {
-        const mvp=getGameMVP();
-        if(mvp){const mv=document.createElement("div");mv.className="result-mvp";mv.innerHTML="<b>⭐ MVP GAME</b><span>"+mvp.name+" • kontribusi "+mvp.value+"</span>";b.appendChild(mv)}
         for (let i = 0; i < playerCount; i++) {
           let el = document.getElementById("player" + (i + 1));
 
@@ -5214,12 +5213,10 @@
           const remaining = game.hands[i].length;
           const nearWin = !game.dead[i] && !game.over && remaining <= 3;
           el.classList.toggle("near-win", nearWin);
-          alert.textContent =
-            nearWin && remaining === 1
-              ? "ONE CARD!"
-              : nearWin
-                ? "TINGGAL " + remaining + " KARTU"
-                : "";
+          const reactionNow=game.reactions?.[i];
+          alert.textContent = reactionNow && reactionNow.until>Date.now()
+            ? reactionNow.text
+            : (nearWin && remaining === 1 ? "ONE CARD!" : nearWin ? "TINGGAL " + remaining + " KARTU" : "");
 
           let mc = document.getElementById("mini" + (i + 1));
           mc.innerHTML = "";
@@ -5612,6 +5609,8 @@
               ? "Pemain pertama habis mendapat +" + playerCount + "."
               : "Semua pemain yang hidup akhirnya mati.") +
           "</div>";
+        const mvp=getGameMVP();
+        if(mvp){const mv=document.createElement("div");mv.className="result-mvp";mv.innerHTML="<b>⭐ MVP GAME</b><span>"+mvp.name+" • kontribusi "+mvp.value+"</span>";b.appendChild(mv)}
         for (let i = 0; i < playerCount; i++) {
           let v = handValue(game.hands[i]);
           let status = game.dead[i]
@@ -6949,6 +6948,7 @@
         document.getElementById("setup").style.display = "none";
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
+        document.getElementById("quickChatBtn").style.display = "block";
         const yourHand = document.querySelector(".your-hand");
         if (yourHand) yourHand.style.removeProperty("display");
 
@@ -7068,6 +7068,7 @@
         document.getElementById("scoreModal").classList.remove("show");
         document.getElementById("scoreTopBtn").style.display = "none";
         document.getElementById("newGameTopBtn").style.display = "none";
+        document.getElementById("quickChatBtn").style.display = "none";
         document.getElementById("game").classList.remove("active");
         document.getElementById("setup").style.display = "";
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
