@@ -4901,11 +4901,10 @@
 
           let n = el.querySelector(".player-name");
 
-          let st = game.dead[i]
-            ? " • MATI"
-            : game.turn === i
-              ? " • GILIRAN"
-              : "";
+          // Indikator giliran sudah ditunjukkan oleh highlight hijau
+          // pada profil pemain, jadi tidak perlu menambah tulisan "GILIRAN"
+          // di nama agar nama tetap pendek dan rapi di mobile.
+          let st = game.dead[i] ? " • MATI" : "";
 
           n.textContent =
             (i === 0 ? "Anda" : "Pemain " + (i + 1)) +
