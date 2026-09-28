@@ -361,14 +361,104 @@
         pointer-events: none;
       }
       .center {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        display: none;
+      }
+      .game-status-ribbon {
+        width: min(680px, calc(100% - 24px));
+        margin: 0 auto 9px;
+        padding: 8px 12px;
         display: flex;
-        gap: 18px;
-        align-items: flex-start;
-        z-index: 5;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        border-radius: 14px;
+        background: linear-gradient(
+          145deg,
+          rgba(7, 54, 38, 0.96),
+          rgba(5, 39, 28, 0.96)
+        );
+        border: 1px solid rgba(243, 207, 112, 0.18);
+        box-shadow:
+          0 8px 20px rgba(0, 0, 0, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.045);
+      }
+      .game-status-item {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        white-space: nowrap;
+      }
+      .game-status-label {
+        color: #9fc6b7;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 1.25px;
+        text-transform: uppercase;
+      }
+      .game-status-value {
+        color: #f3cf70;
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .game-status-turn {
+        color: #fff;
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .game-status-direction {
+        min-width: 30px;
+        min-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 7px;
+        border-radius: 8px;
+        background: rgba(243, 207, 112, 0.1);
+        border: 1px solid rgba(243, 207, 112, 0.14);
+        color: #f3cf70;
+      }
+      .game-status-direction .arrow {
+        font-size: 19px;
+        line-height: 1;
+      }
+      .game-status-divider {
+        width: 1px;
+        height: 22px;
+        background: rgba(255, 255, 255, 0.11);
+      }
+      @media (max-width: 700px) {
+        .game-status-ribbon {
+          width: calc(100% - 12px);
+          margin-bottom: 6px;
+          padding: 7px 8px;
+          gap: 7px;
+          border-radius: 11px;
+        }
+        .game-status-item {
+          gap: 4px;
+        }
+        .game-status-label {
+          font-size: 7px;
+          letter-spacing: 0.9px;
+        }
+        .game-status-value,
+        .game-status-turn {
+          font-size: 9px;
+        }
+        .game-status-direction {
+          min-width: 25px;
+          min-height: 24px;
+          padding: 0 5px;
+          border-radius: 7px;
+        }
+        .game-status-direction .arrow {
+          font-size: 16px;
+        }
+        .game-status-divider {
+          height: 18px;
+        }
       }
       .joker-corner {
         position: absolute;
@@ -2818,27 +2908,28 @@
       <button class="start-btn setup-start" id="startBtn">🎴 MULAI PERMAINAN</button>
     </section>
     <section class="game" id="game">
+      <div class="game-status-ribbon" aria-live="polite">
+        <div class="game-status-item">
+          <span class="game-status-label">Putaran</span>
+          <span class="game-status-value" id="roundInfo">1</span>
+        </div>
+        <div class="game-status-divider"></div>
+        <div class="game-status-item">
+          <span class="game-status-label">Rotasi</span>
+          <span class="game-status-direction" id="turnDirection" title="Arah putaran giliran"></span>
+        </div>
+        <div class="game-status-divider"></div>
+        <div class="game-status-item">
+          <span class="game-status-label">Giliran</span>
+          <span class="game-status-turn" id="turnInfo">Menunggu...</span>
+        </div>
+      </div>
+
       <div class="table">
         <div class="joker-corner">
           <div class="center-title">Joker</div>
           <div id="jokerCard"></div>
           <small id="jokerInfo"></small>
-        </div>
-        <div class="center">
-          <div class="center-box">
-            <div class="round-rules-wrap">
-              <div>
-                <div class="center-title">Putaran</div>
-                <div class="basic-rule" id="roundInfo">1</div>
-              </div>
-            </div>
-            <div
-              class="turn-direction"
-              id="turnDirection"
-              title="Arah putaran giliran"
-            ></div>
-            <small id="turnInfo">Menunggu...</small>
-          </div>
         </div>
         <div class="table-area" id="tableArea"></div>
         <div class="info" id="gameInfo"></div>
