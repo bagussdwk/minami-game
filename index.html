@@ -4493,9 +4493,7 @@
       function saveGameState() {
         if (!game) return;
         try {
-          localStorage.setItem(
-            MINAMI_SAVE_KEY,
-            JSON.stringify({
+          const payload = JSON.stringify({
               game: {
                 ...game,
                 potRanks: Array.from(game.potRanks || []),
@@ -4507,8 +4505,9 @@
               scoreHistory: Array.isArray(window.minamiScoreHistory)
                 ? window.minamiScoreHistory
                 : [],
-            }),
-          );
+            });
+            localStorage.setItem(MINAMI_SAVE_KEY, payload);
+            sessionStorage.setItem(MINAMI_SAVE_KEY, payload);
         } catch (e) {
           // Abaikan jika penyimpanan browser tidak tersedia.
         }
@@ -4517,6 +4516,7 @@
       function clearSavedGame() {
         try {
           localStorage.removeItem(MINAMI_SAVE_KEY);
+          sessionStorage.removeItem(MINAMI_SAVE_KEY);
         } catch (e) {}
       }
 
@@ -4592,7 +4592,7 @@
 
       function restoreSavedGame() {
         try {
-          const raw = localStorage.getItem(MINAMI_SAVE_KEY);
+          const raw = localStorage.getItem(MINAMI_SAVE_KEY) || sessionStorage.getItem(MINAMI_SAVE_KEY);
           if (!raw) return false;
 
           const saved = JSON.parse(raw);
@@ -4645,7 +4645,9 @@
           resumeRestoredGame();
           return true;
         } catch (e) {
-          clearSavedGame();
+          // Jangan hapus state permainan hanya karena proses render restore gagal.
+          // State tetap dipertahankan agar refresh berikutnya masih bisa mencoba restore.
+          console.error("MINAMI restore failed:", e);
           return false;
         }
       }
