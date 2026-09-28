@@ -48,6 +48,194 @@
         white-space: nowrap;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
       }
+      .watch-speed {
+        display: none;
+        align-items: center;
+        gap: 3px;
+        padding: 3px;
+        border-radius: 9px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.13);
+      }
+      .watch-speed-label {
+        padding: 0 4px;
+        color: #9fc6b7;
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+      }
+      .watch-speed-btn {
+        min-height: 27px;
+        padding: 5px 7px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: #d8eee3;
+        font-size: 9px;
+        font-weight: 900;
+      }
+      .watch-speed-btn.active {
+        background: #f3cf70;
+        color: #18251d;
+      }
+      .play-feedback {
+        position: fixed;
+        left: 50%;
+        top: 18%;
+        transform: translateX(-50%) translateY(-8px) scale(0.96);
+        z-index: 260;
+        pointer-events: none;
+        opacity: 0;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: rgba(5, 35, 25, 0.94);
+        border: 1px solid rgba(243, 207, 112, 0.3);
+        color: #f3cf70;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 1.2px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+      }
+      .play-feedback.show {
+        animation: minamiFeedback 0.95s ease forwards;
+      }
+      .play-feedback.joker {
+        color: #fff;
+        border-color: rgba(243, 195, 59, 0.65);
+        background: linear-gradient(145deg, rgba(89, 61, 8, 0.95), rgba(40, 29, 5, 0.96));
+      }
+      .match-fx {
+        position: fixed;
+        inset: 0;
+        z-index: 220;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(3, 18, 13, 0.62);
+        pointer-events: none;
+      }
+      .match-fx.show {
+        display: flex;
+        animation: minamiFxBg 1.25s ease forwards;
+      }
+      .match-fx-box {
+        padding: 26px 38px;
+        border-radius: 22px;
+        text-align: center;
+        background: linear-gradient(145deg, rgba(10, 61, 42, 0.98), rgba(5, 35, 25, 0.98));
+        border: 1px solid rgba(243, 207, 112, 0.4);
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.5);
+        animation: minamiWinPop 1.15s cubic-bezier(.2,.85,.3,1.2) forwards;
+      }
+      .match-fx-icon {
+        font-size: 52px;
+        line-height: 1;
+      }
+      .match-fx-title {
+        margin-top: 8px;
+        color: #f5d37a;
+        font-size: 31px;
+        font-weight: 900;
+        letter-spacing: 3px;
+      }
+      .match-fx-sub {
+        margin-top: 5px;
+        color: #d8eee3;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .player-alert {
+        min-height: 16px;
+        margin-top: 3px;
+        color: #f3cf70;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        opacity: 0;
+        transition: opacity 0.18s ease;
+      }
+      .player.near-win .player-alert {
+        opacity: 1;
+      }
+      .player.near-win .avatar {
+        box-shadow: 0 0 0 3px rgba(243, 207, 112, 0.35);
+      }
+      .history-latest {
+        animation: minamiHistoryIn 0.5s ease;
+      }
+      .score-history-wrap {
+        margin-top: 12px;
+        padding-top: 11px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .score-history-title {
+        color: #f3cf70;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        margin-bottom: 7px;
+      }
+      .score-history-list {
+        display: grid;
+        gap: 5px;
+        max-height: 220px;
+        overflow: auto;
+      }
+      .score-history-row {
+        display: grid;
+        grid-template-columns: 60px repeat(5, minmax(0, 1fr));
+        gap: 5px;
+        align-items: center;
+        padding: 7px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        font-size: 9px;
+      }
+      .score-history-game {
+        color: #a9cbbd;
+        font-weight: 800;
+      }
+      .score-history-cell {
+        min-width: 0;
+        color: #d8eee3;
+        text-align: center;
+        font-weight: 700;
+      }
+      .score-history-cell.you {
+        color: #f3cf70;
+        font-weight: 900;
+      }
+      .score-history-current {
+        border-color: rgba(243, 207, 112, 0.22);
+        background: rgba(243, 207, 112, 0.06);
+      }
+      @keyframes minamiFeedback {
+        0% { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(.96); }
+        15% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        78% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        100% { opacity: 0; transform: translateX(-50%) translateY(-5px) scale(.98); }
+      }
+      @keyframes minamiHistoryIn {
+        0% { opacity: 0; transform: translateY(5px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes minamiFxBg {
+        0% { opacity: 0; }
+        12% { opacity: 1; }
+        78% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      @keyframes minamiWinPop {
+        0% { opacity: 0; transform: translateY(16px) scale(.82); }
+        18% { opacity: 1; transform: translateY(0) scale(1.03); }
+        35% { transform: translateY(0) scale(1); }
+        82% { opacity: 1; }
+        100% { opacity: 0; transform: translateY(-8px) scale(1.02); }
+      }
       .topbar-action:hover {
         filter: brightness(1.08);
       }
@@ -126,6 +314,43 @@
         }
         .topbar-action span {
           display: none;
+        }
+        .watch-speed {
+          gap: 2px;
+          padding: 2px;
+        }
+        .watch-speed-label {
+          display: none;
+        }
+        .watch-speed-btn {
+          min-height: 26px;
+          padding: 5px 6px;
+          font-size: 8px;
+        }
+        .play-feedback {
+          top: 13%;
+          font-size: 10px;
+          padding: 8px 12px;
+        }
+        .match-fx-box {
+          width: min(330px, calc(100% - 28px));
+          padding: 20px 18px;
+        }
+        .match-fx-icon {
+          font-size: 42px;
+        }
+        .match-fx-title {
+          font-size: 24px;
+          letter-spacing: 2px;
+        }
+        .match-fx-sub {
+          font-size: 10px;
+        }
+        .score-history-row {
+          grid-template-columns: 46px repeat(5, minmax(0, 1fr));
+          gap: 3px;
+          padding: 6px 4px;
+          font-size: 8px;
         }
         .score-modal-box {
           width: calc(100% - 16px);
@@ -2955,6 +3180,12 @@
       <div class="logo">MINAMI</div>
       <div class="status" id="status">MINAMI GAME</div>
       <div class="topbar-actions">
+        <div class="watch-speed" id="watchSpeedWrap" style="display:none">
+          <span class="watch-speed-label">Speed</span>
+          <button type="button" class="watch-speed-btn" data-speed="1">1×</button>
+          <button type="button" class="watch-speed-btn" data-speed="2">2×</button>
+          <button type="button" class="watch-speed-btn" data-speed="4">4×</button>
+        </div>
         <button
           type="button"
           class="topbar-action score-top-btn"
@@ -2986,6 +3217,16 @@
         </button>
       </div>
     </div>
+
+    <div class="play-feedback" id="playFeedback" aria-live="polite"></div>
+    <div class="match-fx" id="matchFx" aria-live="polite">
+      <div class="match-fx-box">
+        <div class="match-fx-icon" id="matchFxIcon">🏆</div>
+        <div class="match-fx-title" id="matchFxTitle">WIN!</div>
+        <div class="match-fx-sub" id="matchFxSub"></div>
+      </div>
+    </div>
+
     <section class="setup" id="setup">
       <div class="setup-brand">♠ 2 DECK &nbsp;•&nbsp; MINAMI</div>
       <h1 class="setup-logo">MINAMI</h1>
@@ -3139,6 +3380,10 @@
         <div class="scoreboard" id="scoreModalBoard"></div>
         <div class="score-modal-note" id="scoreModalNote">
           Target pertandingan: 25 poin.
+        </div>
+        <div class="score-history-wrap">
+          <div class="score-history-title">Perjalanan Poin</div>
+          <div class="score-history-list" id="scoreHistoryBoard"></div>
         </div>
       </div>
     </div>
