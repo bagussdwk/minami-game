@@ -7351,17 +7351,12 @@
     color: #f3cf70;
   }
 </style>
-<style id="menu-hide-game-ui">
-  /* Saat menu terbuka, UI kartu/player disembunyikan sementara.
-     Meja/background tetap terlihat sebagai backdrop. */
-  body.menu-open .game.active > *:not(.table) {
-    visibility: hidden !important;
-  }
-  body.menu-open .game.active > .table {
-    visibility: visible !important;
-  }
+<style id="menu-hide-hand-only">
+  /* Saat menu hamburger terbuka, hanya footer kartu milik kita yang disembunyikan.
+     Meja, kartu yang sudah dimainkan, player, history, dan background tetap terlihat. */
   body.menu-open .game.active > .your-hand {
     visibility: hidden !important;
+    pointer-events: none !important;
   }
   body.menu-open .menu-modal-box {
     visibility: visible !important;
