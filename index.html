@@ -6490,7 +6490,7 @@
       card.dataset.mobilePointerBound="1";
       let sx=0,sy=0,dragging=false,moved=false,pid=null;
       card.addEventListener("pointerdown",function(e){
-        if(!window.game || game.turn!==0 || game.over || game.dead[0]) return;
+        if(!game || game.turn!==0 || game.over || game.dead[0]) return;
         pid=e.pointerId;sx=e.clientX;sy=e.clientY;moved=false;dragging=false;
         try{card.setPointerCapture(pid)}catch(_){}
       },{passive:true});
@@ -6526,7 +6526,7 @@
         if(!wasDragging || !moved){
           return;
         }
-        if(!window.game || game.turn!==0 || game.over || game.dead[0]) return;
+        if(!game || game.turn!==0 || game.over || game.dead[0]) return;
         if(meld){
           const mi=Number(meld.dataset.meldIndex);
           if(Number.isInteger(mi) && game.melds[mi]){
@@ -6552,10 +6552,9 @@
       }
     });
   }
-  const oldRender=window.render;
-  if(typeof oldRender==="function") return;
+  setupMobilePointerDrag();
   document.addEventListener("DOMContentLoaded",setupMobilePointerDrag);
-  setInterval(setupMobilePointerDrag,500);
+  setInterval(setupMobilePointerDrag,700);
 })();
 </script>
 </body>
