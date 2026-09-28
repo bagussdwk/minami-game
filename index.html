@@ -21,6 +21,11 @@
         color: #fff;
       }
       .topbar {
+        /* Topbar ikut alur halaman saat di-scroll, tidak menempel di viewport. */
+        position: relative;
+        top: auto;
+        inset: auto;
+      }
         height: 64px;
         display: flex;
         align-items: center;
