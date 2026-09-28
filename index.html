@@ -4766,14 +4766,25 @@
       function nextTurn() {
         if (game.over) return;
 
+        const order =
+          Array.isArray(game.turnOrder) && game.turnOrder.length === playerCount
+            ? game.turnOrder
+            : Array.from({ length: playerCount }, (_, i) => i);
+
+        const currentPos = order.indexOf(game.turn);
         let next = -1;
 
-        for (let z = 1; z <= playerCount; z++) {
-          const n = (game.turn + z) % playerCount;
-
-          if (!game.dead[n]) {
-            next = n;
-            break;
+        // Arah permainan ditentukan oleh turnOrder.
+        // Jika WIN/TENHO terjadi, prepareNextTurnOrder() membalik turnOrder
+        // untuk game berikutnya. Jangan menghitung lagi berdasarkan nomor pemain,
+        // karena itu membuat arah permainan selalu kembali ke arah lama.
+        if (currentPos >= 0) {
+          for (let z = 1; z <= order.length; z++) {
+            const n = order[(currentPos + z) % order.length];
+            if (!game.dead[n]) {
+              next = n;
+              break;
+            }
           }
         }
 
@@ -5022,15 +5033,17 @@
         return n;
       }
       function aiNextPlayer(i) {
-        const order = game.turnOrder || [];
-        let pos = order.indexOf(i);
+        const order =
+          Array.isArray(game.turnOrder) && game.turnOrder.length === playerCount
+            ? game.turnOrder
+            : Array.from({ length: playerCount }, (_, x) => x);
+        const pos = order.indexOf(i);
         if (pos < 0) return null;
+
+        // Gunakan urutan giliran yang sama dengan nextTurn().
+        // turnOrder sudah dibalik setelah WIN/TENHO, sehingga AI ikut arah baru.
         for (let k = 1; k <= order.length; k++) {
-          const p =
-            order[
-              (pos + (game.direction === -1 ? k : -k) + order.length * 10) %
-                order.length
-            ];
+          const p = order[(pos + k) % order.length];
           if (p !== i && !game.dead[p]) return p;
         }
         return null;
