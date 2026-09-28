@@ -4900,7 +4900,12 @@
           : game.turn === 0
             ? "Giliran Anda"
             : "Giliran Pemain " + (game.turn + 1);
-        document.getElementById("roundInfo").textContent = game.round;
+        // Indikator Putaran mengikuti putaran meja sebenarnya:
+        // setiap semua pemain mendapat satu giliran = 1 putaran.
+        // Fase aturan tetap disimpan di game.round agar logika permainan tidak berubah.
+        const cycleRound = Math.floor((Number(game.turnCount) || 0) / playerCount) + 1;
+        document.getElementById("roundInfo").textContent =
+          Math.max(Number(game.round) || 1, cycleRound);
       }
       function removeSelectedFromHand() {
         let inds = [...game.selected].sort((a, b) => b - a);
@@ -5541,6 +5546,12 @@
         if (next < 0) {
           return endGame(null, "ALL_DEAD");
         }
+
+        // Hitung satu langkah giliran untuk indikator putaran meja.
+        // Ini terpisah dari game.round yang dipakai sebagai fase aturan
+        // (1 = wajib dasar, 2+ = permainan terbuka).
+        game.turnCount = Number(game.turnCount) || 0;
+        game.turnCount++;
 
         game.turn = next;
 
