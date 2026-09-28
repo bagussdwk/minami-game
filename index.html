@@ -3132,17 +3132,20 @@
         .players-5 .p2 .play-history,
         .players-4 .p2 .play-history {
           position: absolute;
-          right: 0;
-          left: auto;
-          bottom: calc(100% + 2px);
-          width: 150px;
-          max-width: 150px;
-          min-height: 26px;
+          top: calc(100% + 2px);
+          bottom: auto;
+          left: 50%;
+          right: auto;
+          transform: translateX(-50%);
+          width: 64px;
+          max-width: 64px;
+          min-height: 16px;
+          max-height: 34px;
           margin: 0;
-          overflow: visible;
+          overflow: hidden;
           white-space: normal;
           z-index: 40;
-          text-align: right;
+          text-align: center;
         }
 
         .players-5 .p1 .play-history,
@@ -6573,14 +6576,15 @@
     }
 
     .player .play-history {
-      width: 100% !important;
-      max-width: 82px !important;
-      max-height: 46px !important;
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-      padding-right: 2px;
+      width: 64px !important;
+      max-width: 64px !important;
+      max-height: 32px !important;
+      min-height: 14px !important;
+      overflow: hidden !important;
+      padding: 0 !important;
       box-sizing: border-box;
-      scrollbar-width: thin;
+      font-size: 7px !important;
+      line-height: 1.05 !important;
     }
 
     .player .mini-cards {
