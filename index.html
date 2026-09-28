@@ -51,14 +51,225 @@
         line-height: 1;
       }
       .setup {
-        width: min(720px, calc(100% - 32px));
-        margin: 55px auto;
-        padding: 32px;
-        background: rgba(5, 35, 25, 0.9);
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 22px;
-        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
+        position: relative;
+        width: min(820px, calc(100% - 32px));
+        margin: 58px auto 45px;
+        padding: 34px 38px 32px;
+        background:
+          radial-gradient(circle at 50% -10%, rgba(228, 178, 76, 0.12), transparent 38%),
+          linear-gradient(150deg, rgba(6, 44, 31, 0.98), rgba(4, 28, 21, 0.97));
+        border: 1px solid rgba(243, 207, 112, 0.2);
+        border-radius: 26px;
+        box-shadow:
+          0 28px 80px rgba(0, 0, 0, 0.42),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
         text-align: center;
+        overflow: hidden;
+      }
+      .setup::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.025), transparent);
+      }
+      .setup-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 9px;
+        padding: 6px 11px;
+        border-radius: 999px;
+        background: rgba(243, 207, 112, 0.08);
+        border: 1px solid rgba(243, 207, 112, 0.16);
+        color: #f3cf70;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .setup-logo {
+        margin: 0;
+        font-size: clamp(42px, 7vw, 64px);
+        line-height: 0.95;
+        font-weight: 900;
+        letter-spacing: 9px;
+        color: #f5d37a;
+        text-shadow: 0 5px 25px rgba(0, 0, 0, 0.28);
+      }
+      .setup-tagline {
+        margin: 11px auto 0;
+        max-width: 580px;
+        color: #d8eee3;
+        font-size: 14px;
+        line-height: 1.65;
+      }
+      .setup-cards {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 24px 0 22px;
+        height: 88px;
+      }
+      .setup-card {
+        width: 54px;
+        height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+        background: #fff;
+        color: #161616;
+        border: 2px solid #ececec;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+        font-size: 22px;
+        font-weight: 900;
+        margin-left: -13px;
+      }
+      .setup-card:first-child { margin-left: 0; transform: rotate(-12deg) translateY(8px); }
+      .setup-card:nth-child(2) { transform: rotate(-5deg) translateY(1px); z-index: 2; }
+      .setup-card:nth-child(3) { transform: translateY(-5px); z-index: 3; }
+      .setup-card:nth-child(4) { transform: rotate(5deg) translateY(1px); z-index: 2; }
+      .setup-card:nth-child(5) { transform: rotate(12deg) translateY(8px); }
+      .setup-card.red { color: #c72525; }
+
+      .setup-section-label {
+        margin: 0 0 9px;
+        color: #a9cbbd;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+      }
+      .player-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        max-width: 440px;
+        margin: 0 auto 12px;
+      }
+      .player-btn {
+        min-height: 58px;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.045);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 13px;
+        text-align: left;
+      }
+      .player-btn .player-btn-main {
+        display: block;
+        font-size: 14px;
+        font-weight: 900;
+      }
+      .player-btn .player-btn-sub {
+        display: block;
+        margin-top: 3px;
+        color: #aacdc0;
+        font-size: 10px;
+        font-weight: 600;
+      }
+      .player-btn.active {
+        background: linear-gradient(145deg, #e8bb5e, #c99739);
+        color: #18251d;
+        border-color: #f4d37c;
+        box-shadow: 0 8px 18px rgba(201, 151, 57, 0.18);
+      }
+      .player-btn.active .player-btn-sub { color: #31452f; }
+
+      #rulePreview {
+        margin: 10px auto 15px;
+        max-width: 560px;
+        padding: 10px 12px;
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.045);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #d8eee3;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .setup-rules {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 0;
+        background: none;
+        color: #cde6da;
+      }
+      .setup-rule-chip {
+        padding: 10px 9px;
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .setup-rule-chip b {
+        display: block;
+        margin-bottom: 3px;
+        color: #f3cf70;
+        font-size: 9px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .setup-rule-chip span {
+        display: block;
+        color: #d8eee3;
+        font-size: 10px;
+        line-height: 1.4;
+      }
+      .setup-rules > b,
+      .setup-rules > br { display: none; }
+      .start-btn.setup-start {
+        max-width: 520px;
+        margin: 18px auto 0;
+        border-radius: 13px;
+        padding: 15px 18px;
+        background: linear-gradient(145deg, #f1cb70, #d9a441);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+        letter-spacing: 0.3px;
+      }
+      @media (max-width: 700px) {
+        .setup {
+          width: calc(100% - 18px);
+          margin: 28px auto 24px;
+          padding: 24px 15px 20px;
+          border-radius: 20px;
+        }
+        .setup-logo {
+          font-size: 42px;
+          letter-spacing: 6px;
+        }
+        .setup-tagline {
+          font-size: 12px;
+          line-height: 1.55;
+        }
+        .setup-cards {
+          height: 76px;
+          margin: 18px 0 18px;
+        }
+        .setup-card {
+          width: 42px;
+          height: 60px;
+          font-size: 17px;
+          margin-left: -10px;
+        }
+        .player-buttons {
+          gap: 8px;
+          max-width: none;
+        }
+        .player-btn {
+          min-height: 54px;
+          padding: 9px 10px;
+        }
+        .player-btn .player-btn-main { font-size: 12px; }
+        .player-btn .player-btn-sub { font-size: 9px; }
+        #rulePreview { font-size: 10px; margin-bottom: 12px; }
+        .setup-rules { grid-template-columns: 1fr; gap: 6px; }
+        .setup-rule-chip { padding: 8px 9px; }
+        .setup-rule-chip b { font-size: 8px; }
+        .setup-rule-chip span { font-size: 9px; }
       }
       .setup h1 {
         margin: 0 0 10px;
@@ -2550,29 +2761,53 @@
       </div>
     </div>
     <section class="setup" id="setup">
-      <h1>MINAMI</h1>
-      <p>
-        Permainan 2 deck dengan sistem Dasar, POT, Joker, MATI, TENHO/WIN,
-        bantuan strategi, dan skor sampai 25.
+      <div class="setup-brand">♠ 2 DECK &nbsp;•&nbsp; MINAMI</div>
+      <h1 class="setup-logo">MINAMI</h1>
+      <p class="setup-tagline">
+        Permainan kartu dengan Dasar, POT, Joker, MATI, TENHO/WIN,
+        dan pertandingan sampai 25 poin.
       </p>
-      <div class="player-buttons">
-        <button class="player-btn active" data-player="4">4 Pemain</button
-        ><button class="player-btn" data-player="5">5 Pemain</button>
+
+      <div class="setup-cards" aria-hidden="true">
+        <div class="setup-card">7♣</div>
+        <div class="setup-card red">Q♥</div>
+        <div class="setup-card joker-mark">🃏</div>
+        <div class="setup-card red">4♦</div>
+        <div class="setup-card">9♠</div>
       </div>
+
+      <div class="setup-section-label">Pilih jumlah pemain</div>
+      <div class="player-buttons">
+        <button class="player-btn active" data-player="4">
+          <span class="player-btn-main">4 Pemain</span>
+          <span class="player-btn-sub">8 kartu mati • 24 kartu/orang</span>
+        </button>
+        <button class="player-btn" data-player="5">
+          <span class="player-btn-main">5 Pemain</span>
+          <span class="player-btn-sub">4 kartu mati • 20 kartu/orang</span>
+        </button>
+      </div>
+
       <div id="rulePreview">
         4 pemain → 8 kartu mati → 96 kartu → 24 kartu/pemain
       </div>
-      <br />
+
       <div class="setup-rules">
-        <b>Nilai:</b> 2–10 sesuai angka, J/Q/K=10, A=15, Joker=25.<br /><b
-          >Target:</b
-        >
-        pemain pertama mencapai 25 poin.<br /><b>WIN/TENHO:</b> bila sejak awal
-        ada pemain yang seluruh kartunya sudah dapat disusun menjadi kombinasi
-        legal dan tidak ada yang mati, game dapat selesai dengan bonus +7; sisa
-        kartu pemain lain tetap dihitung secara otomatis.
+        <div class="setup-rule-chip">
+          <b>Nilai</b>
+          <span>2–10 sesuai angka • J/Q/K=10 • A=15 • Joker=25</span>
+        </div>
+        <div class="setup-rule-chip">
+          <b>Target</b>
+          <span>Pemain yang mencapai 25 poin mengakhiri pertandingan.</span>
+        </div>
+        <div class="setup-rule-chip">
+          <b>Spesial</b>
+          <span>WIN/TENHO, Dasar, POT, Joker, dan sistem MATI.</span>
+        </div>
       </div>
-      <br /><button class="start-btn" id="startBtn">🎴 MULAI PERMAINAN</button>
+
+      <button class="start-btn setup-start" id="startBtn">🎴 MULAI PERMAINAN</button>
     </section>
     <section class="game" id="game">
       <div class="table">
