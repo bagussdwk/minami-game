@@ -4067,12 +4067,7 @@
       <div class="modal-box">
         <h2 id="resultTitle">Hasil Game</h2>
         <div id="resultBody"></div>
-        <div class="result-actions" id="resultActions">
-          <button class="result-action-secondary" id="viewTableBtn" type="button">👀 Lihat Meja</button>
-          <button class="start-btn result-action-primary" id="nextGameBtn" type="button">
-            Lanjut Permainan
-          </button>
-        </div>
+        <div class="result-actions" id="resultActions"><button class="result-action-secondary" id="viewTableBtn" type="button">👀 Lihat Meja</button><button class="start-btn result-action-primary" id="nextGameBtn" type="button">▶ Lanjut Permainan</button></div>
         <button
           class="start-btn final-new-game"
           id="finalNewGameBtn"
@@ -4249,10 +4244,7 @@
 
     <div class="modal" id="helpModal">
       <div class="modal-box help-modal-box">
-        <div class="help-modal-head">
-          <h2>💡 Bantuan</h2>
-          <button type="button" class="help-close-x" id="helpCloseBtn" aria-label="Tutup bantuan">×</button>
-        </div>
+        <div class="help-modal-head"><h2>💡 Bantuan</h2><button type="button" class="help-close-x" id="helpCloseBtn" aria-label="Tutup bantuan">×</button></div>
         <div id="helpModalBody"></div>
       </div>
     </div>
@@ -4533,20 +4525,8 @@
         if (!yourHand) return;
         if (hidden) {
           yourHand.style.setProperty("display", "none", "important");
-        } else if (game) {
-          // Saat melihat kembali meja setelah game selesai, kartu tangan
-          // tetap boleh ditampilkan untuk melihat hasil akhir.
+        } else if (!game?.over) {
           yourHand.style.removeProperty("display");
-        }
-      }
-
-      function setResultTableMode(active) {
-        document.body.classList.toggle("result-table-mode", !!active);
-        const btn = document.getElementById("resultContinueBtn");
-        if (btn) btn.style.display = active ? "inline-flex" : "none";
-        if (active) {
-          setYourHandOverlayHidden(false);
-          document.getElementById("resultModal")?.classList.remove("show");
         }
       }
 
@@ -5847,7 +5827,6 @@
         }
 
         document.getElementById("resultModal").classList.add("show");
-        setResultTableMode(false);
       }
       function baseBlockedByPot(cards) {
         if (!Array.isArray(cards) || !cards.length || !game?.potRanks) return null;
@@ -7215,14 +7194,8 @@
         }
       };
 
-      document.getElementById("helpBtn").onclick = () => {
-        setYourHandOverlayHidden(true);
-        suggest();
-      };
-      const closeHelp = () => {
-        document.getElementById("helpModal").classList.remove("show");
-        setYourHandOverlayHidden(false);
-      };
+      document.getElementById("helpBtn").onclick = () => { setYourHandOverlayHidden(true); suggest(); };
+      const closeHelp = () => { document.getElementById("helpModal").classList.remove("show"); setYourHandOverlayHidden(false); };
       document.getElementById("helpCloseBtn").onclick = closeHelp;
       document.getElementById("helpModal").onclick = (e) => {
         if (e.target.id === "helpModal") closeHelp();
@@ -7359,18 +7332,10 @@
           setYourHandOverlayHidden(false);
         }
       };
-      document.getElementById("nextGameBtn").onclick = () => {
-        setResultTableMode(false);
+      document.getElementById("nextGameBtn").onclick = () => { setResultTableMode(false);
         document.getElementById("resultModal").classList.remove("show");
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         startGame();
-      };
-      document.getElementById("viewTableBtn").onclick = () => {
-        setResultTableMode(true);
-      };
-      document.getElementById("resultContinueBtn").onclick = () => {
-        setResultTableMode(false);
-        document.getElementById("resultModal").classList.add("show");
       };
       document.getElementById("finalNewGameBtn").onclick = () => {
         clearSavedGame();
@@ -7412,78 +7377,14 @@
       document.getElementById("featureModal").onclick=e=>{if(e.target.id==="featureModal"){e.currentTarget.classList.remove("show");setYourHandOverlayHidden(false)}};
       document.querySelectorAll(".feature-tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".feature-tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");const s=b.dataset.featureTab==="stats";document.getElementById("featureStatsPanel").style.display=s?"":"none";document.getElementById("featureAchievementsPanel").style.display=s?"none":""});
       
+      function setResultTableMode(active) { document.body.classList.toggle("result-table-mode", !!active); const btn=document.getElementById("resultContinueBtn"); if(btn) btn.style.display=active?"inline-flex":"none"; if(active){setYourHandOverlayHidden(false);document.getElementById("resultModal")?.classList.remove("show");} }
+      document.getElementById("viewTableBtn").onclick = () => setResultTableMode(true);
+      document.getElementById("resultContinueBtn").onclick = () => { setResultTableMode(false); document.getElementById("resultModal").classList.add("show"); };
       // Saat pertama kali membuka halaman:
       // jika ada game tersimpan, lanjutkan game tersebut.
       restoreSavedGame();
     </script>
-  <style id="help-result-ui">
-  .help-modal-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    margin-bottom:10px;
-  }
-  .help-modal-head h2{margin:0!important;flex:1;text-align:center}
-  .help-close-x{
-    width:34px!important;
-    height:34px!important;
-    min-width:34px!important;
-    padding:0!important;
-    margin:0!important;
-    border-radius:50%!important;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:center!important;
-    background:rgba(255,255,255,.09)!important;
-    color:#fff!important;
-    border:1px solid rgba(255,255,255,.12)!important;
-    font-size:24px!important;
-    line-height:1!important;
-    font-weight:800!important;
-  }
-  .help-close-x:hover{background:rgba(255,255,255,.16)!important}
-  .result-actions{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:9px;
-    margin-top:14px;
-  }
-  .result-actions button{width:100%;margin:0}
-  .result-action-secondary{
-    background:rgba(255,255,255,.08);
-    color:#dff3e9;
-    border:1px solid rgba(255,255,255,.14);
-  }
-  .result-action-primary{
-    background:linear-gradient(145deg,#f1cb70,#d9a441);
-    color:#18251d;
-  }
-  .result-table-continue{
-    position:fixed;
-    left:50%;
-    bottom:calc(10px + env(safe-area-inset-bottom));
-    transform:translateX(-50%);
-    z-index:1800;
-    width:min(300px,calc(100% - 24px));
-    display:none;
-    align-items:center;
-    justify-content:center;
-    min-height:42px;
-    border-radius:12px;
-    padding:10px 16px;
-    background:linear-gradient(145deg,#f1cb70,#d9a441);
-    color:#18251d;
-    font-size:13px;
-    font-weight:900;
-    box-shadow:0 10px 30px rgba(0,0,0,.35);
-  }
-  body.result-table-mode .result-table-continue{display:inline-flex}
-  @media(max-width:700px){
-    .result-actions{gap:7px}
-    .result-actions button{min-height:44px;padding:10px 8px;font-size:11px}
-  }
-</style><button type="button" class="result-table-continue" id="resultContinueBtn">▶ Lanjut Permainan</button>
+  <style id="help-result-ui">.help-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.help-modal-head h2{margin:0!important;flex:1;text-align:center}.help-close-x{width:34px!important;height:34px!important;min-width:34px!important;padding:0!important;border-radius:50%!important;background:rgba(255,255,255,.09)!important;color:#fff!important;font-size:24px!important;line-height:1!important;font-weight:800!important}.result-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}.result-actions button{width:100%;margin:0}.result-action-secondary{background:rgba(255,255,255,.08);color:#dff3e9;border:1px solid rgba(255,255,255,.14)}.result-action-primary{background:linear-gradient(145deg,#f1cb70,#d9a441);color:#18251d}.result-table-continue{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:1800;width:min(300px,calc(100% - 24px));display:none;align-items:center;justify-content:center;min-height:42px;border-radius:12px;padding:10px 16px;background:linear-gradient(145deg,#f1cb70,#d9a441);color:#18251d;font-size:13px;font-weight:900;box-shadow:0 10px 30px rgba(0,0,0,.35)}body.result-table-mode .result-table-continue{display:inline-flex}</style><button type="button" class="result-table-continue" id="resultContinueBtn">▶ Lanjut Permainan</button>
 </body></html>
 <style id="mobile-hand-fixed-footer-final">
   @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
