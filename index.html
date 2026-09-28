@@ -3948,9 +3948,13 @@
 
         render();
 
-        // AI berpikir 2–4 detik sebelum bermain.
+        // Saat Anda masih hidup, AI berpikir 2–4 detik.
+        // Setelah Anda mati, mode tontonan dipercepat agar game tidak lama.
         if (game.turn !== 0) {
-          const delay = 2000 + Math.floor(Math.random() * 2001);
+          const spectatorFast = !!game.dead[0];
+          const delay = spectatorFast
+            ? 250
+            : 2000 + Math.floor(Math.random() * 2001);
 
           setTimeout(() => {
             if (!game.over && game.turn !== 0 && !game.dead[game.turn]) {
@@ -4856,6 +4860,7 @@
       };
       document.getElementById("nextGameBtn").onclick = () => {
         document.getElementById("resultModal").classList.remove("show");
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         startGame();
       };
     </script>
