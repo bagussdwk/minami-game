@@ -1045,6 +1045,110 @@
         padding: 8px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       }
+      .final-podium {
+        margin-top: 14px;
+        padding: 14px;
+        border-radius: 14px;
+        background: linear-gradient(
+          180deg,
+          rgba(243, 207, 112, 0.12),
+          rgba(255, 255, 255, 0.045)
+        );
+        border: 1px solid rgba(243, 207, 112, 0.24);
+        text-align: center;
+      }
+      .final-podium-title {
+        margin: 0 0 5px;
+        color: #f3cf70;
+        font-size: 18px;
+        font-weight: 900;
+      }
+      .final-podium-subtitle {
+        margin: 0 0 12px;
+        color: #d9eee3;
+        font-size: 11px;
+      }
+      .podium-list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        align-items: end;
+      }
+      .podium-item {
+        min-width: 0;
+        padding: 10px 7px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .podium-medal {
+        font-size: 25px;
+        line-height: 1;
+        margin-bottom: 5px;
+      }
+      .podium-rank {
+        font-size: 10px;
+        color: #b9d9ca;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .podium-name {
+        margin-top: 3px;
+        font-size: 12px;
+        font-weight: 900;
+        overflow-wrap: anywhere;
+      }
+      .podium-score {
+        margin-top: 3px;
+        color: #f3cf70;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .final-last {
+        margin-top: 10px;
+        padding: 9px 10px;
+        border-radius: 10px;
+        background: rgba(138, 32, 32, 0.2);
+        border: 1px solid rgba(255, 154, 154, 0.18);
+        color: #ffe4e4;
+        font-size: 12px;
+      }
+      .final-new-game {
+        width: 100%;
+        margin-top: 10px;
+      }
+      @media (max-width: 700px) {
+        .final-podium {
+          margin-top: 10px;
+          padding: 10px;
+          border-radius: 11px;
+        }
+        .final-podium-title {
+          font-size: 15px;
+        }
+        .final-podium-subtitle {
+          font-size: 10px;
+          margin-bottom: 9px;
+        }
+        .podium-list {
+          gap: 5px;
+        }
+        .podium-item {
+          padding: 8px 5px;
+          border-radius: 9px;
+        }
+        .podium-medal {
+          font-size: 21px;
+        }
+        .podium-rank {
+          font-size: 8px;
+        }
+        .podium-name,
+        .podium-score,
+        .final-last {
+          font-size: 10px;
+        }
+      }
       .win {
         color: #f3cf70;
         font-weight: 900;
@@ -2586,6 +2690,9 @@
         <br /><button class="start-btn" id="nextGameBtn">
           Lanjut Game Berikutnya
         </button>
+        <button class="start-btn final-new-game" id="finalNewGameBtn" style="display:none">
+          Permainan Baru
+        </button>
       </div>
     </div>
 
@@ -3812,14 +3919,62 @@
             "</b></div></div>";
           b.appendChild(row);
         }
-        if (game.scores.some((x) => x >= 25)) {
-          let wi = game.scores.findIndex((x) => x >= 25);
-          b.innerHTML +=
-            '<h3 class="win">🏆 ' +
-            (wi === 0 ? "Anda" : "Pemain " + (wi + 1)) +
-            " mencapai 25 poin dan menang!</h3>";
-          document.getElementById("nextGameBtn").style.display = "none";
-        } else document.getElementById("nextGameBtn").style.display = "block";
+        const reachedTarget = game.scores.some((x) => x >= 25);
+        const nextGameBtn = document.getElementById("nextGameBtn");
+        const finalNewGameBtn = document.getElementById("finalNewGameBtn");
+
+        if (reachedTarget) {
+          const ranking = Array.from({ length: playerCount }, (_, i) => i).sort(
+            (a, b) =>
+              game.scores[b] - game.scores[a] ||
+              game.turnOrder.indexOf(a) - game.turnOrder.indexOf(b),
+          );
+
+          const playerLabel = (i) => (i === 0 ? "Anda" : "Pemain " + (i + 1));
+          const medal = ["🥇", "🥈", "🥉"];
+
+          let podiumHtml =
+            '<div class="final-podium">' +
+            '<div class="final-podium-title">🏆 Permainan Selesai</div>' +
+            '<div class="final-podium-subtitle">Podium akhir berdasarkan total poin</div>' +
+            '<div class="podium-list">';
+
+          ranking.slice(0, 3).forEach((i, k) => {
+            podiumHtml +=
+              '<div class="podium-item">' +
+              '<div class="podium-medal">' +
+              medal[k] +
+              "</div>" +
+              '<div class="podium-rank">Posisi ' +
+              (k + 1) +
+              "</div>" +
+              '<div class="podium-name">' +
+              playerLabel(i) +
+              "</div>" +
+              '<div class="podium-score">' +
+              game.scores[i] +
+              " poin</div>" +
+              "</div>";
+          });
+
+          podiumHtml += "</div>";
+
+          const last = ranking[ranking.length - 1];
+          podiumHtml +=
+            '<div class="final-last">Posisi terakhir: <b>' +
+            playerLabel(last) +
+            "</b> — " +
+            game.scores[last] +
+            " poin</div></div>";
+
+          b.innerHTML += podiumHtml;
+          nextGameBtn.style.display = "none";
+          finalNewGameBtn.style.display = "block";
+        } else {
+          nextGameBtn.style.display = "block";
+          finalNewGameBtn.style.display = "none";
+        }
+
         document.getElementById("resultModal").classList.add("show");
       }
       function playBase() {
@@ -5007,6 +5162,16 @@
         document.getElementById("resultModal").classList.remove("show");
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         startGame();
+      };
+      document.getElementById("finalNewGameBtn").onclick = () => {
+        clearSavedGame();
+        window.minamiScores = null;
+        window.minamiNextOrder = null;
+        window.minamiDirection = 1;
+        document.getElementById("resultModal").classList.remove("show");
+        document.getElementById("game").classList.remove("active");
+        document.getElementById("setup").style.display = "";
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
 
       // Saat pertama kali membuka halaman:
