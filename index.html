@@ -3586,7 +3586,7 @@
         if (game.over) return;
         game.over = true;
         const yourHand = document.querySelector(".your-hand");
-        if (yourHand) yourHand.style.display = "none";
+        if (yourHand) yourHand.style.setProperty("display", "none", "important");
         const deadPlayers = [];
         const alive = [];
         for (let i = 0; i < playerCount; i++) {
@@ -4749,7 +4749,7 @@
 
         document.getElementById("setup").style.display = "none";
         const yourHand = document.querySelector(".your-hand");
-        if (yourHand) yourHand.style.display = "";
+        if (yourHand) yourHand.style.removeProperty("display");
 
         document
           .getElementById("game")
