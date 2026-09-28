@@ -7351,22 +7351,31 @@
   }
 </style>
 <style id="topbar-chat-header-final">
-  /* Header ala room chat: tetap terlihat saat isi halaman di-scroll. */
+  /* Header ala room chat WhatsApp: selalu menempel di viewport saat halaman di-scroll. */
   .topbar {
-    position: sticky !important;
+    position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
+    height: 64px !important;
     z-index: 10000 !important;
   }
 
-  @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
+  /* Beri ruang di bawah header agar isi game tidak tertutup. */
+  body {
+    padding-top: 64px !important;
+  }
+
+  /* Semua perangkat yang disentuh, termasuk HP landscape 16:9,
+     tetap memakai tinggi header mobile. */
+  @media (max-width: 700px), (hover: none) and (pointer: coarse) {
     .topbar {
-      position: sticky !important;
-      top: 0 !important;
-      width: 100% !important;
-      z-index: 10000 !important;
+      height: 52px !important;
+      min-height: 52px !important;
+    }
+    body {
+      padding-top: 52px !important;
     }
   }
 </style>
