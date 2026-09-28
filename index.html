@@ -3785,7 +3785,7 @@
   }
 </style>
 <style id="minami-ui-safe-result-help">
-.help-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.help-modal-head h2{margin:0}.help-close-x{width:34px;height:34px;min-width:34px;padding:0;border-radius:50%;background:rgba(255,255,255,.09);color:#fff;font-size:22px;line-height:1}.result-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}.result-actions .start-btn{margin:0;flex:1 1 180px}.result-table-btn{display:none;position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:1200;min-width:190px;background:linear-gradient(145deg,#f1cb70,#d9a441);color:#18251d;box-shadow:0 10px 25px rgba(0,0,0,.3)}body.result-table-mode .result-table-btn{display:inline-flex;align-items:center;justify-content:center}body.result-table-mode .your-hand{display:block!important}body.result-table-mode #resultModal{display:none!important}@media(max-width:700px){.result-actions{gap:7px}.result-actions .start-btn{font-size:12px;padding:11px 10px}.result-table-btn{bottom:8px;min-width:170px;font-size:12px}}
+.help-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.help-modal-head h2{margin:0}.help-close-x{width:34px;height:34px;min-width:34px;padding:0;border-radius:50%;background:rgba(255,255,255,.09);color:#fff;font-size:22px;line-height:1}body.result-table-mode .table.game-victory{animation:minamiVictoryTable 1.8s ease-in-out infinite}body.result-table-mode .player.victory-player{animation:minamiVictoryPlayer 1.45s ease-in-out infinite;z-index:100}.result-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}.result-actions .start-btn{margin:0;flex:1 1 180px}.result-table-btn{display:none;position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:1200;min-width:190px;background:linear-gradient(145deg,#f1cb70,#d9a441);color:#18251d;box-shadow:0 10px 25px rgba(0,0,0,.3)}body.result-table-mode .result-table-btn{display:inline-flex;align-items:center;justify-content:center}body.result-table-mode .your-hand{display:block!important}body.result-table-mode #resultModal{display:none!important}@media(max-width:700px){.result-actions{gap:7px}.result-actions .start-btn{font-size:12px;padding:11px 10px}.result-table-btn{bottom:8px;min-width:170px;font-size:12px}}
 </style>
   </head>
   <body>
@@ -4363,7 +4363,11 @@
           table.classList.remove("game-victory");
           void table.offsetWidth;
           table.classList.add("game-victory");
-          setTimeout(() => table.classList.remove("game-victory"), 2900);
+          setTimeout(() => {
+            if (!document.body.classList.contains("result-table-mode")) {
+              table.classList.remove("game-victory");
+            }
+          }, 2900);
         }
 
         const player = document.getElementById("player" + (playerIndex + 1));
@@ -4371,7 +4375,11 @@
           player.classList.remove("victory-player");
           void player.offsetWidth;
           player.classList.add("victory-player");
-          setTimeout(() => player.classList.remove("victory-player"), 2900);
+          setTimeout(() => {
+            if (!document.body.classList.contains("result-table-mode")) {
+              player.classList.remove("victory-player");
+            }
+          }, 2900);
         }
 
         const pointText = points > 0 ? "🏆 +" + points + " POIN" : "⭐ POIN TERTINGGI";
@@ -7228,6 +7236,41 @@
         if (active) {
           document.getElementById("resultModal")?.classList.remove("show");
           setYourHandOverlayHidden(false);
+
+          // Saat kembali melihat meja, pertahankan suasana kemenangan
+          // yang sama seperti setelah ceremony selesai.
+          const delta = Array.isArray(game?.lastResult?.delta)
+            ? game.lastResult.delta
+            : [];
+          if (delta.length) {
+            const topPointPlayer = delta.reduce(
+              (best, value, index) =>
+                value > delta[best] ? index : best,
+              0,
+            );
+            const table = document.querySelector(".table");
+            if (table) {
+              table.classList.remove("game-victory");
+              void table.offsetWidth;
+              table.classList.add("game-victory");
+            }
+            document
+              .querySelectorAll(".victory-player")
+              .forEach((el) => el.classList.remove("victory-player"));
+            const player = document.getElementById(
+              "player" + (topPointPlayer + 1),
+            );
+            if (player) {
+              player.classList.add("victory-player");
+            }
+          }
+        } else {
+          document
+            .querySelectorAll(".victory-player")
+            .forEach((el) => el.classList.remove("victory-player"));
+          document
+            .querySelector(".table")
+            ?.classList.remove("game-victory");
         }
       };
       document.getElementById("viewTableBtn").onclick = () => setResultTableMode(true);
