@@ -794,6 +794,101 @@
       .center {
         display: none;
       }
+      .move-history-top-btn {
+        min-height: 28px;
+        padding: 5px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(243, 207, 112, 0.2);
+        background: rgba(243, 207, 112, 0.08);
+        color: #f3cf70;
+        font-size: 9px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+      .move-history-top-btn:hover {
+        filter: brightness(1.1);
+      }
+      .move-history-modal-box {
+        width: min(680px, calc(100% - 20px));
+        max-height: 82vh;
+        overflow: hidden;
+      }
+      .move-history-list {
+        max-height: 62vh;
+        overflow-y: auto;
+        display: grid;
+        gap: 8px;
+        padding-right: 2px;
+      }
+      .move-history-player {
+        padding: 9px 10px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.045);
+        border: 1px solid rgba(255,255,255,.08);
+      }
+      .move-history-player-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+        color: #f3cf70;
+        font-size: 10px;
+        font-weight: 900;
+      }
+      .move-history-player-count {
+        color: #9fc6b7;
+        font-size: 8px;
+        font-weight: 700;
+      }
+      .move-history-item {
+        padding: 6px 7px;
+        margin-top: 4px;
+        border-radius: 7px;
+        background: rgba(0,0,0,.12);
+        color: #d8eee3;
+        font-size: 9px;
+        line-height: 1.35;
+      }
+      .move-history-item-label {
+        color: #fff;
+        font-weight: 900;
+        margin-right: 4px;
+      }
+      .move-history-empty {
+        color: #8fb5a7;
+        font-size: 9px;
+        font-style: italic;
+      }
+      .move-history-card {
+        display: inline-block;
+        margin: 1px 2px 1px 0;
+        padding: 2px 4px;
+        border-radius: 4px;
+        background: #fff;
+        border: 1px solid #d9d9d9;
+        color: #111;
+        font-weight: 800;
+      }
+      .move-history-card.red { color: #d62828; }
+      .move-history-card.joker {
+        background: #f3c33b;
+        border-color: #d6a900;
+      }
+      @media (max-width: 700px) {
+        .move-history-top-btn {
+          min-height: 24px;
+          padding: 4px 6px;
+          font-size: 8px;
+        }
+        .move-history-modal-box {
+          width: calc(100% - 12px);
+          padding: 11px;
+        }
+        .move-history-list {
+          max-height: 68vh;
+        }
+      }
       .game-status-ribbon {
         width: min(680px, calc(100% - 24px));
         margin: 0 auto 9px;
@@ -3522,6 +3617,8 @@
     </section>
     <section class="game" id="game">
       <div class="game-status-ribbon" aria-live="polite">
+        <button type="button" class="move-history-top-btn" id="moveHistoryBtn" title="Lihat semua riwayat kartu yang diturunkan">🕘 History</button>
+        <div class="game-status-divider"></div>
         <div class="game-status-item">
           <span class="game-status-label">Putaran</span>
           <span class="game-status-value" id="roundInfo">1</span>
@@ -3637,6 +3734,18 @@
           </div>
           <div class="score-history-list" id="scoreHistoryBoard"></div>
         </div>
+      </div>
+    </div>
+    <div class="modal" id="moveHistoryModal">
+      <div class="modal-box move-history-modal-box">
+        <div class="score-modal-head">
+          <div>
+            <h2 class="score-modal-title">🕘 Riwayat Turun Kartu</h2>
+            <div class="score-modal-subtitle">Semua kartu yang sudah diturunkan setiap pemain pada game ini</div>
+          </div>
+          <button type="button" class="score-modal-close" id="moveHistoryClose" aria-label="Tutup riwayat">×</button>
+        </div>
+        <div class="move-history-list" id="moveHistoryList"></div>
       </div>
     </div>
     <div class="modal" id="jokerChoiceModal">
@@ -4743,9 +4852,42 @@
         }
         if (hasJoker) playJokerSound();
 
-        // Hanya tampilkan 1 aksi terakhir
-        game.history[i] = game.history[i].slice(0, 1);
+        // Simpan seluruh aksi pemain. Riwayat lama tidak lagi dipotong,
+        // sehingga panel History dapat merekap semua kartu yang diturunkan.
       }
+      function renderMoveHistory() {
+        const list = document.getElementById("moveHistoryList");
+        if (!list || !game) return;
+
+        list.innerHTML = Array.from({ length: playerCount }, (_, i) => {
+          const moves = Array.isArray(game.history?.[i]) ? game.history[i] : [];
+          const playerName = i === 0 ? "Anda" : "Pemain " + (i + 1);
+
+          // logMove memakai unshift, jadi balik agar urutan tampil dari aksi pertama.
+          const ordered = [...moves].reverse();
+
+          return '<div class="move-history-player">' +
+            '<div class="move-history-player-title">' +
+              '<span>🎴 ' + playerName + '</span>' +
+              '<span class="move-history-player-count">' + moves.length + ' aksi</span>' +
+            '</div>' +
+            (ordered.length
+              ? ordered.map((x, idx) =>
+                  '<div class="move-history-item">' +
+                    '<span class="move-history-item-label">' + (idx + 1) + '. ' + (x.label || "Turun") + ':</span>' +
+                    (Array.isArray(x.cards) ? x.cards.map(c =>
+                      '<span class="move-history-card ' +
+                        (c.red ? 'red ' : '') + (c.joker ? 'joker' : '') + '">' +
+                        c.text +
+                      '</span>'
+                    ).join('') : '') +
+                  '</div>'
+                ).join('')
+              : '<div class="move-history-empty">Belum ada kartu yang diturunkan.</div>') +
+          '</div>';
+        }).join('');
+      }
+
       function renderPlayers() {
         for (let i = 0; i < playerCount; i++) {
           let el = document.getElementById("player" + (i + 1));
@@ -6677,6 +6819,23 @@
           saveGameState();
         };
       });
+
+      document.getElementById("moveHistoryBtn").onclick = () => {
+        if (!game) return;
+        setYourHandOverlayHidden(true);
+        renderMoveHistory();
+        document.getElementById("moveHistoryModal").classList.add("show");
+      };
+      document.getElementById("moveHistoryClose").onclick = () => {
+        document.getElementById("moveHistoryModal").classList.remove("show");
+        setYourHandOverlayHidden(false);
+      };
+      document.getElementById("moveHistoryModal").onclick = (e) => {
+        if (e.target.id === "moveHistoryModal") {
+          document.getElementById("moveHistoryModal").classList.remove("show");
+          setYourHandOverlayHidden(false);
+        }
+      };
 
       document.getElementById("scoreTopBtn").onclick = () => {
         setYourHandOverlayHidden(true);
