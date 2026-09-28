@@ -3385,6 +3385,16 @@
         } catch (e) {}
       }
 
+      function setYourHandOverlayHidden(hidden) {
+        const yourHand = document.querySelector(".your-hand");
+        if (!yourHand) return;
+        if (hidden) {
+          yourHand.style.setProperty("display", "none", "important");
+        } else if (!game?.over) {
+          yourHand.style.removeProperty("display");
+        }
+      }
+
       function resumeRestoredGame() {
         if (!game) return;
 
@@ -5689,14 +5699,17 @@
       document.getElementById("potBtn").onclick = makePot;
       document.getElementById("discardJokerBtn").onclick = discardJoker;
       document.getElementById("activeRulesBtn").onclick = () => {
+        setYourHandOverlayHidden(true);
         document.getElementById("activeRulesModal").classList.add("show");
       };
       document.getElementById("activeRulesClose").onclick = () => {
         document.getElementById("activeRulesModal").classList.remove("show");
+        setYourHandOverlayHidden(false);
       };
       document.getElementById("activeRulesModal").onclick = (e) => {
         if (e.target.id === "activeRulesModal") {
           document.getElementById("activeRulesModal").classList.remove("show");
+          setYourHandOverlayHidden(false);
         }
       };
 
@@ -5723,15 +5736,18 @@
       };
       document.getElementById("newGameTopBtn").onclick = doNewGame;
       document.getElementById("scoreTopBtn").onclick = () => {
+        setYourHandOverlayHidden(true);
         renderScores();
         document.getElementById("scoreModal").classList.add("show");
       };
       document.getElementById("scoreModalClose").onclick = () => {
         document.getElementById("scoreModal").classList.remove("show");
+        setYourHandOverlayHidden(false);
       };
       document.getElementById("scoreModal").onclick = (e) => {
         if (e.target.id === "scoreModal") {
           document.getElementById("scoreModal").classList.remove("show");
+          setYourHandOverlayHidden(false);
         }
       };
       document.getElementById("nextGameBtn").onclick = () => {
