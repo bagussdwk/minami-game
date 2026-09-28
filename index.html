@@ -7071,6 +7071,7 @@
       menuModal.onclick = (e) => { if (e.target === menuModal) closeMenu(); };
       document.getElementById("menuMusicBtn").onclick = () => {
         musicToggle.click();
+        closeMenu();
       };
       document.getElementById("menuRestartBtn").onclick = () => {
         closeMenu();
@@ -7268,5 +7269,32 @@
     .score-history-subtitle {
       font-size: 8px;
     }
+  }
+</style>
+
+
+<style id="menu-clean-interface">
+  /* Saat menu hamburger terbuka, meja/kartu tidak terlihat di belakangnya. */
+  #menuModal {
+    background: rgba(4, 25, 18, 0.985) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Kontrol yang sudah dipindahkan ke hamburger tidak tampil lagi di topbar. */
+  #musicToggle,
+  #newGameTopBtn,
+  #activeRulesBtn {
+    display: none !important;
+  }
+
+  /* Menu tetap menjadi satu-satunya antarmuka permainan yang terlihat saat terbuka. */
+  #menuModal.show {
+    z-index: 5000 !important;
+  }
+
+  #menuModal .menu-modal-box {
+    position: relative;
+    z-index: 5001;
   }
 </style>
