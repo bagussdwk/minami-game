@@ -4916,39 +4916,35 @@
 
           let hi = document.getElementById("history" + (i + 1));
 
-          // History kecil di meja hanya ditampilkan di bawah pemain
-          // yang terakhir melakukan aksi. Rekapan lengkap tetap tersedia
-          // melalui tombol 🕘 History.
-          const lastPlayer = Number.isInteger(game.lastMovePlayer)
-            ? game.lastMovePlayer
-            : -1;
-          hi.innerHTML = i === lastPlayer
-            ? (game.history[i] || [])
-                .slice(0, 1)
-                .map(
-                  (x) =>
-                    '<div class="' +
-                    (x.latest ? "history-latest" : "") +
-                    '"><b>' +
-                    x.label +
-                    ":</b> " +
-                    x.cards
-                      .map((c) => {
-                        let colorClass = c.red ? "history-red" : "history-black";
-                        if (c.joker) colorClass += " history-joker";
-                        return (
-                          '<span class="history-card ' +
-                          colorClass +
-                          '">' +
-                          c.text +
-                          "</span>"
-                        );
-                      })
-                      .join("") +
-                    "</div>",
-                )
-                .join("")
-            : "";
+          // History kecil di meja tetap menempel setelah aksi dilakukan.
+          // Setiap pemain mempertahankan aksi terakhirnya, sehingga setelah
+          // giliran berpindah history pemain sebelumnya tidak ikut hilang.
+          // Rekapan lengkap semua aksi tetap tersedia melalui tombol 🕘 History.
+          hi.innerHTML = (game.history[i] || [])
+            .slice(0, 1)
+            .map(
+              (x) =>
+                '<div class="' +
+                (x.latest ? "history-latest" : "") +
+                '"><b>' +
+                x.label +
+                ":</b> " +
+                x.cards
+                  .map((c) => {
+                    let colorClass = c.red ? "history-red" : "history-black";
+                    if (c.joker) colorClass += " history-joker";
+                    return (
+                      '<span class="history-card ' +
+                      colorClass +
+                      '">' +
+                      c.text +
+                      "</span>"
+                    );
+                  })
+                  .join("") +
+                "</div>",
+            )
+            .join("");
 
           (game.history[i] || []).forEach((x) => (x.latest = false));
 
