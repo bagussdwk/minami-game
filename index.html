@@ -5079,6 +5079,16 @@
         const yourHand = document.querySelector(".your-hand");
         if (yourHand)
           yourHand.style.setProperty("display", "none", "important");
+        // Saat game berakhir, turunkan dulu kombinasi legal yang masih
+        // bisa dibuat dari tangan pemain lain. Contoh 3,3,3,4 menjadi
+        // POT 3,3,3 sehingga kartu residual yang dihitung hanya 4.
+        for (let i = 0; i < playerCount; i++) {
+          if (i === winner) continue;
+          if (game.dead[i] && !game.hasBase[i]) continue;
+          const arranged = autoArrangeResidualHand(game.hands[i]);
+          game.hands[i] = arranged.residual;
+        }
+
         const deadPlayers = [];
         const alive = [];
         for (let i = 0; i < playerCount; i++) {
@@ -5613,7 +5623,61 @@
         }
         return handValue(work);
       }
-      // Saat game berakhir karena ada pemain yang WIN/TENHO, pemain lain\n      // dianggap langsung mati. Namun kartu yang masih bisa dimainkan secara\n      // legal tetap dihitung seolah-olah sempat diturunkan terlebih dahulu.\n      // Contoh: 3,3,3,4 -> POT 3,3,3 -> residual hanya 4.\n      function autoArrangeResidualHand(h) {\n        let work = [...h];\n        const arranged = [];\n\n        while (work.length >= 3) {\n          let best = null;\n\n          // POT: ambil seluruh kartu dengan rank yang sama jika minimal 3.\n          // Ini sengaja mengecek seluruh grup, bukan hanya 3 kartu, supaya\n          // 3,3,3,3 juga menjadi satu POT utuh.\n          const byRank = new Map();\n          for (const c of work) {\n            if (isJoker(c)) continue;\n            if (!byRank.has(c.rank)) byRank.set(c.rank, []);\n            byRank.get(c.rank).push(c);\n          }\n          for (const cards of byRank.values()) {\n            if (cards.length < 3) continue;\n            const pm = potCards(cards);\n            if (!pm) continue;\n            const gain = handValue(cards);\n            if (\n              !best ||\n              gain > best.gain ||\n              (gain === best.gain && cards.length > best.cards.length)\n            ) {\n              best = { cards, gain, type: "pot" };\n            }\n          }\n\n          // DASAR: gunakan kandidat yang memang dikenali oleh rule engine.\n          // initialBaseCandidates mencari dasar legal sampai 5 kartu, sehingga\n          // kombinasi seperti 4-5-6 / 7-8-9-10 tetap bisa dihitung otomatis.\n          for (const candidate of initialBaseCandidates(work)) {\n            const cards = candidate.cards || [];\n            if (cards.length < 3) continue;\n            const gain = handValue(cards);\n            if (\n              !best ||\n              gain > best.gain ||\n              (gain === best.gain && cards.length > best.cards.length)\n            ) {\n              best = { cards, gain, type: "base" };\n            }\n          }\n\n          if (!best) break;\n\n          for (const c of best.cards) {\n            const idx = work.indexOf(c);\n            if (idx >= 0) work.splice(idx, 1);\n          }\n          arranged.push(best);\n        }\n\n        return { residual: work, arranged };\n      }\n\n      function showResultTenho(w, d) {
+      // Saat game berakhir karena ada pemain yang WIN/TENHO, pemain lain\n      // dianggap langsung mati. Namun kartu yang masih bisa dimainkan secara\n      // legal tetap dihitung seolah-olah sempat diturunkan terlebih dahulu.\n      // Contoh: 3,3,3,4 -> POT 3,3,3 -> residual hanya 4.\n      function autoArrangeResidualHand(h) {
+        let work = [...h];
+        const arranged = [];
+
+        while (work.length >= 3) {
+          let best = null;
+
+          // POT: seluruh kartu dengan rank sama yang berjumlah minimal 3.
+          const byRank = new Map();
+          for (const c of work) {
+            if (isJoker(c)) continue;
+            if (!byRank.has(c.rank)) byRank.set(c.rank, []);
+            byRank.get(c.rank).push(c);
+          }
+
+          for (const cards of byRank.values()) {
+            if (cards.length < 3) continue;
+            const pm = potCards(cards);
+            if (!pm) continue;
+            const gain = handValue(cards);
+            if (
+              !best ||
+              gain > best.gain ||
+              (gain === best.gain && cards.length > best.cards.length)
+            ) {
+              best = { cards, gain, type: "pot" };
+            }
+          }
+
+          // DASAR: gunakan kandidat yang dikenali oleh rule engine.
+          for (const candidate of initialBaseCandidates(work)) {
+            const cards = candidate.cards || [];
+            if (cards.length < 3) continue;
+            const gain = handValue(cards);
+            if (
+              !best ||
+              gain > best.gain ||
+              (gain === best.gain && cards.length > best.cards.length)
+            ) {
+              best = { cards, gain, type: "base" };
+            }
+          }
+
+          if (!best) break;
+
+          for (const c of best.cards) {
+            const idx = work.indexOf(c);
+            if (idx >= 0) work.splice(idx, 1);
+          }
+          arranged.push(best);
+        }
+
+        return { residual: work, arranged };
+      }
+      function showResultTenho(w, d) {
         let residual = game.hands.map(estimateResidualValue);
         let others = [];
         for (let i = 0; i < playerCount; i++)
