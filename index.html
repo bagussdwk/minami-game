@@ -2772,6 +2772,139 @@
       };
       let playerCount = 4,
         game = null;
+
+      const MINAMI_SAVE_KEY = "minami_game_state_v1";
+
+      function saveGameState() {
+        if (!game) return;
+        try {
+          localStorage.setItem(
+            MINAMI_SAVE_KEY,
+            JSON.stringify({
+              game: {
+                ...game,
+                potRanks: Array.from(game.potRanks || []),
+              },
+              nextOrder: Array.isArray(window.minamiNextOrder)
+                ? window.minamiNextOrder
+                : null,
+              direction: window.minamiDirection ?? game.direction ?? 1,
+            }),
+          );
+        } catch (e) {
+          // Abaikan jika penyimpanan browser tidak tersedia.
+        }
+      }
+
+      function clearSavedGame() {
+        try {
+          localStorage.removeItem(MINAMI_SAVE_KEY);
+        } catch (e) {}
+      }
+
+      function resumeRestoredGame() {
+        if (!game) return;
+
+        document.getElementById("setup").style.display = "none";
+        document
+          .getElementById("game")
+          .classList.add("active", "players-" + playerCount);
+
+        for (let i = 1; i <= 5; i++) {
+          document.getElementById("player" + i).style.display =
+            i <= playerCount ? "block" : "none";
+        }
+
+        renderDeadCards(game.deadCards, game.jokerIndex, true);
+        document.getElementById("jokerInfo").textContent = "";
+        document.getElementById("status").textContent = game.over
+          ? "Game selesai"
+          : "Game dilanjutkan";
+
+        const yourHand = document.querySelector(".your-hand");
+        if (yourHand) {
+          if (game.over)
+            yourHand.style.setProperty("display", "none", "important");
+          else yourHand.style.removeProperty("display");
+        }
+
+        if (game.over) {
+          document.getElementById("resultModal").classList.remove("show");
+          if (game.lastResult) {
+            showResult(
+              game.lastResult.winner,
+              game.lastResult.reason,
+              game.lastResult.delta,
+            );
+          }
+          return;
+        }
+
+        render();
+
+        // Setelah refresh, lanjutkan giliran tanpa mengulang pembagian kartu.
+        if (game.turn !== 0 && !game.dead[game.turn]) {
+          const spectatorFast = !!game.dead[0];
+          const delay = spectatorFast
+            ? 250
+            : 2000 + Math.floor(Math.random() * 2001);
+
+          setTimeout(() => {
+            if (!game.over && game.turn !== 0 && !game.dead[game.turn]) {
+              aiTurn();
+            }
+          }, delay);
+        } else if (game.turn === 0 && game.round >= 2 && !humanHasMove()) {
+          markDead(0);
+          game.firstRoundDone[0] = true;
+          if (game.dead.every(Boolean)) endGame(null, "ALL_DEAD");
+          else nextTurn();
+        }
+      }
+
+      function restoreSavedGame() {
+        try {
+          const raw = localStorage.getItem(MINAMI_SAVE_KEY);
+          if (!raw) return false;
+
+          const saved = JSON.parse(raw);
+          if (!saved || !saved.game) return false;
+
+          game = saved.game;
+          playerCount = Number(game.playerCount) || 4;
+          game.potRanks = new Set(Array.isArray(game.potRanks) ? game.potRanks : []);
+          game.selected = Array.isArray(game.selected) ? game.selected : [];
+          game.dead = Array.isArray(game.dead) ? game.dead : Array(playerCount).fill(false);
+          game.deadOrder = Array.isArray(game.deadOrder)
+            ? game.deadOrder
+            : Array(playerCount).fill(null);
+          game.hasBase = Array.isArray(game.hasBase)
+            ? game.hasBase
+            : Array(playerCount).fill(false);
+          game.firstRoundDone = Array.isArray(game.firstRoundDone)
+            ? game.firstRoundDone
+            : Array(playerCount).fill(false);
+          game.history = Array.isArray(game.history)
+            ? game.history
+            : Array.from({ length: playerCount }, () => []);
+          game.scores = Array.isArray(game.scores)
+            ? game.scores
+            : Array(playerCount).fill(0);
+
+          window.minamiScores = game.scores;
+          window.minamiDirection =
+            saved.direction === -1 ? -1 : game.direction === -1 ? -1 : 1;
+          window.minamiNextOrder = Array.isArray(saved.nextOrder)
+            ? saved.nextOrder.slice()
+            : null;
+
+          resumeRestoredGame();
+          return true;
+        } catch (e) {
+          clearSavedGame();
+          return false;
+        }
+      }
       const val = (r) =>
         r === "A" ? 15 : ["J", "Q", "K"].includes(r) ? 10 : Number(r);
       function shuffle(a) {
@@ -3057,6 +3190,7 @@
         renderScores();
         updateButtons();
         bindDropTargets();
+        saveGameState();
       }
       function clearDropTargets() {
         document
@@ -3625,6 +3759,12 @@
         for (let i = 0; i < playerCount; i++) game.scores[i] += scoreDelta[i];
         prepareNextTurnOrder(winner);
         if (winner !== null || reason === "TENHO") toggleDirection();
+        game.lastResult = {
+          winner,
+          reason,
+          delta: scoreDelta.slice(),
+        };
+        saveGameState();
         showResult(winner, reason, scoreDelta);
       }
       function showResult(winner, reason, delta) {
@@ -4746,6 +4886,7 @@
         game.jokerIndex = jokerIndex;
 
         window.minamiScores = game.scores;
+        saveGameState();
 
         document.getElementById("setup").style.display = "none";
         const yourHand = document.querySelector(".your-hand");
@@ -4856,6 +4997,10 @@
         }
       };
       document.getElementById("newGameBtn").onclick = () => {
+        clearSavedGame();
+        window.minamiScores = null;
+        window.minamiNextOrder = null;
+        window.minamiDirection = 1;
         location.reload();
       };
       document.getElementById("nextGameBtn").onclick = () => {
@@ -4863,6 +5008,10 @@
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         startGame();
       };
+
+      // Saat pertama kali membuka halaman:
+      // jika ada game tersimpan, lanjutkan game tersebut.
+      restoreSavedGame();
     </script>
   </body>
 </html>
