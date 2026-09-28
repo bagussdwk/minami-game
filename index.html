@@ -6410,21 +6410,30 @@
           click.stop(now + 0.025);
         } catch (e) {}
       }
-      function stopMinamiMusic(fadeMs = 700) {
+            function stopMinamiMusic(fadeMs = 700) {
         const m = window.minamiMusic;
         if (!m) return;
         try {
-          const now = m.ctx.currentTime;
-          m.gain.gain.cancelScheduledValues(now);
-          m.gain.gain.setTargetAtTime(0.0001, now, Math.max(0.04, fadeMs / 1000 / 4));
-          setTimeout(() => {
-            try {
-              m.timer && clearInterval(m.timer);
-              m.oscillators.forEach((o) => { try { o.stop(); } catch (e) {} });
-              m.ctx.close();
-            } catch (e) {}
+          const audio = m.audio;
+          const startVolume = Number(audio.volume) || 0.36;
+          const started = performance.now();
+          const fade = () => {
+            const p = Math.min(1, (performance.now() - started) / Math.max(80, fadeMs));
+            audio.volume = Math.max(0, startVolume * (1 - p));
+            if (p < 1) requestAnimationFrame(fade);
+            else {
+              audio.pause();
+              audio.currentTime = 0;
+              window.minamiMusic = null;
+            }
+          };
+          if (fadeMs <= 0) {
+            audio.pause();
+            audio.currentTime = 0;
             window.minamiMusic = null;
-          }, fadeMs + 80);
+          } else {
+            fade();
+          }
         } catch (e) {
           window.minamiMusic = null;
         }
@@ -6432,84 +6441,23 @@
 
       function startMinamiMusic() {
         if (window.minamiMusicMuted) return;
-        stopMinamiMusic(0);
+        if (window.minamiMusic?.audio) {
+          window.minamiMusic.audio.volume = 0.36;
+          window.minamiMusic.audio.play().catch(() => {});
+          return;
+        }
         try {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          if (!AudioContext) return;
-          const ctx = new AudioContext();
-          const master = ctx.createGain();
-          master.gain.value = 0.035;
-          master.connect(ctx.destination);
-
-          const bass = ctx.createOscillator();
-          const bassGain = ctx.createGain();
-          bass.type = "triangle";
-          bass.frequency.value = 110;
-          bassGain.gain.value = 0.16;
-          bass.connect(bassGain).connect(master);
-          bass.start();
-
-          const pad = ctx.createOscillator();
-          const padGain = ctx.createGain();
-          pad.type = "sine";
-          pad.frequency.value = 220;
-          padGain.gain.value = 0.045;
-          pad.connect(padGain).connect(master);
-          pad.start();
-
-          const notes = [261.63, 329.63, 392.00, 329.63, 293.66, 349.23, 440.00, 349.23];
-          let step = 0;
-          const playStep = () => {
-            if (!window.minamiMusic || window.minamiMusic.ctx !== ctx) return;
-            const now = ctx.currentTime;
-            const osc = ctx.createOscillator();
-            const g = ctx.createGain();
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(notes[step % notes.length], now);
-            g.gain.setValueAtTime(0.0001, now);
-            g.gain.exponentialRampToValueAtTime(0.28, now + 0.035);
-            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
-            osc.connect(g).connect(master);
-            osc.start(now);
-            osc.stop(now + 0.52);
-            step++;
-          };
-
-          window.minamiMusic = { ctx, gain: master, timer: null, oscillators: [bass, pad] };
-          if (ctx.state === "suspended") ctx.resume();
-          playStep();
-          window.minamiMusic.timer = setInterval(playStep, 520);
+          const audio = new Audio("./casino-vip-music-classy-lounge-casino-1-469300.mp3");
+          audio.loop = true;
+          audio.preload = "auto";
+          audio.volume = 0.36;
+          audio.setAttribute("aria-hidden", "true");
+          audio.style.display = "none";
+          document.body.appendChild(audio);
+          window.minamiMusic = { audio };
+          const play = audio.play();
+          if (play && typeof play.catch === "function") play.catch(() => {});
         } catch (e) {}
-      }
-
-      function playMinamiVictoryMusic() {
-        stopMinamiMusic(450);
-        if (window.minamiMusicMuted) return;
-        setTimeout(() => {
-          try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const ctx = new AudioContext();
-            const master = ctx.createGain();
-            master.gain.value = 0.055;
-            master.connect(ctx.destination);
-            const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
-            notes.forEach((f, i) => {
-              const o = ctx.createOscillator();
-              const g = ctx.createGain();
-              const t = ctx.currentTime + i * 0.22;
-              o.type = i === 3 ? "triangle" : "sine";
-              o.frequency.value = f;
-              g.gain.setValueAtTime(0.0001, t);
-              g.gain.exponentialRampToValueAtTime(0.42, t + 0.035);
-              g.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
-              o.connect(g).connect(master);
-              o.start(t);
-              o.stop(t + 0.52);
-            });
-            setTimeout(() => { try { ctx.close(); } catch (e) {} }, 1900);
-          } catch (e) {}
-        }, 430);
       }
 
       function startGame() {
