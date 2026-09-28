@@ -5153,17 +5153,10 @@
             };
           return { ok: true };
         }
-        // Kartu yang rank-nya sudah menjadi POT punya aturan khusus saat ditambahkan ke DASAR.
-        // Jika kartu POT hanya satu-satunya kartu dari rank tersebut, jangan pindahkan ke DASAR.
-        // Jika kartu POT dibawa bersama kartu yang berada DI LUAR rank POT dan rank POT-nya
-        // tepat menempel pada ujung dasar, kartu POT boleh ikut masuk sebagai bagian dari rangkaian.
-        const opts = extendBaseOptions(m, cards);
-        if (!opts.length)
-          return {
-            ok: false,
-            msg: "Tambahan harus menyambung urutan di satu ujung. Joker yang sudah dipakai tetap mematikan angka yang dipilih sebelumnya.",
-          };
-
+        // Rank yang sudah menjadi POT tidak boleh dipakai sendirian untuk DASAR.
+        // Harus ada minimal satu kartu non-Joker lain yang ikut sebagai companion.
+        // Contoh: POT 5 -> kartu 5 saja tidak boleh masuk ke 6-7-8-9.
+        // 4+5 boleh, selama keseluruhan rangkaiannya tetap legal.
         const potRanksInCards = [
           ...new Set(
             cards
@@ -5171,48 +5164,26 @@
               .map((c) => c.rank),
           ),
         ];
+
         if (potRanksInCards.length) {
-          const allowed = [];
-          for (const o of opts) {
-            let good = true;
-            for (const r of potRanksInCards) {
-              const potPos = rankOrder[r];
-              // Rank POT harus berada tepat di ujung lama (langsung menempel pada meld lama),
-              // bukan menjadi kartu POT yang dilewati/didorong lebih jauh oleh kartu lain.
-              const touchesLeft = o.side === "left" && potPos === m.start - 1;
-              const touchesRight = o.side === "right" && potPos === m.end + 1;
-              if (!touchesLeft && !touchesRight) {
-                good = false;
-                break;
-              }
-            }
-            if (good) allowed.push(o);
-          }
-          if (!allowed.length) {
-            // Kalau ada kartu POT yang tidak boleh ikut, kartu non-POT tetap boleh dimainkan
-            // sendiri sebagai perluasan dasar.
-            const nonPot = cards.filter(
-              (c) => isJoker(c) || !game.potRanks.has(c.rank),
-            );
-            if (nonPot.length) {
-              const fallback = extendBaseOptions(m, nonPot);
-              if (fallback.length)
-                return {
-                  ok: true,
-                  options: fallback,
-                  partial: true,
-                  potCards: cards.filter(
-                    (c) => !isJoker(c) && game.potRanks.has(c.rank),
-                  ),
-                };
-            }
+          const companionCards = cards.filter(
+            (c) => !isJoker(c) && !game.potRanks.has(c.rank),
+          );
+          if (!companionCards.length) {
             return {
               ok: false,
-              msg: "Kartu yang sudah menjadi POT harus tetap masuk ke POT, kecuali kartu POT tersebut langsung menempel di ujung dasar dan dibawa bersama kartu yang memperpanjang rangkaian.",
+              msg: "Kartu yang sudah menjadi POT tidak boleh masuk DASAR sendirian. Bawa bersama kartu pendamping yang sah.",
             };
           }
-          return { ok: true, options: allowed };
         }
+
+        const opts = extendBaseOptions(m, cards);
+        if (!opts.length)
+          return {
+            ok: false,
+            msg: "Tambahan harus menyambung urutan di satu ujung. Joker yang sudah dipakai tetap mematikan angka yang dipilih sebelumnya.",
+          };
+
         return { ok: true, options: opts };
       }
 
@@ -5456,6 +5427,26 @@
 
         document.getElementById("resultModal").classList.add("show");
       }
+      function baseBlockedByPot(cards) {
+        if (!Array.isArray(cards) || !cards.length || !game?.potRanks) return null;
+
+        const potCards = cards.filter(
+          (c) => !isJoker(c) && game.potRanks.has(c.rank),
+        );
+        if (!potCards.length) return null;
+
+        const companion = cards.some(
+          (c) => !isJoker(c) && !game.potRanks.has(c.rank),
+        );
+        if (companion) return null;
+
+        return (
+          "Kartu " +
+          [...new Set(potCards.map((c) => c.rank))].join(", ") +
+          " sudah menjadi POT. Kartu tersebut harus dimainkan bersama kartu pendamping yang sah."
+        );
+      }
+
       function playBase() {
         if (game.round !== 1 || game.hasBase[0]) {
           if (game.round !== 1 && !game.hasBase[0]) game.hasBase[0] = true;
@@ -5466,6 +5457,12 @@
         if (!cs.length) {
           alert("Pilih kartu dulu.");
           return;
+        }
+
+        const potBlock = baseBlockedByPot(cs);
+        if (potBlock) {
+          alert(potBlock);
+          return false;
         }
 
         const finish = (m) => {
