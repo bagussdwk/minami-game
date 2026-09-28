@@ -3709,6 +3709,81 @@
         .player-name { max-width: 82px !important; }
       }
     </style>
+<style id="minami-victory-ceremony">
+  .table.game-victory{
+    animation:minamiVictoryTable 1.9s ease-in-out infinite !important;
+    box-shadow:0 0 0 2px rgba(243,207,112,.18),0 0 55px rgba(243,207,112,.24),inset 0 0 55px rgba(243,207,112,.08) !important;
+  }
+  .player.victory-player{
+    z-index:95 !important;
+    animation:minamiVictoryPlayer 1.35s ease-in-out infinite !important;
+  }
+  .player.victory-player .avatar{
+    box-shadow:0 0 0 3px rgba(243,207,112,.65),0 0 24px rgba(243,207,112,.75),0 0 48px rgba(243,207,112,.3) !important;
+    border-color:#f3cf70 !important;
+  }
+  .player.victory-player::before,
+  .player.victory-player::after{
+    content:"✦";
+    position:absolute;
+    color:#f7d978;
+    font-size:18px;
+    font-weight:900;
+    pointer-events:none;
+    animation:minamiVictorySpark 1.15s ease-in-out infinite;
+  }
+  .player.victory-player::before{left:-5px;top:2px}
+  .player.victory-player::after{right:-5px;bottom:2px;animation-delay:.35s}
+  .player-reaction-bubble.victory{
+    min-width:110px;
+    padding:8px 12px;
+    background:linear-gradient(145deg,rgba(92,66,12,.98),rgba(35,25,5,.98));
+    border-color:rgba(255,220,108,.75);
+    color:#ffe69a;
+    font-size:11px;
+    box-shadow:0 0 24px rgba(243,207,112,.28),0 8px 22px rgba(0,0,0,.4);
+  }
+  .player-reaction-bubble.victory::after{
+    background:rgba(35,25,5,.98);
+    border-color:rgba(255,220,108,.6);
+  }
+  .victory-points-pop{
+    position:fixed;
+    left:50%;
+    top:43%;
+    z-index:290;
+    pointer-events:none;
+    opacity:0;
+    transform:translate(-50%,12px) scale(.72);
+    color:#ffe69a;
+    font-size:clamp(26px,6vw,46px);
+    font-weight:1000;
+    letter-spacing:1px;
+    text-shadow:0 4px 18px rgba(0,0,0,.55),0 0 28px rgba(243,207,112,.55);
+  }
+  .victory-points-pop.show{animation:minamiVictoryPoints 1.35s cubic-bezier(.2,.8,.2,1) forwards}
+  @keyframes minamiVictoryTable{
+    0%,100%{filter:brightness(1);transform:scale(1)}
+    45%{filter:brightness(1.12);transform:scale(1.006)}
+  }
+  @keyframes minamiVictoryPlayer{
+    0%,100%{transform:translateY(0) scale(1)}
+    50%{transform:translateY(-5px) scale(1.045)}
+  }
+  @keyframes minamiVictorySpark{
+    0%,100%{opacity:.15;transform:scale(.65) rotate(0)}
+    50%{opacity:1;transform:scale(1.25) rotate(18deg)}
+  }
+  @keyframes minamiVictoryPoints{
+    0%{opacity:0;transform:translate(-50%,14px) scale(.72)}
+    18%{opacity:1;transform:translate(-50%,0) scale(1.05)}
+    68%{opacity:1;transform:translate(-50%,-16px) scale(1)}
+    100%{opacity:0;transform:translate(-50%,-42px) scale(1.02)}
+  }
+  @media (max-width:700px),(hover:none) and (pointer:coarse){
+    .victory-points-pop{top:39%;font-size:28px}
+  }
+</style>
 </head>
   <body>
     <div class="topbar">
@@ -4270,6 +4345,45 @@
           osc.start(now);
           osc.stop(now + 0.17);
         } catch (e) {}
+      }
+
+      function showGameVictoryCeremony(playerIndex, points, reason) {
+        document.querySelectorAll(".victory-player").forEach((el) => el.classList.remove("victory-player"));
+        const table = document.querySelector(".table");
+        if (table) {
+          table.classList.remove("game-victory");
+          void table.offsetWidth;
+          table.classList.add("game-victory");
+          setTimeout(() => table.classList.remove("game-victory"), 2900);
+        }
+
+        const player = document.getElementById("player" + (playerIndex + 1));
+        if (player) {
+          player.classList.remove("victory-player");
+          void player.offsetWidth;
+          player.classList.add("victory-player");
+          setTimeout(() => player.classList.remove("victory-player"), 2900);
+        }
+
+        const pointText = points > 0 ? "🏆 +" + points + " POIN" : "⭐ POIN TERTINGGI";
+        showPlayerBubble(playerIndex, pointText, "victory");
+
+        let pop = document.getElementById("victoryPointsPop");
+        if (!pop) {
+          pop = document.createElement("div");
+          pop.id = "victoryPointsPop";
+          pop.className = "victory-points-pop";
+          document.body.appendChild(pop);
+        }
+        pop.textContent = points > 0 ? "+" + points + " POIN" : "⭐ POIN TERTINGGI";
+        pop.classList.remove("show");
+        void pop.offsetWidth;
+        pop.classList.add("show");
+        clearTimeout(pop._hideTimer);
+        pop._hideTimer = setTimeout(() => pop.classList.remove("show"), 1450);
+
+        if (reason === "TENHO") playMinamiSfx("tenho");
+        else if (points > 0) playMinamiSfx("win");
       }
 
       function showMatchEffect(winner, reason) {
@@ -5590,13 +5704,28 @@
         window.minamiWinStreak=winner===0?(Number(localStorage.getItem("minamiWinStreak"))||0)+1:0;localStorage.setItem("minamiWinStreak",String(window.minamiWinStreak));
         updateLifetimeStatsFromGame();updateAchievements();playMinamiSfx(reason==="TENHO"?"tenho":winner!==null?"win":"dead");
         saveGameState();
-        showMatchEffect(winner, reason);
+
+        // Ceremony kemenangan: jangan langsung membuka hasil/poin.
+        // Pemain dengan perolehan poin tertinggi di game ini mendapat
+        // highlight di meja + efek pada profilnya terlebih dahulu.
+        const topPointPlayer = scoreDelta.reduce(
+          (best, value, index) =>
+            value > scoreDelta[best] ? index : best,
+          0,
+        );
+        showGameVictoryCeremony(topPointPlayer, scoreDelta[topPointPlayer], reason);
+
+        const ceremonyDelay = 3000;
+        setTimeout(() => {
+          if (!game.over) return;
+          showMatchEffect(winner, reason);
+        }, ceremonyDelay - 850);
 
         setTimeout(
           () => {
             if (game.over) showResult(winner, reason, scoreDelta);
           },
-          game.scores.some((x) => x >= 25) ? 1400 : 900,
+          ceremonyDelay,
         );
       }
       function showResult(winner, reason, delta) {
