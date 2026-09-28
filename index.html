@@ -3028,6 +3028,58 @@
         }
       }
 
+      /* ===== MOBILE: HANYA PEMAIN 1 DI BAWAH, PEMAIN LAIN DI ATAS ===== */
+      @media (max-width: 700px) {
+        .players-5 .p1,
+        .players-4 .p1 {
+          top: auto !important;
+          bottom: 22px !important;
+          left: 50% !important;
+          right: auto !important;
+          transform: translateX(-50%) !important;
+          z-index: 32;
+        }
+
+        .players-5 .p2,
+        .players-4 .p2 {
+          top: 22px !important;
+          bottom: auto !important;
+          left: 4% !important;
+          right: auto !important;
+          transform: none !important;
+          z-index: 32;
+        }
+
+        .players-5 .p3,
+        .players-4 .p3 {
+          top: 22px !important;
+          bottom: auto !important;
+          left: 50% !important;
+          right: auto !important;
+          transform: translateX(-50%) !important;
+          z-index: 32;
+        }
+
+        .players-5 .p4,
+        .players-4 .p4 {
+          top: 22px !important;
+          bottom: auto !important;
+          left: auto !important;
+          right: 4% !important;
+          transform: none !important;
+          z-index: 32;
+        }
+
+        .players-5 .p5 {
+          top: 112px !important;
+          bottom: auto !important;
+          left: 50% !important;
+          right: auto !important;
+          transform: translateX(-50%) !important;
+          z-index: 32;
+        }
+      }
+
       /* ===== MOBILE PLAYER 1 DI BAWAH JOKER + HISTORY P2 FULL ===== */
       @media (max-width: 700px) {
         /* P1 dan P2 kembali ke pojok bawah meja pada mobile. */
