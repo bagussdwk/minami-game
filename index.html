@@ -3110,11 +3110,11 @@
         /* P1 dan P2 kembali ke pojok bawah meja pada mobile. */
         .players-5 .p1,
         .players-4 .p1 {
-          top: auto;
-          bottom: 22px;
-          left: 8px;
-          right: auto;
-          transform: none;
+          top: auto !important;
+          bottom: 4px !important;
+          left: 50% !important;
+          right: auto !important;
+          transform: translateX(-50%) !important;
           z-index: 32;
         }
 
@@ -6563,8 +6563,10 @@
   @media (max-width: 700px) {
     /* Sisakan koridor tengah khusus untuk kartu yang sudah dimainkan. */
     .table-area {
-      padding: 132px 124px 150px 55px !important;
+      padding: 132px 58px 150px !important;
       align-content: center !important;
+      justify-content: center !important;
+      box-sizing: border-box !important;
       z-index: 20 !important;
     }
 
@@ -6603,7 +6605,7 @@
     @media (max-width: 360px) {
       .table-area {
         padding-left: 48px !important;
-        padding-right: 124px !important;
+        padding-right: 48px !important;
       }
     }
 
