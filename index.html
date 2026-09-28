@@ -1097,6 +1097,40 @@
         }
       }
 
+      /* Zona aman animasi pembagian: judul + counter hanya di koridor tengah. */
+      .deal-title {
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        width: 180px !important;
+        transform: translate(-50%, -88px) !important;
+        padding: 6px 10px !important;
+        box-sizing: border-box !important;
+        border-radius: 9px !important;
+        background: rgba(0, 0, 0, 0.28) !important;
+        font-size: 17px !important;
+        line-height: 1.2 !important;
+        z-index: 20 !important;
+        pointer-events: none !important;
+      }
+
+      .deal-count {
+        top: 50% !important;
+        bottom: auto !important;
+        left: 50% !important;
+        right: auto !important;
+        width: 130px !important;
+        transform: translate(-50%, 86px) !important;
+        padding: 5px 8px !important;
+        box-sizing: border-box !important;
+        border-radius: 8px !important;
+        background: rgba(0, 0, 0, 0.24) !important;
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+        z-index: 20 !important;
+        pointer-events: none !important;
+      }
+
       /* Posisi animasi pembagian mengikuti posisi pemain mobile */
       @media (max-width: 700px) {
         /* Label tujuan animasi dibuat compact agar tidak menjadi panel panjang */
