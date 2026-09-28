@@ -3336,7 +3336,7 @@
     width:clamp(42px,11vw,54px)!important;height:clamp(61px,16vw,78px)!important;
     flex:0 0 auto!important;margin-left:clamp(-18px,-3.4vw,-10px)!important;
     border-radius:8px!important;font-size:clamp(15px,4vw,20px)!important;
-    touch-action:none!important;user-select:none!important;-webkit-user-drag:none!important;
+    touch-action:pan-x!important;user-select:none!important;-webkit-user-drag:none!important;
     transition:transform .12s ease,box-shadow .12s ease!important;
   }
   .your-cards .card:first-child{margin-left:0!important}
@@ -6485,48 +6485,85 @@
     if(!window.matchMedia || !matchMedia("(max-width:700px)").matches) return;
     const hand=document.getElementById("yourCards");
     if(!hand) return;
+
     hand.querySelectorAll(".card").forEach(function(card){
-      if(card.dataset.mobilePointerBound==="1") return;
-      card.dataset.mobilePointerBound="1";
-      let sx=0,sy=0,dragging=false,moved=false,pid=null;
+      if(card.dataset.mobilePointerBound==="2") return;
+      card.dataset.mobilePointerBound="2";
+
+      let sx=0,sy=0,pid=null,dragging=false,moved=false,dragStarted=false;
+
       card.addEventListener("pointerdown",function(e){
         if(!game || game.turn!==0 || game.over || game.dead[0]) return;
-        pid=e.pointerId;sx=e.clientX;sy=e.clientY;moved=false;dragging=false;
-        try{card.setPointerCapture(pid)}catch(_){}
+        pid=e.pointerId;
+        sx=e.clientX;
+        sy=e.clientY;
+        moved=false;
+        dragging=false;
+        dragStarted=false;
+        // Jangan setPointerCapture di awal.
+        // Browser harus tetap bebas melakukan horizontal scroll pada tangan.
       },{passive:true});
+
       card.addEventListener("pointermove",function(e){
         if(pid!==e.pointerId) return;
-        const dx=e.clientX-sx,dy=e.clientY-sy;
-        if(!dragging && Math.hypot(dx,dy)<8) return;
+
+        const dx=e.clientX-sx;
+        const dy=e.clientY-sy;
+        const ax=Math.abs(dx);
+        const ay=Math.abs(dy);
+
+        if(!dragging && ax<8 && ay<8) return;
+
         moved=true;
+
+        // Gerakan horizontal = scroll tangan.
+        // Gerakan vertikal/ke atas = mulai drag kartu ke meja.
         if(!dragging){
+          const shouldDrag = ay>=12 && ay>ax*0.72;
+          if(!shouldDrag) return;
+
           dragging=true;
-          if(typeof game.selected==="object"){
-            const idx=[...hand.children].indexOf(card);
-            if(idx>=0 && game.selected.indexOf(idx)<0) game.selected=[idx];
+          dragStarted=true;
+
+          const idx=[...hand.children].indexOf(card);
+          if(idx>=0 && game.selected.indexOf(idx)<0){
+            game.selected=[idx];
           }
+
+          try{card.setPointerCapture(pid)}catch(_){}
           card.classList.add("mobile-dragging");
           document.body.classList.add("mobile-card-dragging");
         }
+
         e.preventDefault();
+
         const hit=document.elementFromPoint(e.clientX,e.clientY);
-        document.querySelectorAll(".mobile-pointer-target").forEach(x=>x.classList.remove("mobile-pointer-target"));
-        const meld=hit&&hit.closest?hit.closest(".meld"):null;
-        const area=hit&&hit.closest?hit.closest("#tableArea"):null;
+        document.querySelectorAll(".mobile-pointer-target")
+          .forEach(x=>x.classList.remove("mobile-pointer-target"));
+
+        const meld=hit&&hit.closest ? hit.closest(".meld") : null;
+        const area=hit&&hit.closest ? hit.closest("#tableArea") : null;
+
         if(meld) meld.classList.add("mobile-pointer-target");
         else if(area) area.classList.add("mobile-pointer-target");
       },{passive:false});
+
       card.addEventListener("pointerup",function(e){
         if(pid!==e.pointerId) return;
+
         const wasDragging=dragging;
         const hit=document.elementFromPoint(e.clientX,e.clientY);
-        const meld=hit&&hit.closest?hit.closest(".meld"):null;
-        const area=hit&&hit.closest?hit.closest("#tableArea"):null;
+        const meld=hit&&hit.closest ? hit.closest(".meld") : null;
+        const area=hit&&hit.closest ? hit.closest("#tableArea") : null;
+
         cleanup();
-        if(!wasDragging || !moved){
-          return;
-        }
+
+        // Kalau bukan drag vertikal, biarkan browser/handler kartu
+        // menjalankan seleksi biasa dan horizontal scroll tetap bekerja.
+        if(!wasDragging) return;
+
         if(!game || game.turn!==0 || game.over || game.dead[0]) return;
+
         if(meld){
           const mi=Number(meld.dataset.meldIndex);
           if(Number.isInteger(mi) && game.melds[mi]){
@@ -6536,22 +6573,33 @@
             return;
           }
         }
+
         if(area){
           dropNewBase();
           return;
         }
+
         render();
       },{passive:false});
-      card.addEventListener("pointercancel",function(){cleanup()});
+
+      card.addEventListener("pointercancel",function(){
+        cleanup();
+      });
+
       function cleanup(){
-        try{if(pid!=null) card.releasePointerCapture(pid)}catch(_){}
-        pid=null;dragging=false;moved=false;
+        try{if(pid!=null && dragStarted) card.releasePointerCapture(pid)}catch(_){}
+        pid=null;
+        dragging=false;
+        moved=false;
+        dragStarted=false;
         card.classList.remove("mobile-dragging");
         document.body.classList.remove("mobile-card-dragging");
-        document.querySelectorAll(".mobile-pointer-target").forEach(x=>x.classList.remove("mobile-pointer-target"));
+        document.querySelectorAll(".mobile-pointer-target")
+          .forEach(x=>x.classList.remove("mobile-pointer-target"));
       }
     });
   }
+
   setupMobilePointerDrag();
   document.addEventListener("DOMContentLoaded",setupMobilePointerDrag);
   setInterval(setupMobilePointerDrag,700);
