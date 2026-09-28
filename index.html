@@ -5240,7 +5240,7 @@
         });
 
         const hasJoker = orderedCards.some((c) => isJoker(c));
-        if(game.stats){game.stats.moves[i]=(game.stats.moves[i]||0)+1;game.stats.cardsPlayed[i]=(game.stats.cardsPlayed[i]||0)+orderedCards.length;if(["Dasar","DASAR","Tambah Dasar"].includes(label))game.stats.bases[i]=(game.stats.bases[i]||0)+1;if(["POT","Tambah POT"].includes(label))game.stats.pots[i]=(game.stats.pots[i]||0)+1;if(hasJoker)game.stats.jokers[i]=(game.stats.jokers[i]||0)+1;game.stats.maxCombo[i]=Math.max(game.stats.maxCombo[i]||0,orderedCards.length)} animateTableAction(label,hasJoker);playMinamiSfx(hasJoker?"joker":label.toLowerCase().includes("pot")?"pot":"card");if(i>0)setAIReaction(i,label,hasJoker);
+        if(game.stats){game.stats.moves[i]=(game.stats.moves[i]||0)+1;game.stats.cardsPlayed[i]=(game.stats.cardsPlayed[i]||0)+orderedCards.length;if(["Dasar","DASAR","Tambah Dasar"].includes(label))game.stats.bases[i]=(game.stats.bases[i]||0)+1;if(["POT","Tambah POT"].includes(label))game.stats.pots[i]=(game.stats.pots[i]||0)+1;if(hasJoker)game.stats.jokers[i]=(game.stats.jokers[i]||0)+1;game.stats.maxCombo[i]=Math.max(game.stats.maxCombo[i]||0,orderedCards.length)} updateLifetimeStatsFromAction(i,orderedCards,label); animateTableAction(label,hasJoker);playMinamiSfx(hasJoker?"joker":label.toLowerCase().includes("pot")?"pot":"card");if(i>0)setAIReaction(i,label,hasJoker);
         if (orderedCards.length >= 2) {
           showPlayFeedback(
             "COMBO ×" + orderedCards.length + " • " + label.toUpperCase(),
@@ -7434,7 +7434,31 @@
       const MINAMI_FEATURE_KEY="minamiFeatureStatsV1", MINAMI_ACH_KEY="minamiAchievementsV1";
       function featureStats(){try{const x=JSON.parse(localStorage.getItem(MINAMI_FEATURE_KEY)||"null");return x&&typeof x==="object"?x:{games:0,wins:0,tenho:0,pots:0,cards:0,jokers:0,bestCombo:0,dead:0,cardsPerGame:0}}catch(e){return{games:0,wins:0,tenho:0,pots:0,cards:0,jokers:0,bestCombo:0,dead:0,cardsPerGame:0}}}
       function saveFeatureStats(s){try{localStorage.setItem(MINAMI_FEATURE_KEY,JSON.stringify(s))}catch(e){}}
-      function updateLifetimeStatsFromGame(){if(!game?.stats||game._lifetimeCounted)return;game._lifetimeCounted=true;const s=featureStats(),st=game.stats;s.games++;if(game.lastResult?.winner===0)s.wins++;if(game.lastResult?.reason==="TENHO")s.tenho++;s.pots+=st.pots.reduce((a,b)=>a+(b||0),0);s.cards+=st.cardsPlayed.reduce((a,b)=>a+(b||0),0);s.jokers+=st.jokers.reduce((a,b)=>a+(b||0),0);s.bestCombo=Math.max(s.bestCombo||0,...st.maxCombo);s.dead+=game.dead.filter(Boolean).length;s.cardsPerGame=s.games?Math.round(s.cards/s.games):0;saveFeatureStats(s)}
+      function updateLifetimeStatsFromAction(i, orderedCards, label){
+        if(!game?.stats)return;
+        const s=featureStats();
+        const count=orderedCards.length;
+        const hasJoker=orderedCards.some(c=>isJoker(c));
+        if(label==="POT" || label==="Tambah POT") s.pots++;
+        s.cards+=count;
+        if(hasJoker) s.jokers++;
+        s.bestCombo=Math.max(s.bestCombo||0,count);
+        s.cardsPerGame=s.games?Math.round(s.cards/s.games):0;
+        saveFeatureStats(s);
+        updateAchievements();
+      }
+      function updateLifetimeStatsFromGame(){
+        if(!game?.stats||game._lifetimeCounted)return;
+        game._lifetimeCounted=true;
+        const s=featureStats(),st=game.stats;
+        s.games++;
+        if(game.lastResult?.winner===0)s.wins++;
+        if(game.lastResult?.reason==="TENHO")s.tenho++;
+        s.dead+=game.dead.filter(Boolean).length;
+        s.cardsPerGame=s.games?Math.round(s.cards/s.games):0;
+        saveFeatureStats(s);
+        updateAchievements();
+      }
       function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAMI_ACH_KEY)||"[]")}catch(e){return[]}}
       function updateAchievements(){const s=featureStats(),u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menang 1 game",s.wins>=1],["tenho","🃏","TENHO!","Mendapatkan TENHO",s.tenho>=1],["pot-master","♟️","POT Hunter","Membuat 5 POT",s.pots>=5],["joker-master","🃏","Joker Master","Memainkan Joker 5 kali",s.jokers>=5],["combo-master","🔥","Combo Master","Menurunkan 5 kartu sekaligus",s.bestCombo>=5],["marathon","🎴","Marathon","Menyelesaikan 10 game",s.games>=10],["streak-3","⚡","Winning Streak","Menang 3 game berturut-turut",(Number(localStorage.getItem("minamiWinStreak"))||0)>=3]];let ch=false;a.forEach(x=>{if(x[4]&&!u.has(x[0])){u.add(x[0]);ch=true;showPlayFeedback(x[1]+" ACHIEVEMENT: "+x[2],false)}});if(ch)localStorage.setItem(MINAMI_ACH_KEY,JSON.stringify([...u]))}
       function getGameMVP(){if(!game?.stats)return null;let best=null;for(let i=0;i<playerCount;i++){const st=game.stats,v=(st.cardsPlayed[i]||0)+(st.pots[i]||0)*3+(st.jokers[i]||0)*2+(st.bases[i]||0)+(game.lastResult?.winner===i?10:0),x={i,value:v,name:i===0?"Anda":"Pemain "+(i+1)};if(!best||v>best.value)best=x}return best}
