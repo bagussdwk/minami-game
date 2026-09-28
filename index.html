@@ -7235,12 +7235,6 @@
         setResultTableMode(false);
         document.getElementById("resultModal").classList.add("show");
       };
-      document.getElementById("nextGameBtn").onclick = () => {
-        setResultTableMode(false);
-        document.getElementById("resultModal").classList.remove("show");
-        startGame();
-      };
-
       const doNewGame = () => {
         clearSavedGame();
         window.minamiScores = null;
@@ -7374,6 +7368,7 @@
         }
       };
       document.getElementById("nextGameBtn").onclick = () => {
+        setResultTableMode(false);
         document.getElementById("resultModal").classList.remove("show");
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
         startGame();
