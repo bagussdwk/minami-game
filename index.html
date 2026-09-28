@@ -3613,11 +3613,11 @@
         if (winner !== null) scoreDelta[winner] = winnerBonus;
         // Jika ada pemain yang mati sebelum dasar, poin pemain yang hidup
         // hanya memakai peringkat yang tersisa. Contoh 5 pemain dengan 2 mati:
-        // 2, 1, 0, -2, -2.
+        // 3, 2, 1, -2, -2.
         const ptsNoDead = [-1, 0, 1, 2, 3].slice(0, alive.length);
         const ptsWithDead = Array.from(
           { length: alive.length },
-          (_, k) => alive.length - 1 - k,
+          (_, k) => alive.length - k,
         );
         const pts = deadPlayers.length ? ptsWithDead : ptsNoDead;
         alive.forEach((x, k) => (scoreDelta[x.i] = pts[k]));
