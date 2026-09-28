@@ -283,6 +283,15 @@
           transform: translateY(-8px) scale(1.02);
         }
       }
+      .music-toggle {
+        background: rgba(243, 207, 112, 0.09);
+        border-color: rgba(243, 207, 112, 0.2);
+        color: #f3cf70;
+      }
+      .music-toggle.muted {
+        color: #9fb8ad;
+        background: rgba(255, 255, 255, 0.05);
+      }
       .topbar-action:hover {
         filter: brightness(1.08);
       }
@@ -3412,6 +3421,15 @@
         </div>
         <button
           type="button"
+          class="topbar-action music-toggle"
+          id="musicToggle"
+          title="Matikan musik"
+          aria-label="Matikan musik"
+        >
+          🎵 <span>Musik</span>
+        </button>
+        <button
+          type="button"
           class="topbar-action score-top-btn"
           id="scoreTopBtn"
           title="Lihat status poin"
@@ -5115,6 +5133,7 @@
       function endGame(winner = null, reason = "NORMAL") {
         if (game.over) return;
         game.over = true;
+        playMinamiVictoryMusic();
         const yourHand = document.querySelector(".your-hand");
         if (yourHand)
           yourHand.style.setProperty("display", "none", "important");
@@ -6391,6 +6410,108 @@
           click.stop(now + 0.025);
         } catch (e) {}
       }
+      function stopMinamiMusic(fadeMs = 700) {
+        const m = window.minamiMusic;
+        if (!m) return;
+        try {
+          const now = m.ctx.currentTime;
+          m.gain.gain.cancelScheduledValues(now);
+          m.gain.gain.setTargetAtTime(0.0001, now, Math.max(0.04, fadeMs / 1000 / 4));
+          setTimeout(() => {
+            try {
+              m.timer && clearInterval(m.timer);
+              m.oscillators.forEach((o) => { try { o.stop(); } catch (e) {} });
+              m.ctx.close();
+            } catch (e) {}
+            window.minamiMusic = null;
+          }, fadeMs + 80);
+        } catch (e) {
+          window.minamiMusic = null;
+        }
+      }
+
+      function startMinamiMusic() {
+        if (window.minamiMusicMuted) return;
+        stopMinamiMusic(0);
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          const ctx = new AudioContext();
+          const master = ctx.createGain();
+          master.gain.value = 0.035;
+          master.connect(ctx.destination);
+
+          const bass = ctx.createOscillator();
+          const bassGain = ctx.createGain();
+          bass.type = "triangle";
+          bass.frequency.value = 110;
+          bassGain.gain.value = 0.16;
+          bass.connect(bassGain).connect(master);
+          bass.start();
+
+          const pad = ctx.createOscillator();
+          const padGain = ctx.createGain();
+          pad.type = "sine";
+          pad.frequency.value = 220;
+          padGain.gain.value = 0.045;
+          pad.connect(padGain).connect(master);
+          pad.start();
+
+          const notes = [261.63, 329.63, 392.00, 329.63, 293.66, 349.23, 440.00, 349.23];
+          let step = 0;
+          const playStep = () => {
+            if (!window.minamiMusic || window.minamiMusic.ctx !== ctx) return;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(notes[step % notes.length], now);
+            g.gain.setValueAtTime(0.0001, now);
+            g.gain.exponentialRampToValueAtTime(0.28, now + 0.035);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.48);
+            osc.connect(g).connect(master);
+            osc.start(now);
+            osc.stop(now + 0.52);
+            step++;
+          };
+
+          window.minamiMusic = { ctx, gain: master, timer: null, oscillators: [bass, pad] };
+          if (ctx.state === "suspended") ctx.resume();
+          playStep();
+          window.minamiMusic.timer = setInterval(playStep, 520);
+        } catch (e) {}
+      }
+
+      function playMinamiVictoryMusic() {
+        stopMinamiMusic(450);
+        if (window.minamiMusicMuted) return;
+        setTimeout(() => {
+          try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const master = ctx.createGain();
+            master.gain.value = 0.055;
+            master.connect(ctx.destination);
+            const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+            notes.forEach((f, i) => {
+              const o = ctx.createOscillator();
+              const g = ctx.createGain();
+              const t = ctx.currentTime + i * 0.22;
+              o.type = i === 3 ? "triangle" : "sine";
+              o.frequency.value = f;
+              g.gain.setValueAtTime(0.0001, t);
+              g.gain.exponentialRampToValueAtTime(0.42, t + 0.035);
+              g.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
+              o.connect(g).connect(master);
+              o.start(t);
+              o.stop(t + 0.52);
+            });
+            setTimeout(() => { try { ctx.close(); } catch (e) {} }, 1900);
+          } catch (e) {}
+        }, 430);
+      }
+
       function startGame() {
         let d = shuffle(deck()),
           deadCount = playerCount === 4 ? 8 : 4,
@@ -6412,6 +6533,8 @@
         window.minamiNextOrder = null;
 
         const direction = window.minamiDirection === -1 ? -1 : 1;
+
+        startMinamiMusic();
 
         game = {
           hands,
@@ -6576,6 +6699,24 @@
         document.getElementById("setup").style.display = "";
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
+      const musicToggle = document.getElementById("musicToggle");
+      const updateMusicToggle = () => {
+        const muted = !!window.minamiMusicMuted;
+        musicToggle.classList.toggle("muted", muted);
+        musicToggle.innerHTML = muted ? "🔇 <span>Musik</span>" : "🎵 <span>Musik</span>";
+        musicToggle.title = muted ? "Nyalakan musik" : "Matikan musik";
+        musicToggle.setAttribute("aria-label", musicToggle.title);
+      };
+      window.minamiMusicMuted = localStorage.getItem("minamiMusicMuted") === "1";
+      updateMusicToggle();
+      musicToggle.onclick = () => {
+        window.minamiMusicMuted = !window.minamiMusicMuted;
+        localStorage.setItem("minamiMusicMuted", window.minamiMusicMuted ? "1" : "0");
+        if (window.minamiMusicMuted) stopMinamiMusic(250);
+        else if (game && !game.over) startMinamiMusic();
+        updateMusicToggle();
+      };
+
       document.getElementById("newGameTopBtn").onclick = doNewGame;
       document.querySelectorAll(".watch-speed-btn").forEach((btn) => {
         btn.onclick = () => {
