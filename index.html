@@ -21,11 +21,8 @@
         color: #fff;
       }
       .topbar {
-        /* Topbar ikut alur halaman saat di-scroll, tidak menempel di viewport. */
-        position: relative;
-        top: auto;
-        inset: auto;
-      }
+        /* Topbar berada di alur halaman dan ikut scroll. */
+        position: static;
         height: 64px;
         display: flex;
         align-items: center;
@@ -2956,8 +2953,8 @@
         }
 
         .topbar {
-          position: relative;
-          z-index: 100;
+          position: static !important;
+          z-index: auto;
           width: 100%;
           height: 52px;
           min-height: 52px;
