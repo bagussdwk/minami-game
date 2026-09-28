@@ -3382,8 +3382,8 @@
           Target pertandingan: 25 poin.
         </div>
         <div class="score-history-wrap">
-          <div class="score-history-title">Perolehan Poin per Game</div>
-      <div class="score-history-subtitle">Angka di bawah adalah poin game tersebut. Total pertandingan ada di atas.</div>
+          <div class="score-history-title">Riwayat Poin per Game</div>
+      <div class="score-history-subtitle">Game Ini menunjukkan poin ronde berjalan; Total menunjukkan akumulasi semua game.</div>
           <div class="score-history-list" id="scoreHistoryBoard"></div>
         </div>
       </div>
@@ -3703,9 +3703,8 @@
           ? window.minamiScoreHistory
           : [];
 
-        // Riwayat menampilkan POIN YANG DIDAPAT PADA GAME TERSEBUT,
-        // bukan total akumulasi pertandingan. Jadi saat Game 2 dimulai,
-        // baris Game 2 kembali 0, 0, 0, 0, 0.
+        // Riwayat tetap menampilkan perolehan masing-masing game.
+        // Total akumulasi ditampilkan di scoreboard utama.
         const pointsForRow = (row, index) => {
           if (Array.isArray(row.delta)) return row.delta;
 
@@ -3730,8 +3729,8 @@
           current: false,
         }));
 
-        // Game yang sedang berjalan ditampilkan sebagai baris 0 terlebih dahulu.
-        // Setelah game selesai, hasilnya sudah masuk ke history sehingga tidak diduplikasi.
+        // Game yang sedang berjalan ditampilkan sebagai baris poin sementara.
+        // Total akumulasi tetap berada di scoreboard utama.
         if (!game.over) {
           rows.push({
             game: game.gameNumber || history.length + 1,
@@ -3890,6 +3889,10 @@
           game.scores = Array.isArray(game.scores)
             ? game.scores
             : Array(playerCount).fill(0);
+          game.currentDelta =
+            Array.isArray(game.currentDelta) && game.currentDelta.length === playerCount
+              ? game.currentDelta
+              : Array(playerCount).fill(0);
 
           window.minamiScores = game.scores;
           window.minamiAISpeed = Number(game.aiSpeed) || 1;
@@ -4595,15 +4598,24 @@
         const s = document.getElementById("scoreModalBoard");
         if (!s) return;
         s.innerHTML = "";
+
+        const currentGamePoints =
+          Array.isArray(game.currentDelta) && game.currentDelta.length === playerCount
+            ? game.currentDelta
+            : Array(playerCount).fill(0);
+
         for (let i = 0; i < playerCount; i++) {
           let d = document.createElement("div");
           d.className = "score-chip";
           d.innerHTML =
             "<b>" +
             (i === 0 ? "Anda" : "P" + (i + 1)) +
-            "</b>: " +
-            game.scores[i] +
-            " poin";
+            '</b><div style="margin-top:5px;color:#f3cf70;font-size:12px">Game Ini: ' +
+            (Number(currentGamePoints[i]) >= 0 ? "+" : "") +
+            (Number(currentGamePoints[i]) || 0) +
+            '</div><div style="margin-top:3px;color:#d8eee3;font-size:11px">Total: ' +
+            (Number(game.scores[i]) || 0) +
+            " poin</div>";
           s.appendChild(d);
         }
 
@@ -4611,10 +4623,8 @@
         if (note) {
           note.textContent =
             game.over
-              ? "Pertandingan selesai."
-              : game.dead[0]
-                ? "Anda sudah mati. Game AI berjalan cepat."
-                : "Target pertandingan: 25 poin.";
+              ? "Game ini sudah selesai. Total adalah akumulasi semua game."
+              : "Game Ini dimulai dari 0. Total membawa akumulasi game sebelumnya. Target pertandingan: 25 poin.";
         }
         renderScoreHistory();
       }
@@ -4691,7 +4701,10 @@
         document.getElementById("jokerChoiceCancel").onclick = () => {
           document.getElementById("jokerChoiceModal").classList.remove("show");
           window._jokerChoiceCallback = null;
+          setYourHandOverlayHidden(false);
+          render();
         };
+        setYourHandOverlayHidden(true);
         document.getElementById("jokerChoiceModal").classList.add("show");
         return false;
       }
@@ -4878,6 +4891,7 @@
         alive.forEach((x, k) => (scoreDelta[x.i] = pts[k]));
         deadPlayers.forEach((i) => (scoreDelta[i] = -2));
         for (let i = 0; i < playerCount; i++) game.scores[i] += scoreDelta[i];
+        game.currentDelta = scoreDelta.slice();
         prepareNextTurnOrder(winner);
         if (winner !== null || reason === "TENHO") toggleDirection();
 
@@ -5133,14 +5147,19 @@
               document
                 .getElementById("jokerChoiceModal")
                 .classList.remove("show");
+              setYourHandOverlayHidden(false);
               finish(o);
             };
             box.appendChild(item);
           });
-          document.getElementById("jokerChoiceCancel").onclick = () =>
+          document.getElementById("jokerChoiceCancel").onclick = () => {
             document
               .getElementById("jokerChoiceModal")
               .classList.remove("show");
+            setYourHandOverlayHidden(false);
+            render();
+          };
+          setYourHandOverlayHidden(true);
           document.getElementById("jokerChoiceModal").classList.add("show");
           return;
         }
@@ -6072,6 +6091,7 @@
           gameNumber: (Array.isArray(window.minamiScoreHistory)
             ? window.minamiScoreHistory.length
             : 0) + 1,
+          currentDelta: Array(playerCount).fill(0),
           aiSpeed: Number(window.minamiAISpeed) || 1,
           over: false,
         };
