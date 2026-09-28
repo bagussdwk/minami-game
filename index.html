@@ -4263,6 +4263,9 @@
           game.history = Array.isArray(game.history)
             ? game.history
             : Array.from({ length: playerCount }, () => []);
+          game.lastMovePlayer = Number.isInteger(game.lastMovePlayer)
+            ? game.lastMovePlayer
+            : null;
           game.scores = Array.isArray(game.scores)
             ? game.scores
             : Array(playerCount).fill(0);
@@ -4807,6 +4810,7 @@
           a.innerHTML = '<div style="opacity:.75">Meja masih kosong</div>';
       }
       function logMove(i, label, cards) {
+        game.lastMovePlayer = i;
         if (!game.history[i]) game.history[i] = [];
 
         let orderedCards = [...cards];
@@ -4912,34 +4916,39 @@
 
           let hi = document.getElementById("history" + (i + 1));
 
-          hi.innerHTML = (game.history[i] || [])
-            .map(
-              (x) =>
-                '<div class="' +
-                (x.latest ? "history-latest" : "") +
-                '"><b>' +
-                x.label +
-                ":</b> " +
-                x.cards
-                  .map((c) => {
-                    let colorClass = c.red ? "history-red" : "history-black";
-
-                    if (c.joker) {
-                      colorClass += " history-joker";
-                    }
-
-                    return (
-                      '<span class="history-card ' +
-                      colorClass +
-                      '">' +
-                      c.text +
-                      "</span>"
-                    );
-                  })
-                  .join("") +
-                "</div>",
-            )
-            .join("");
+          // History kecil di meja hanya ditampilkan di bawah pemain
+          // yang terakhir melakukan aksi. Rekapan lengkap tetap tersedia
+          // melalui tombol 🕘 History.
+          const lastPlayer = Number.isInteger(game.lastMovePlayer)
+            ? game.lastMovePlayer
+            : -1;
+          hi.innerHTML = i === lastPlayer
+            ? (game.history[i] || [])
+                .slice(0, 1)
+                .map(
+                  (x) =>
+                    '<div class="' +
+                    (x.latest ? "history-latest" : "") +
+                    '"><b>' +
+                    x.label +
+                    ":</b> " +
+                    x.cards
+                      .map((c) => {
+                        let colorClass = c.red ? "history-red" : "history-black";
+                        if (c.joker) colorClass += " history-joker";
+                        return (
+                          '<span class="history-card ' +
+                          colorClass +
+                          '">' +
+                          c.text +
+                          "</span>"
+                        );
+                      })
+                      .join("") +
+                    "</div>",
+                )
+                .join("")
+            : "";
 
           (game.history[i] || []).forEach((x) => (x.latest = false));
 
@@ -6647,6 +6656,7 @@
           hasBase: Array(playerCount).fill(false),
           firstRoundDone: Array(playerCount).fill(false),
           history: Array.from({ length: playerCount }, () => []),
+          lastMovePlayer: null,
           gameNumber:
             (Array.isArray(window.minamiScoreHistory)
               ? window.minamiScoreHistory.length
