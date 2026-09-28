@@ -6174,6 +6174,10 @@
         document.getElementById("helpModal").classList.add("show");
       }
       function showDealAnimation(playerCount, totalCards, onComplete) {
+        // Selama pembagian, kartu tangan pemain disembunyikan agar
+        // antarmuka tetap bersih dan fokus ke animasi pembagian.
+        setYourHandOverlayHidden(true);
+
         const old = document.getElementById("dealOverlay");
         if (old) old.remove();
 
@@ -6248,6 +6252,9 @@
             // Semua kartu sudah selesai dibagikan
             setTimeout(() => {
               overlay.remove();
+
+              // Setelah pembagian selesai, tampilkan kembali kartu tangan.
+              setYourHandOverlayHidden(false);
 
               if (typeof onComplete === "function") {
                 onComplete();
