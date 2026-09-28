@@ -29,6 +29,112 @@
         background: rgba(0, 0, 0, 0.28);
         border-bottom: 1px solid rgba(255, 255, 255, 0.12);
       }
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 7px;
+      }
+      .topbar-action {
+        min-height: 34px;
+        padding: 7px 11px;
+        border-radius: 9px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1;
+        white-space: nowrap;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+      .topbar-action:hover {
+        filter: brightness(1.08);
+      }
+      .score-top-btn {
+        background: rgba(243, 207, 112, 0.12);
+        border-color: rgba(243, 207, 112, 0.25);
+        color: #f3cf70;
+      }
+      .new-game-top-btn {
+        background: rgba(255, 255, 255, 0.07);
+      }
+      .score-modal-box {
+        width: min(620px, calc(100% - 24px));
+        max-height: 78vh;
+      }
+      .score-modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .score-modal-title {
+        margin: 0;
+        font-size: 18px;
+      }
+      .score-modal-subtitle {
+        margin-top: 3px;
+        color: #aacdc0;
+        font-size: 10px;
+      }
+      .score-modal-close {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        padding: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.09);
+        color: #fff;
+        font-size: 22px;
+        line-height: 1;
+      }
+      .score-modal .scoreboard {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 0;
+      }
+      .score-modal .score-chip {
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .score-modal-note {
+        margin-top: 10px;
+        padding: 9px 10px;
+        border-radius: 10px;
+        background: rgba(243, 207, 112, 0.07);
+        border: 1px solid rgba(243, 207, 112, 0.12);
+        color: #f2e4b9;
+        font-size: 11px;
+      }
+      @media (max-width: 700px) {
+        .topbar {
+          padding: 0 8px;
+        }
+        .topbar-actions {
+          gap: 4px;
+        }
+        .topbar-action {
+          min-height: 30px;
+          padding: 6px 7px;
+          font-size: 9px;
+        }
+        .topbar-action span {
+          display: none;
+        }
+        .score-modal-box {
+          width: calc(100% - 16px);
+          padding: 12px;
+        }
+        .score-modal .scoreboard {
+          grid-template-columns: 1fr;
+        }
+      }
       .logo {
         font-size: 26px;
         font-weight: 800;
@@ -2848,7 +2954,27 @@
     <div class="topbar">
       <div class="logo">MINAMI</div>
       <div class="status" id="status">MINAMI GAME</div>
-      <div>
+      <div class="topbar-actions">
+        <button
+          type="button"
+          class="topbar-action score-top-btn"
+          id="scoreTopBtn"
+          title="Lihat status poin"
+          aria-label="Lihat status poin"
+          style="display:none"
+        >
+          🏆 <span>Poin</span>
+        </button>
+        <button
+          type="button"
+          class="topbar-action new-game-top-btn"
+          id="newGameTopBtn"
+          title="Mulai game baru"
+          aria-label="Mulai game baru"
+          style="display:none"
+        >
+          ⟳ <span>New Game</span>
+        </button>
         <button
           type="button"
           class="active-rules-btn"
@@ -2970,14 +3096,6 @@
         </div> -->
       </div>
 
-      <div class="panel">
-        <div class="panel-title">Status Skor</div>
-        <div class="scoreboard" id="scoreboard"></div>
-        <div class="status-note" id="statusNote"></div>
-      </div>
-      <div class="actions">
-        <button class="secondary" id="newGameBtn">↻ Permainan Baru</button>
-      </div>
       <div class="your-hand">
         <div class="your-hand-title">
           Kartu Anda <span id="handValue"></span>
@@ -3002,6 +3120,28 @@
         <div id="suggestionBody"></div>
       </div>
     </section>
+    <div class="modal score-modal" id="scoreModal">
+      <div class="modal-box score-modal-box">
+        <div class="score-modal-head">
+          <div>
+            <h2 class="score-modal-title">🏆 Status Poin</h2>
+            <div class="score-modal-subtitle">Total poin setiap pemain dalam pertandingan</div>
+          </div>
+          <button
+            type="button"
+            class="score-modal-close"
+            id="scoreModalClose"
+            aria-label="Tutup status poin"
+          >
+            ×
+          </button>
+        </div>
+        <div class="scoreboard" id="scoreModalBoard"></div>
+        <div class="score-modal-note" id="scoreModalNote">
+          Target pertandingan: 25 poin.
+        </div>
+      </div>
+    </div>
     <div class="modal" id="jokerChoiceModal">
       <div class="modal-box" style="max-width: 620px">
         <h2 style="margin-top: 0; text-align: center">
@@ -3249,6 +3389,8 @@
         if (!game) return;
 
         document.getElementById("setup").style.display = "none";
+        document.getElementById("scoreTopBtn").style.display = "inline-flex";
+        document.getElementById("newGameTopBtn").style.display = "inline-flex";
         document
           .getElementById("game")
           .classList.add("active", "players-" + playerCount);
@@ -3995,7 +4137,8 @@
       }
 
       function renderScores() {
-        let s = document.getElementById("scoreboard");
+        const s = document.getElementById("scoreModalBoard");
+        if (!s) return;
         s.innerHTML = "";
         for (let i = 0; i < playerCount; i++) {
           let d = document.createElement("div");
@@ -4007,6 +4150,16 @@
             game.scores[i] +
             " poin";
           s.appendChild(d);
+        }
+
+        const note = document.getElementById("scoreModalNote");
+        if (note) {
+          note.textContent =
+            game.over
+              ? "Pertandingan selesai."
+              : game.dead[0]
+                ? "Anda sudah mati. Game AI berjalan cepat."
+                : "Target pertandingan: 25 poin.";
         }
       }
       function updateButtons() {
@@ -5447,6 +5600,8 @@
         saveGameState();
 
         document.getElementById("setup").style.display = "none";
+        document.getElementById("scoreTopBtn").style.display = "inline-flex";
+        document.getElementById("newGameTopBtn").style.display = "inline-flex";
         const yourHand = document.querySelector(".your-hand");
         if (yourHand) yourHand.style.removeProperty("display");
 
@@ -5554,12 +5709,30 @@
           document.getElementById("helpModal").classList.remove("show");
         }
       };
-      document.getElementById("newGameBtn").onclick = () => {
+      const doNewGame = () => {
         clearSavedGame();
         window.minamiScores = null;
         window.minamiNextOrder = null;
         window.minamiDirection = 1;
-        location.reload();
+        document.getElementById("scoreModal").classList.remove("show");
+        document.getElementById("scoreTopBtn").style.display = "none";
+        document.getElementById("newGameTopBtn").style.display = "none";
+        document.getElementById("game").classList.remove("active");
+        document.getElementById("setup").style.display = "";
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      };
+      document.getElementById("newGameTopBtn").onclick = doNewGame;
+      document.getElementById("scoreTopBtn").onclick = () => {
+        renderScores();
+        document.getElementById("scoreModal").classList.add("show");
+      };
+      document.getElementById("scoreModalClose").onclick = () => {
+        document.getElementById("scoreModal").classList.remove("show");
+      };
+      document.getElementById("scoreModal").onclick = (e) => {
+        if (e.target.id === "scoreModal") {
+          document.getElementById("scoreModal").classList.remove("show");
+        }
       };
       document.getElementById("nextGameBtn").onclick = () => {
         document.getElementById("resultModal").classList.remove("show");
@@ -5572,6 +5745,8 @@
         window.minamiNextOrder = null;
         window.minamiDirection = 1;
         document.getElementById("resultModal").classList.remove("show");
+        document.getElementById("scoreTopBtn").style.display = "none";
+        document.getElementById("newGameTopBtn").style.display = "none";
         document.getElementById("game").classList.remove("active");
         document.getElementById("setup").style.display = "";
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
