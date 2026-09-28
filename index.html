@@ -3174,7 +3174,203 @@
         }
       }
     </style>
-  </head>
+  
+<style id="minami-mobile-ui-v3">
+@media (max-width:700px){
+  html,body{
+    height:auto!important;
+    min-height:100%!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    background:
+      radial-gradient(circle at 50% 22%,rgba(25,125,83,.32),transparent 38%),
+      linear-gradient(180deg,#031b16 0%,#052d22 48%,#021812 100%)!important;
+  }
+  body{padding-bottom:20px!important}
+  .topbar{
+    position:sticky!important;top:0!important;z-index:180!important;
+    height:58px!important;padding:0 10px!important;
+    background:rgba(3,24,19,.94)!important;
+    backdrop-filter:blur(12px)!important;
+    border-bottom:1px solid rgba(243,207,112,.15)!important;
+  }
+  .logo{
+    font-size:21px!important;letter-spacing:2.5px!important;
+    color:#f5e6b7!important;text-shadow:0 2px 10px rgba(0,0,0,.35)!important;
+  }
+  .logo:before{content:"🎴";font-size:20px;margin-right:6px}
+  .status{
+    flex:1!important;text-align:center!important;
+    color:#f3cf70!important;font-size:10px!important;font-weight:900!important;
+    letter-spacing:1px!important;text-transform:uppercase!important;
+  }
+  .topbar-actions{gap:4px!important}
+  .topbar-action{min-width:32px!important;min-height:32px!important;padding:7px!important;border-radius:10px!important}
+  .topbar-action span{display:none!important}
+
+  .game-status-ribbon{
+    width:calc(100% - 4px)!important;margin:7px auto 7px!important;
+    padding:7px 8px!important;border-radius:12px!important;
+    gap:7px!important;background:rgba(5,43,31,.9)!important;
+    border-color:rgba(243,207,112,.18)!important;
+  }
+  .game-status-label{font-size:7px!important;letter-spacing:.8px!important}
+  .game-status-value,.game-status-turn{font-size:10px!important}
+  .game-status-direction{min-width:23px!important}
+
+  .game.active{
+    width:calc(100% - 8px)!important;max-width:none!important;
+    margin:0 auto 22px!important;padding:0!important;
+    height:auto!important;min-height:0!important;overflow:visible!important;
+  }
+  .game.active>.table{
+    width:100%!important;height:735px!important;min-height:735px!important;
+    position:relative!important;overflow:hidden!important;
+    border:6px solid #162f27!important;border-radius:32px!important;
+    background:
+      radial-gradient(circle at 50% 46%,rgba(28,129,88,.38),transparent 38%),
+      radial-gradient(circle at 50% 50%,#0a5a3e 0%,#06412f 55%,#032a20 100%)!important;
+    box-shadow:0 15px 35px rgba(0,0,0,.42),inset 0 0 45px rgba(0,0,0,.28)!important;
+  }
+  .game.active>.table:after{
+    inset:10px!important;border-radius:24px!important;
+    border:1px solid rgba(243,207,112,.3)!important;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)!important;
+  }
+  .table:before{
+    content:"";position:absolute;inset:14%;border-radius:50%;
+    border:1px solid rgba(243,207,112,.08);
+    background:radial-gradient(circle,rgba(255,255,255,.025),transparent 68%);
+    pointer-events:none;z-index:1;
+  }
+  .table-area{
+    left:50%!important;top:48%!important;transform:translate(-50%,-50%)!important;
+    width:72%!important;min-height:250px!important;z-index:12!important;
+    display:flex!important;flex-wrap:wrap!important;align-content:center!important;
+    justify-content:center!important;gap:7px!important;
+    padding:20px!important;
+  }
+  .meld{
+    min-width:52px!important;padding:5px 6px!important;border-radius:9px!important;
+    background:rgba(2,24,18,.28)!important;
+    border-color:rgba(255,255,255,.2)!important;
+  }
+  .meld-title{font-size:7px!important;margin-bottom:3px!important}
+  .meld-cards .card{
+    width:29px!important;height:41px!important;font-size:11px!important;
+    margin-left:-8px!important;border-radius:5px!important
+  }
+
+  .player{
+    width:88px!important;z-index:25!important;
+    text-align:center!important;
+  }
+  .players-5 .p1,.players-4 .p1{
+    left:50%!important;right:auto!important;top:auto!important;bottom:7px!important;
+    transform:translateX(-50%)!important;
+  }
+  .players-5 .p2,.players-4 .p2{
+    right:4px!important;left:auto!important;top:45%!important;bottom:auto!important;
+    transform:translateY(-50%)!important;
+  }
+  .players-5 .p3,.players-4 .p3{
+    top:8px!important;left:50%!important;right:auto!important;bottom:auto!important;
+    transform:translateX(-50%)!important;
+  }
+  .players-5 .p4,.players-4 .p4{
+    top:45%!important;left:4px!important;right:auto!important;bottom:auto!important;
+    transform:translateY(-50%)!important;
+  }
+  .players-5 .p5{
+    left:8px!important;right:auto!important;top:auto!important;bottom:128px!important;
+    transform:none!important;
+  }
+  .avatar{
+    width:34px!important;height:34px!important;margin:3px auto!important;
+    font-size:16px!important;border-width:2px!important;
+  }
+  .player-name{
+    max-width:88px!important;padding:5px 7px!important;border-radius:18px!important;
+    font-size:9px!important;white-space:nowrap!important;
+    overflow:hidden!important;text-overflow:ellipsis!important;
+    background:rgba(2,19,16,.78)!important;border:1px solid rgba(255,255,255,.08)!important;
+  }
+  .mini-cards{margin-top:2px!important}
+  .mini-cards .card{width:18px!important;height:25px!important;margin-left:-7px!important}
+  .play-history{
+    width:88px!important;max-height:30px!important;overflow:hidden!important;
+    margin:2px auto 0!important;font-size:7px!important;
+  }
+  .history-card{padding:2px 3px!important;font-size:7px!important;margin:1px!important}
+
+  .joker-corner{
+    top:50%!important;left:8px!important;transform:translateY(-50%)!important;
+    z-index:30!important;padding:4px!important;opacity:.92!important;
+  }
+  .joker-corner .center-title{font-size:7px!important;margin-bottom:3px!important}
+  .joker-corner .card{width:34px!important;height:48px!important;font-size:14px!important}
+
+  /* Tangan seperti mockup: kartu besar, rapat, tetap menjadi bagian halaman. */
+  .game.active>.your-hand{
+    position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    transform:none!important;width:calc(100% - 8px)!important;max-width:520px!important;
+    margin:10px auto 12px!important;padding:8px 5px 9px!important;
+    z-index:80!important;background:linear-gradient(180deg,rgba(5,45,33,.97),rgba(2,28,21,.98))!important;
+    border:1px solid rgba(243,207,112,.16)!important;border-radius:15px!important;
+    box-shadow:0 12px 28px rgba(0,0,0,.32)!important;
+  }
+  .your-hand-title{
+    font-size:9px!important;letter-spacing:1.3px!important;margin-bottom:3px!important;
+    color:#e9f3ed!important;
+  }
+  .your-hand-title:after{content:" • TARIK KARTU KE MEJA";color:#f3cf70;font-size:7px;letter-spacing:.7px}
+  .game.active>.your-hand .hand-actions{display:none!important}
+  .your-cards{
+    width:100%!important;min-height:92px!important;height:100px!important;max-height:110px!important;
+    overflow-x:auto!important;overflow-y:hidden!important;
+    justify-content:center!important;align-items:flex-end!important;
+    padding:8px 14px 3px!important;scrollbar-width:thin!important;
+    touch-action:pan-x!important;
+  }
+  .your-cards .card{
+    width:clamp(42px,11vw,54px)!important;height:clamp(61px,16vw,78px)!important;
+    flex:0 0 auto!important;margin-left:clamp(-18px,-3.4vw,-10px)!important;
+    border-radius:8px!important;font-size:clamp(15px,4vw,20px)!important;
+    touch-action:none!important;user-select:none!important;-webkit-user-drag:none!important;
+    transition:transform .12s ease,box-shadow .12s ease!important;
+  }
+  .your-cards .card:first-child{margin-left:0!important}
+  .your-cards .card.selected{transform:translateY(-10px)!important}
+  .your-cards .card.mobile-dragging{
+    transform:translateY(-22px) scale(1.08)!important;z-index:200!important;
+    box-shadow:0 15px 28px rgba(0,0,0,.5),0 0 0 3px rgba(243,207,112,.4)!important
+  }
+
+  /* Mobile benar-benar drag-first: hanya aksi khusus Joker yang tetap tersedia. */
+  #sortSuitBtn,#sortRankBtn,#baseBtn,#addBtn,#potBtn{display:none!important}
+  #discardJokerBtn{display:inline-flex!important;margin-top:4px!important}
+
+  .game.active>.panel,.game.active>.actions,.game.active>.suggestions{
+    width:calc(100% - 8px)!important;max-width:520px!important;margin:9px auto!important;
+    position:relative!important;left:auto!important;right:auto!important;transform:none!important;
+  }
+  .game.active>.panel,.game.active>.suggestions{
+    border-radius:14px!important;background:rgba(4,31,24,.92)!important;
+    border-color:rgba(255,255,255,.09)!important;
+  }
+  .game.active>.actions{padding:8px!important}
+  .panel-title{font-size:10px!important}
+}
+@media (max-width:390px){
+  .game.active>.table{height:690px!important;min-height:690px!important}
+  .player{width:78px!important}
+  .player-name{max-width:78px!important;font-size:8px!important}
+  .play-history{width:78px!important}
+  .players-5 .p5{bottom:118px!important;left:5px!important}
+  .table-area{width:76%!important}
+}
+</style>
+</head>
   <body>
     <div class="topbar">
       <div class="logo">MINAMI</div>
@@ -6282,7 +6478,87 @@
       // jika ada game tersimpan, lanjutkan game tersebut.
       restoreSavedGame();
     </script>
-  </body>
+  
+<script id="minami-mobile-pointer-drag-v3">
+(function(){
+  function setupMobilePointerDrag(){
+    if(!window.matchMedia || !matchMedia("(max-width:700px)").matches) return;
+    const hand=document.getElementById("yourCards");
+    if(!hand) return;
+    hand.querySelectorAll(".card").forEach(function(card){
+      if(card.dataset.mobilePointerBound==="1") return;
+      card.dataset.mobilePointerBound="1";
+      let sx=0,sy=0,dragging=false,moved=false,pid=null;
+      card.addEventListener("pointerdown",function(e){
+        if(!window.game || game.turn!==0 || game.over || game.dead[0]) return;
+        pid=e.pointerId;sx=e.clientX;sy=e.clientY;moved=false;dragging=false;
+        try{card.setPointerCapture(pid)}catch(_){}
+      },{passive:true});
+      card.addEventListener("pointermove",function(e){
+        if(pid!==e.pointerId) return;
+        const dx=e.clientX-sx,dy=e.clientY-sy;
+        if(!dragging && Math.hypot(dx,dy)<8) return;
+        moved=true;
+        if(!dragging){
+          dragging=true;
+          if(typeof game.selected==="object"){
+            const idx=[...hand.children].indexOf(card);
+            if(idx>=0 && game.selected.indexOf(idx)<0) game.selected=[idx];
+          }
+          card.classList.add("mobile-dragging");
+          document.body.classList.add("mobile-card-dragging");
+        }
+        e.preventDefault();
+        const hit=document.elementFromPoint(e.clientX,e.clientY);
+        document.querySelectorAll(".mobile-pointer-target").forEach(x=>x.classList.remove("mobile-pointer-target"));
+        const meld=hit&&hit.closest?hit.closest(".meld"):null;
+        const area=hit&&hit.closest?hit.closest("#tableArea"):null;
+        if(meld) meld.classList.add("mobile-pointer-target");
+        else if(area) area.classList.add("mobile-pointer-target");
+      },{passive:false});
+      card.addEventListener("pointerup",function(e){
+        if(pid!==e.pointerId) return;
+        const wasDragging=dragging;
+        const hit=document.elementFromPoint(e.clientX,e.clientY);
+        const meld=hit&&hit.closest?hit.closest(".meld"):null;
+        const area=hit&&hit.closest?hit.closest("#tableArea"):null;
+        cleanup();
+        if(!wasDragging || !moved){
+          return;
+        }
+        if(!window.game || game.turn!==0 || game.over || game.dead[0]) return;
+        if(meld){
+          const mi=Number(meld.dataset.meldIndex);
+          if(Number.isInteger(mi) && game.melds[mi]){
+            game.targetMeld=mi;
+            addMeld();
+            if(typeof playCardPlaceSound==="function") playCardPlaceSound();
+            return;
+          }
+        }
+        if(area){
+          dropNewBase();
+          return;
+        }
+        render();
+      },{passive:false});
+      card.addEventListener("pointercancel",function(){cleanup()});
+      function cleanup(){
+        try{if(pid!=null) card.releasePointerCapture(pid)}catch(_){}
+        pid=null;dragging=false;moved=false;
+        card.classList.remove("mobile-dragging");
+        document.body.classList.remove("mobile-card-dragging");
+        document.querySelectorAll(".mobile-pointer-target").forEach(x=>x.classList.remove("mobile-pointer-target"));
+      }
+    });
+  }
+  const oldRender=window.render;
+  if(typeof oldRender==="function") return;
+  document.addEventListener("DOMContentLoaded",setupMobilePointerDrag);
+  setInterval(setupMobilePointerDrag,500);
+})();
+</script>
+</body>
 </html>
 <style id="mobile-hand-fixed-footer-final">
   @media (max-width: 700px) {
