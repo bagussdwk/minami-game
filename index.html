@@ -6626,11 +6626,10 @@
           });
         };
 
-        // Sambung dasar/POT. POT normal maksimal 3 kartu.
-        // Pengecualian: AI boleh memakai lebih dari 3 jika langkah itu
-        // membantu WIN/TENHO atau memangkas sisa nilai tangan secara signifikan.
+        // Sambung dasar/POT. Untuk perilaku normal AI, POT dibatasi maksimal
+        // 3 kartu agar Joker tidak dibuang terlalu cepat.
         game.melds.forEach((m, mi) => {
-          const maxAdd = m.type === "pot" ? 4 : 5;
+          const maxAdd = m.type === "pot" ? 3 : 5;
           subsets(h, maxAdd).forEach((cards) => {
             if (m.type === "pot") {
               // POT lama tidak boleh ditambah Joker sendirian.
@@ -6640,6 +6639,35 @@
             const chk = addToMeld(cards, mi);
             if (chk.ok) addCandidate(cards, "add", mi);
           });
+
+          // Pengecualian strategis: boleh 4 kartu ke POT lama hanya jika
+          // hasilnya memangkas nilai tangan secara sangat besar atau langsung
+          // menghabiskan tangan. Jadi ini bukan batas aturan POT, melainkan
+          // batas pencarian AI agar tidak boros Joker di awal.
+          if (m.type === "pot") {
+            subsets(h, 4).forEach((cards) => {
+              if (cards.length !== 4) return;
+              const real = cards.filter((c) => !isJoker(c));
+              if (!real.length) return;
+              const chk = addToMeld(cards, mi);
+              if (!chk.ok) return;
+
+              const remaining = h.filter((c) => !cards.includes(c));
+              const beforeValue = handValue(h);
+              const afterValue = handValue(remaining);
+              const finish = remaining.length === 0;
+              const majorReduction =
+                beforeValue > 0 &&
+                afterValue <= Math.max(5, Math.floor(beforeValue * 0.35));
+
+              if (finish || majorReduction) {
+                addCandidate(cards, "add", mi, {
+                  strategicPot: true,
+                  finish,
+                });
+              }
+            });
+          }
         });
 
         // POT baru normal: maksimal 3 kartu.
