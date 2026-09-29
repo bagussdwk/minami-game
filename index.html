@@ -3625,7 +3625,21 @@
   }
 </style>
 
-<style id="menu-and-table-themes">
+<style id="menu-profile-style">
+      .menu-profile-card{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:11px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)}
+      .menu-profile-avatar{width:40px;height:40px;min-width:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(145deg,#f3cf70,#b8872c);color:#173f2d;font-size:21px;box-shadow:0 5px 12px rgba(0,0,0,.22)}
+      .menu-profile-main{min-width:0;flex:1}
+      .menu-profile-label{color:#9fc6b7;font-size:8px;font-weight:900;letter-spacing:1px;text-transform:uppercase}
+      .menu-profile-current{margin-top:2px;color:#f3cf70;font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .menu-profile-edit{display:flex;gap:6px;margin-top:8px}
+      .menu-profile-edit input{min-width:0;flex:1;height:34px;padding:7px 9px;border-radius:8px;border:1px solid rgba(255,255,255,.12);outline:none;background:rgba(0,0,0,.18);color:#fff;font-size:11px;font-weight:700}
+      .menu-profile-edit input:focus{border-color:rgba(243,207,112,.5);box-shadow:0 0 0 2px rgba(243,207,112,.08)}
+      .menu-profile-save{height:34px;padding:7px 10px;border-radius:8px;background:linear-gradient(145deg,#f3cf70,#c99739);color:#18251d;font-size:10px;font-weight:900}
+      .menu-profile-save:hover{filter:brightness(1.08)}
+      .menu-profile-note{margin-top:6px;color:#789f90;font-size:8px;line-height:1.35}
+      @media(max-width:700px){.menu-profile-edit input{font-size:12px}.menu-profile-save{min-width:62px}}
+    </style>
+    <style id="menu-and-table-themes">
       .hamburger-btn {
         width: 34px;
         height: 30px;
@@ -3984,7 +3998,7 @@
         <div class="player p1" id="player1">
           <div class="play-history" id="history1"></div>
           <div class="avatar">👤</div>
-          <div class="player-name">Anda</div>
+          <div class="player-name" id="playerName1">Anda</div>
           <div class="mini-cards" id="mini1"></div>
         </div>
         <div class="player p2" id="player2">
@@ -4138,6 +4152,21 @@
             <div class="score-modal-subtitle">Pengaturan permainan</div>
           </div>
           <button type="button" class="score-modal-close" id="menuClose">×</button>
+        </div>
+        <div class="menu-section" id="profileMenuSection">
+          <div class="menu-section-title">Profil Saya</div>
+          <div class="menu-profile-card">
+            <div class="menu-profile-avatar">👤</div>
+            <div class="menu-profile-main">
+              <div class="menu-profile-label">Nama pemain</div>
+              <div class="menu-profile-current" id="profileCurrentName">Anda</div>
+              <div class="menu-profile-edit">
+                <input type="text" id="profileNameInput" maxlength="18" placeholder="Masukkan nama..." autocomplete="nickname" />
+                <button type="button" class="menu-profile-save" id="profileNameSave">Simpan</button>
+              </div>
+              <div class="menu-profile-note" id="profileNameNote">Nama ini akan tampil sebagai nama P1 di meja.</div>
+            </div>
+          </div>
         </div>
         <div class="menu-section">
           <div class="menu-section-title">Permainan</div>
@@ -7594,15 +7623,61 @@
         updateMusicToggle();
       };
 
+      const MINAMI_PROFILE_KEY = "minamiProfileV1";
+      function getPlayerProfile(){
+        try{
+          const saved = JSON.parse(localStorage.getItem(MINAMI_PROFILE_KEY) || "null");
+          const name = typeof saved?.name === "string" ? saved.name.trim() : "";
+          return { name: name || "Anda" };
+        }catch(e){ return { name:"Anda" }; }
+      }
+      function getPlayerName(i){
+        return i === 0 ? getPlayerProfile().name : "Pemain " + (i + 1);
+      }
+      function applyPlayerProfile(){
+        const name = getPlayerProfile().name;
+        const playerNameEl = document.getElementById("playerName1");
+        if(playerNameEl) playerNameEl.textContent = name;
+        const current = document.getElementById("profileCurrentName");
+        if(current) current.textContent = name;
+        const input = document.getElementById("profileNameInput");
+        if(input && document.activeElement !== input) input.value = name === "Anda" ? "" : name;
+      }
+      function savePlayerProfile(){
+        const input = document.getElementById("profileNameInput");
+        const note = document.getElementById("profileNameNote");
+        let name = (input?.value || "").trim().replace(/\s+/g," ");
+        if(!name) name = "Anda";
+        name = name.slice(0,18);
+        try{ localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({name})); }catch(e){}
+        applyPlayerProfile();
+        if(note){
+          note.textContent = name === "Anda" ? "Nama dikembalikan ke nama default." : "Nama berhasil disimpan.";
+          note.style.color = "#7ff0b0";
+          clearTimeout(note._timer);
+          note._timer = setTimeout(()=>{
+            note.textContent = "Nama ini akan tampil sebagai nama P1 di meja.";
+            note.style.color = "";
+          },1800);
+        }
+      }
+      applyPlayerProfile();
+
       const menuModal = document.getElementById("menuModal");
       if (!game) menuModal.classList.remove("game-active");
       const closeMenu = () => {
         menuModal.classList.remove("show");
         document.body.classList.remove("menu-open");
       };
+      document.getElementById("profileNameSave").onclick = savePlayerProfile;
+      document.getElementById("profileNameInput").addEventListener("keydown", (e) => {
+        if(e.key === "Enter") savePlayerProfile();
+      });
+
       document.getElementById("menuBtn").onclick = () => {
         // Tentukan isi menu setiap kali dibuka berdasarkan status game saat ini.
         menuModal.classList.toggle("game-active", !!game && !game.over);
+        applyPlayerProfile();
         menuModal.classList.add("show");
         document.body.classList.add("menu-open");
       };
@@ -7750,7 +7825,7 @@
       }
       function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAMI_ACH_KEY)||"[]")}catch(e){return[]}}
       function updateAchievements(){const s=featureStats(),u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menang 1 game",s.wins>=1],["tenho","🃏","TENHO!","Mendapatkan TENHO",s.tenho>=1],["pot-master","♟️","POT Hunter","Membuat 5 POT",s.pots>=5],["joker-master","🃏","Joker Master","Memainkan Joker 5 kali",s.jokers>=5],["combo-master","🔥","Combo Master","Menurunkan 5 kartu sekaligus",s.bestCombo>=5],["marathon","🎴","Marathon","Menyelesaikan 10 game",s.games>=10],["streak-3","⚡","Winning Streak","Menang 3 game berturut-turut",(Number(localStorage.getItem("minamiWinStreak"))||0)>=3]];let ch=false;a.forEach(x=>{if(x[4]&&!u.has(x[0])){u.add(x[0]);ch=true;showPlayFeedback(x[1]+" ACHIEVEMENT: "+x[2],false)}});if(ch)localStorage.setItem(MINAMI_ACH_KEY,JSON.stringify([...u]))}
-      function getGameMVP(){if(!game?.stats)return null;let best=null;for(let i=0;i<playerCount;i++){const st=game.stats,v=(st.cardsPlayed[i]||0)+(st.pots[i]||0)*3+(st.jokers[i]||0)*2+(st.bases[i]||0)+(game.lastResult?.winner===i?10:0),x={i,value:v,name:i===0?"Anda":"Pemain "+(i+1)};if(!best||v>best.value)best=x}return best}
+      function getGameMVP(){if(!game?.stats)return null;let best=null;for(let i=0;i<playerCount;i++){const st=game.stats,v=(st.cardsPlayed[i]||0)+(st.pots[i]||0)*3+(st.jokers[i]||0)*2+(st.bases[i]||0)+(game.lastResult?.winner===i?10:0),x={i,value:v,name:getPlayerName(i)};if(!best||v>best.value)best=x}return best}
       function renderFeatureStats(){const b=document.getElementById("featureStatsPanel");if(!b)return;const s=featureStats(),games=s.games||0,wins=s.wins||0,winRate=games?Math.round(wins/games*100):0;b.innerHTML='<div class="feature-stat-grid">'+[['games','Game selesai'],['wins','WIN'],['winRate','Win Rate'],['tenho','TENHO'],['pots','POT'],['jokers','Joker dimainkan'],['bestCombo','Combo terbesar'],['cards','Kartu dimainkan'],['cardsPerGame','Kartu/game'],['bestStreak','Win streak terbaik'],['dead','Mati Tangan']].map(x=>'<div><b>'+(x[0]==="winRate"?winRate+"%":(s[x[0]]||0))+'</b><span>'+x[1]+'</span></div>').join('')+'</div>';}
       function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menang 1 game"],["tenho","🃏","TENHO!","Mendapatkan TENHO"],["pot-master","♟️","POT Hunter","Membuat 5 POT"],["joker-master","🃏","Joker Master","Memainkan Joker 5 kali"],["combo-master","🔥","Combo Master","Menurunkan 5 kartu sekaligus"],["marathon","🎴","Marathon","Menyelesaikan 10 game"],["streak-3","⚡","Winning Streak","Menang 3 game berturut-turut"]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
       function renderFeaturePanels(){renderFeatureStats();renderAchievements()}
