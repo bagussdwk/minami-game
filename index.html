@@ -7964,16 +7964,17 @@
           {name:"EXPERT",icon:"🔥",min:30,next:60},
           {name:"MASTER",icon:"💎",min:60,next:100}
         ];
-        if(rank1>=100){
+        const grandmasterReady=rank1>=100&&games>=25&&gameWins>=10;
+        if(grandmasterReady){
           const gmLevel=Math.floor((rank1-100)/50)+1;
           const currentMin=100+(gmLevel-1)*50;
           const next=currentMin+50;
           return {
             name:"GRANDMASTER",icon:"👑",level:gmLevel,min:currentMin,next,
-            current:rank1,nextLabel:"GRANDMASTER "+(gmLevel+1),
+            current:rank1,
+            nextLabel:"GRANDMASTER "+(gmLevel+1),
             progress:Math.min(100,Math.round((rank1-currentMin)/(next-currentMin)*100)),
-            eligible:games>=25&&gameWins>=10,
-            locked:false
+            eligible:true
           };
         }
         let tier=tiers[0];
@@ -7981,10 +7982,13 @@
           if(rank1>=tiers[i].min){tier=tiers[i];break;}
         }
         const progress=Math.min(100,Math.round((rank1-tier.min)/(tier.next-tier.min)*100));
+        const atMasterGate=tier.name==="MASTER"&&rank1>=100;
         return {
           name:tier.name,icon:tier.icon,level:0,min:tier.min,next:tier.next,
-          current:rank1,nextLabel:tiers.find(x=>x.min===tier.next)?.name||"GRANDMASTER",
-          progress
+          current:rank1,nextLabel:atMasterGate?"GRANDMASTER":tiers.find(x=>x.min===tier.next)?.name||"GRANDMASTER",
+          progress,
+          eligible:false,
+          gate:atMasterGate
         };
       }
       function renderFeatureStats(){
