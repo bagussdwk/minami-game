@@ -5925,6 +5925,7 @@
           reason,
           delta: scoreDelta.slice(),
         };
+        recordLifetimeRank1(scoreDelta, reason);
         if(game.stats){game.stats.winner=winner;game.stats.reason=reason;game.stats.delta=scoreDelta.slice()}
         window.minamiWinStreak=winner===0?(Number(localStorage.getItem("minamiWinStreak"))||0)+1:0;localStorage.setItem("minamiWinStreak",String(window.minamiWinStreak));
         updateLifetimeStatsFromGame();updateAchievements();renderFeatureStats();renderAchievements();playMinamiSfx(reason==="TENHO"?"tenho":winner!==null?"win":"dead");
@@ -7862,6 +7863,19 @@
         saveFeatureStats(s);
         updateAchievements();
       }
+      function recordLifetimeRank1(delta, reason){
+        if(!Array.isArray(delta)||delta.length!==playerCount)return;
+        if(reason==="ALL_DEAD"||delta.every(v=>Number(v)===-2))return;
+        const maxDelta=Math.max(...delta.map(v=>Number(v)));
+        if(Number(delta[0])!==maxDelta)return;
+        if(game?._rank1Counted)return;
+        if(game)game._rank1Counted=true;
+        const s=featureStats();
+        s.rank1=(Number(s.rank1)||0)+1;
+        saveFeatureStats(s);
+        renderFeatureStats();
+        renderAchievements();
+      }
       function updateLifetimeStatsFromGame(){
         if(!game||game._lifetimeCounted)return;
         game._lifetimeCounted=true;
@@ -7871,10 +7885,6 @@
         s.games++;
         if(game.lastResult?.winner===0)s.wins++;
         const delta=Array.isArray(game.lastResult?.delta)?game.lastResult.delta:[];
-        if(delta.length===playerCount && !(game.lastResult?.reason==="ALL_DEAD" || delta.every(v=>Number(v)===-2))){
-          const maxDelta=Math.max(...delta.map(v=>Number(v)));
-          if(Number(delta[0])===maxDelta) s.rank1++;
-        }
         if(game.lastResult?.reason==="TENHO")s.tenho++;
         s.dead+=(Array.isArray(game.deadReason)?game.deadReason.filter(x=>x==="NO_BASE").length:0);
         const mvp=getGameMVP();
