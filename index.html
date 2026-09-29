@@ -6314,6 +6314,27 @@
           game.round = 2;
         }
 
+        // Pada putaran pertama, pemain manusia wajib punya DASAR.
+        // Jika saat gilirannya ternyata tidak punya satu pun dasar legal,
+        // langsung dianggap MATI TANGAN dan giliran diteruskan.
+        // Jangan menunggu round berubah ke 2, karena round baru bisa berubah
+        // setelah semua pemain menyelesaikan giliran awalnya.
+        if (
+          game.turn === 0 &&
+          game.round === 1 &&
+          !game.hasBase[0] &&
+          !hasAnyBase(game.hands[0])
+        ) {
+          markDead(0);
+          game.firstRoundDone[0] = true;
+
+          if (game.dead.every(Boolean)) {
+            return endGame(null, "ALL_DEAD");
+          }
+
+          return nextTurn();
+        }
+
         // Setelah putaran pertama selesai, pemain manusia yang
         // tidak mempunyai satu pun langkah legal langsung MATI.
         // Tidak ada tombol LEWAT dan Joker tidak dipakai sebagai jalan keluar.
