@@ -5411,6 +5411,30 @@
         container.appendChild(stack);
       }
 
+      let deadCardsResponsiveTimer = null;
+      function refreshDeadCardsResponsive() {
+        if (!game || !game.deadCards || game.over) return;
+        const jokerInfo = document.getElementById("jokerInfo");
+        // Jangan membuka Joker lebih awal saat animasi pembagian kartu masih berjalan.
+        if (jokerInfo && jokerInfo.textContent !== "") return;
+        renderDeadCards(game.deadCards, game.jokerIndex, true);
+      }
+
+      window.addEventListener("resize", () => {
+        clearTimeout(deadCardsResponsiveTimer);
+        deadCardsResponsiveTimer = setTimeout(refreshDeadCardsResponsive, 80);
+      });
+
+      if (window.matchMedia) {
+        const deadCardsMedia = window.matchMedia("(max-width: 700px)");
+        const onDeadCardsMediaChange = () => refreshDeadCardsResponsive();
+        if (deadCardsMedia.addEventListener) {
+          deadCardsMedia.addEventListener("change", onDeadCardsMediaChange);
+        } else if (deadCardsMedia.addListener) {
+          deadCardsMedia.addListener(onDeadCardsMediaChange);
+        }
+      }
+
       function renderScores() {
         const s = document.getElementById("scoreModalBoard");
         if (!s) return;
