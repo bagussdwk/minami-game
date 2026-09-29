@@ -6007,7 +6007,6 @@
               p.games++;
               if(game.scores[i]>=25)p.gameWins++;
             }
-            p.title=minamiRankTitleFromStats(p.rank1,p.games,p.gameWins);
           }
           savePersistentAIRoster();
           window.minamiMatchAIProfiles=game.aiProfilesData.map(p=>p?{...p}:p);
@@ -7479,7 +7478,7 @@
             rank1:0,
             games:0,
             gameWins:0,
-            title:"PEMULA"
+            title:["PEMULA","NOVICE","PLAYER","EXPERT","MASTER"][Math.floor(Math.random()*5)]
           };
         });
       }
@@ -7495,7 +7494,7 @@
               rank1:Number(p.rank1)||0,
               games:Number(p.games)||0,
               gameWins:Number(p.gameWins)||0,
-              title:minamiRankTitleFromStats(p.rank1,p.games,p.gameWins)
+              title:p.title||"PEMULA"
             }));
           }
         }catch(e){}
@@ -7526,7 +7525,7 @@
           for(let i=1;i<playerCount;i++){
             const p=game.aiProfilesData[i];
             const e=document.getElementById("playerTitle"+(i+1));
-            if(e)e.textContent=p ? minamiRankTitleFromStats(p.rank1,p.games,p.gameWins) : "PEMULA";
+            if(e)e.textContent=p?.title||"PEMULA";
           }
         }
       }
@@ -7538,7 +7537,7 @@
           const avatar=el.querySelector(".avatar"), name=el.querySelector(".player-name"), title=el.querySelector(".player-title");
           if(avatar){ avatar.innerHTML='<img src="'+p.photo+'" alt="" />'; avatar.classList.add("profile-photo"); }
           if(name) name.textContent=p.name;
-          if(title) title.textContent=minamiRankTitleFromStats(p.rank1,p.games,p.gameWins);
+          if(title) title.textContent=p.title||"PEMULA";
         }
       }
       function applyPlayerProfilesToTable(){ applyPlayerProfile(); applyAIProfiles(); refreshPlayerTitles(); }
