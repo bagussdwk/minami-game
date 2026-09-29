@@ -7293,6 +7293,11 @@
         document.getElementById("resultModal").classList.add("show");
       };
       const doNewGame = () => {
+        // Hentikan game lama terlebih dahulu agar timer AI yang masih menunggu
+        // tidak melanjutkan giliran setelah kembali ke menu awal.
+        if (game) game.over = true;
+        game = null;
+
         clearSavedGame();
         window.minamiScores = null;
         window.minamiScoreHistory = [];
