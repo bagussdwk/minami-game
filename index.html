@@ -7445,6 +7445,8 @@
         document.body.classList.remove("menu-open");
       };
       document.getElementById("menuBtn").onclick = () => {
+        // Tentukan isi menu setiap kali dibuka berdasarkan status game saat ini.
+        menuModal.classList.toggle("game-active", !!game && !game.over);
         menuModal.classList.add("show");
         document.body.classList.add("menu-open");
       };
