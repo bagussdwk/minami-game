@@ -6596,25 +6596,42 @@
         while (work.length >= 3) {
           let best = null;
 
-          // POT: seluruh kartu dengan rank sama yang berjumlah minimal 3.
+          // POT: kartu dengan rank sama, Joker boleh menjadi pengganti kartu
+          // rank tersebut. Jadi 9,9,Joker = POT 9, 7,Joker,Joker = POT 7,
+          // dan 5,Joker,Joker,Joker = POT 5.
           const byRank = new Map();
+          const jokers = work.filter((c) => isJoker(c));
           for (const c of work) {
             if (isJoker(c)) continue;
             if (!byRank.has(c.rank)) byRank.set(c.rank, []);
             byRank.get(c.rank).push(c);
           }
 
-          for (const cards of byRank.values()) {
-            if (cards.length < 3) continue;
-            const pm = potCards(cards);
-            if (!pm) continue;
-            const gain = handValue(cards);
-            if (
-              !best ||
-              gain > best.gain ||
-              (gain === best.gain && cards.length > best.cards.length)
-            ) {
-              best = { cards, gain, type: "pot" };
+          for (const [rank, realCards] of byRank.entries()) {
+            // Coba semua jumlah kartu asli + Joker yang masih tersedia.
+            // Minimal tetap 3 kartu dan minimal 1 kartu asli rank POT.
+            for (let realCount = 1; realCount <= realCards.length; realCount++) {
+              for (
+                let jokerCount = Math.max(0, 3 - realCount);
+                jokerCount <= jokers.length;
+                jokerCount++
+              ) {
+                if (realCount + jokerCount < 3) continue;
+                const cards = [
+                  ...realCards.slice(0, realCount),
+                  ...jokers.slice(0, jokerCount),
+                ];
+                const pm = potCards(cards);
+                if (!pm) continue;
+                const gain = handValue(cards);
+                if (
+                  !best ||
+                  gain > best.gain ||
+                  (gain === best.gain && cards.length > best.cards.length)
+                ) {
+                  best = { cards, gain, type: "pot", rank };
+                }
+              }
             }
           }
 
