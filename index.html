@@ -5420,7 +5420,7 @@
 
         list.innerHTML = Array.from({ length: playerCount }, (_, i) => {
           const moves = Array.isArray(game.history?.[i]) ? game.history[i] : [];
-          const playerName = i === 0 ? "Anda" : "Pemain " + (i + 1);
+          const playerName = getPlayerName(i);
 
           // logMove memakai unshift, jadi balik agar urutan tampil dari aksi pertama.
           const ordered = [...moves].reverse();
@@ -5460,7 +5460,7 @@
           // jadi nama pemain dibuat tetap pendek dan bersih.
 
           n.textContent =
-            (i === 0 ? "Anda" : "Pemain " + (i + 1)) +
+            getPlayerName(i) +
             " (" +
             game.hands[i].length +
             ")";
@@ -5638,7 +5638,7 @@
           ? "Selesai"
           : game.turn === 0
             ? "Giliran Anda"
-            : "Giliran Pemain " + (game.turn + 1);
+            : "Giliran " + getPlayerName(game.turn);
         // Indikator Putaran mengikuti putaran meja sebenarnya:
         // setiap semua pemain mendapat satu giliran = 1 putaran.
         // Fase aturan tetap disimpan di game.round agar logika permainan tidak berubah.
@@ -5959,7 +5959,7 @@
             ? "Game Selesai"
             : reason === "TENHO"
               ? "TENHO / WIN!"
-              : "Pemain " + (winner + 1) + " MENANG!";
+              : getPlayerName(winner) + " MENANG!";
         let b = document.getElementById("resultBody");
         b.innerHTML =
           '<div class="status-note">' +
@@ -5984,7 +5984,7 @@
           row.className = "result-row";
           row.innerHTML =
             '<div class="result-left"><b>' +
-            (i === 0 ? "Anda" : "Pemain " + (i + 1)) +
+            getPlayerName(i) +
             '</b><div class="result-status">' +
             status +
             "</div>" +
@@ -6010,7 +6010,7 @@
               game.turnOrder.indexOf(a) - game.turnOrder.indexOf(b),
           );
 
-          const playerLabel = (i) => (i === 0 ? "Anda" : "Pemain " + (i + 1));
+          const playerLabel = (i) => getPlayerName(i);
           const medal = ["🥇", "🥈", "🥉"];
 
           let podiumHtml =
@@ -6563,14 +6563,14 @@
         let b = document.getElementById("resultBody");
         b.innerHTML =
           '<div class="status-note">TENHO/WIN: ' +
-          (w === 0 ? "Anda" : "Pemain " + (w + 1)) +
+          getPlayerName(w) +
           " mendapat +7. Sisa kartu pemain lain dicari otomatis dari kemungkinan kombinasi legal untuk mendapatkan nilai sisa serendah mungkin, lalu ranking skor dihitung dari nilai terbesar ke terkecil.</div>";
         for (let i = 0; i < playerCount; i++) {
           let row = document.createElement("div");
           row.className = "result-row";
           row.innerHTML =
             "<span>" +
-            (i === 0 ? "Anda" : "Pemain " + (i + 1)) +
+            getPlayerName(i) +
             "</span><span>nilai sisa terbaik " +
             residual[i] +
             " → <b>" +
@@ -6585,7 +6585,7 @@
           let wi = game.scores.findIndex((x) => x >= 25);
           b.innerHTML +=
             '<h3 class="win">🏆 ' +
-            (wi === 0 ? "Anda" : "Pemain " + (wi + 1)) +
+            getPlayerName(wi) +
             " mencapai 25 poin dan menang!</h3>";
           document.getElementById("nextGameBtn").style.display = "none";
         } else document.getElementById("nextGameBtn").style.display = "block";
@@ -7676,7 +7676,7 @@
         }catch(e){ return { name:"Anda" }; }
       }
       function getPlayerName(i){
-        return i === 0 ? getPlayerProfile().name : "Pemain " + (i + 1);
+        return getPlayerName(i);
       }
       function applyPlayerProfile(){
         const name = getPlayerProfile().name;
@@ -7912,7 +7912,7 @@
       function openPlayerAction(i){
         if(!game || game.over || i<0 || i>=playerCount) return;
         playerActionTarget=i;
-        const name=i===0?"Anda":"Pemain "+(i+1);
+        const name=getPlayerName(i);
         document.getElementById("playerActionTitle").textContent="🎯 "+name;
         const grid=document.getElementById("playerActionGrid");
         const actions=[
