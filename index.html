@@ -5926,7 +5926,7 @@
         };
         if(game.stats){game.stats.winner=winner;game.stats.reason=reason;game.stats.delta=scoreDelta.slice()}
         window.minamiWinStreak=winner===0?(Number(localStorage.getItem("minamiWinStreak"))||0)+1:0;localStorage.setItem("minamiWinStreak",String(window.minamiWinStreak));
-        updateLifetimeStatsFromGame();updateAchievements();playMinamiSfx(reason==="TENHO"?"tenho":winner!==null?"win":"dead");
+        updateLifetimeStatsFromGame();updateAchievements();renderFeatureStats();renderAchievements();playMinamiSfx(reason==="TENHO"?"tenho":winner!==null?"win":"dead");
         saveGameState();
 
         // Ceremony kemenangan: jangan langsung membuka hasil/poin.
