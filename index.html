@@ -4814,7 +4814,8 @@
           window.minamiAISpeed = Number(game.aiSpeed) || 1;
           window.minamiScoreHistory = Array.isArray(saved.scoreHistory)
             ? saved.scoreHistory
-            : [];\n          window.minamiDirection =
+            : [];
+          window.minamiDirection =
             saved.direction === -1 ? -1 : game.direction === -1 ? -1 : 1;
           window.minamiNextOrder = Array.isArray(saved.nextOrder)
             ? saved.nextOrder.slice()
