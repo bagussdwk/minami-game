@@ -7425,7 +7425,7 @@
         return "PEMULA";
       }
       function randomAITitle(){
-        const titles=["PEMULA","NOVICE","PLAYER","EXPERT","MASTER","ACE","CARD SHARK","TABLE MASTER"];
+        const titles=["PEMULA","NOVICE","PLAYER","EXPERT","MASTER"];
         return titles[Math.floor(Math.random()*titles.length)];
       }
       function refreshPlayerTitles(){
@@ -7440,7 +7440,7 @@
       }
       function randomAIProfiles(count){
         const pool = shuffle(MINAMI_AI_PROFILE_POOL.slice());
-        const titles = shuffle(["PEMULA","NOVICE","PLAYER","EXPERT","MASTER","ACE","CARD SHARK","TABLE MASTER"]);
+        const titles = shuffle(["PEMULA","NOVICE","PLAYER","EXPERT","MASTER"]);
         return Array.from({length:count}, (_,idx) => {
           const p = pool[idx % pool.length];
           return { name:p.name, photo:p.photo, title:titles[idx % titles.length] };
