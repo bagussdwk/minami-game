@@ -7407,9 +7407,10 @@
       }
       function randomAIProfiles(count){
         const pool = shuffle(MINAMI_AI_PROFILE_POOL.slice());
+        const titles = shuffle(["PEMULA","NOVICE","PLAYER","EXPERT","MASTER","ACE","CARD SHARK","TABLE MASTER"]);
         return Array.from({length:count}, (_,idx) => {
           const p = pool[idx % pool.length];
-          return { name:p.name, photo:p.photo, title:randomAITitle() };
+          return { name:p.name, photo:p.photo, title:titles[idx % titles.length] };
         });
       }
       function applyAIProfiles(){
