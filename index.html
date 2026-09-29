@@ -6298,6 +6298,12 @@
           return hasAnyBase(game.hands[0]);
         }
         const h = game.hands[0];
+
+        // Mulai Round 2+, Joker adalah "nyawa giliran".
+        // Jadi walaupun tidak ada langkah lain yang legal, pemain tetap hidup
+        // selama masih memiliki Joker yang bisa dibuang.
+        if (game.round >= 2 && h.some(isJoker)) return true;
+
         for (const m of game.melds) {
           for (const cards of subsets(h, 4))
             if (addToMeld(cards, game.melds.indexOf(m)).ok) return true;
