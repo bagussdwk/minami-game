@@ -7886,7 +7886,6 @@
         s.cards+=count;
         if(hasJoker) s.jokers++;
         s.bestCombo=Math.max(s.bestCombo||0,count);
-        s.cardsPerMatch=s.matches?Math.round(s.cards/s.matches):0;
         saveFeatureStats(s);
         updateAchievements();
       }
@@ -7974,11 +7973,12 @@
         const gameWinRate=games?Math.round(gameWins/games*100):0;
         const rank1=s.rank1||0,rank1Rate=matches?Math.round(rank1/matches*100):0;
         const stats=[
-          ["matches","Match selesai"],["matchWins","Win Match"],["matchWinRate","Win Rate Match"],
-          ["games","Game selesai"],["gameWins","Win Game"],["gameWinRate","Win Rate Game"],
-          ["rank1","Rank 1"],["rank1Rate","Rank 1 Rate"],["tenho","TENHO"],["pots","POT"],
-          ["jokers","Joker dimainkan"],["bestCombo","Combo terbesar"],["cards","Kartu dimainkan"],
-          ["cardsPerMatch","Kartu/Match"],["bestStreak","Win streak terbaik"],["dead","Mati Tangan"]
+          ["matches","Match selesai"],
+          ["games","Game selesai"],
+          ["rank1","Rank 1"],["rank1Rate","Rank 1 Rate"],
+          ["gameWins","Win Game"],["gameWinRate","Win Rate Game"],
+          ["tenho","TENHO"],["pots","POT"],["jokers","Joker dimainkan"],
+          ["bestCombo","Combo terbesar"],["bestStreak","Win streak terbaik"],["dead","Mati Tangan"]
         ];
         b.innerHTML='<div class="feature-stat-grid">'+stats.map(x=>{
           const pct=x[0]==="matchWinRate"?matchWinRate:x[0]==="gameWinRate"?gameWinRate:x[0]==="rank1Rate"?rank1Rate:null;
