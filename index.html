@@ -5751,15 +5751,13 @@
             });
         }
         // Nilai sisa kartu paling kecil mendapat poin paling besar.
-        // Semakin kecil nilai sisa kartu, semakin tinggi poin yang diterima.
-        // Jika sama, ikuti urutan giliran.
+        // Jika nilai sisa sama, pemain yang keluar/mati lebih belakangan
+        // mendapat poin lebih tinggi. Urutan giliran tidak dipakai sebagai
+        // tie-breaker karena urutan keluar sudah menjadi penentunya.
         alive.sort(
           (a, b) =>
             a.v - b.v ||
-            (game.dead[a.i] ? 0 : 1) - (game.dead[b.i] ? 0 : 1) ||
-            (game.dead[a.i] && game.dead[b.i]
-              ? (game.deadOrder[a.i] ?? 999) - (game.deadOrder[b.i] ?? 999)
-              : a.turn - b.turn),
+            (game.deadOrder[b.i] ?? 999) - (game.deadOrder[a.i] ?? 999),
         );
         const scoreDelta = Array(playerCount).fill(0);
         // Skala poin tetap mengikuti jumlah pemain, bukan jumlah pemain yang hidup.
