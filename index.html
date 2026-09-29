@@ -442,10 +442,13 @@
           grid-template-columns: 1fr;
         }
       }
-      .player-name{display:block!important;margin:0!important;padding:0!important;line-height:1!important;height:auto!important}
+      .player-identity{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;gap:0!important;margin:0!important;padding:0!important;line-height:0!important}
+      .player-name{display:block!important;width:auto!important;max-width:100%!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;line-height:1!important;height:auto!important;font-size:8px!important}
+      .player-title{display:block!important;width:auto!important;max-width:100%!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;height:auto!important;line-height:1!important;font-size:4.8px!important;text-transform:uppercase;letter-spacing:.2px;font-weight:900;color:rgba(243,207,112,.88);white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+      .player-name + .player-title{margin:0!important}
       .player-title{display:block!important;margin:-1px 0 0!important;padding:0!important;height:auto!important;line-height:1!important;font-size:5.2px;text-transform:uppercase;letter-spacing:.3px;font-weight:900;color:rgba(243,207,112,.88);white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.5)}
       .player-name + .player-title{margin-top:-1px!important}
-      @media(max-width:700px),(hover:none) and (pointer:coarse){.player-name{line-height:1!important}.player-title{font-size:4.8px;letter-spacing:.2px;line-height:1!important;margin:-1px 0 0!important}.player-name + .player-title{margin-top:-1px!important}}
+      @media(max-width:700px),(hover:none) and (pointer:coarse){.player-name{line-height:1!important}.player-identity{gap:0!important;line-height:0!important}.player-name{font-size:8px!important;line-height:1!important}.player-title{font-size:4.8px!important;letter-spacing:.2px;line-height:1!important;margin:0!important}.player-name + .player-title{margin:0!important}}
       .minami-rank-card{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:10px 11px;border-radius:12px;background:linear-gradient(135deg,rgba(243,207,112,.09),rgba(255,255,255,.035));border:1px solid rgba(243,207,112,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
       .minami-rank-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;flex:0 0 42px;border-radius:11px;background:rgba(243,207,112,.10);border:1px solid rgba(243,207,112,.18);font-size:24px;box-shadow:0 4px 12px rgba(0,0,0,.16)}
       .minami-rank-main{flex:1;min-width:0}
@@ -4019,31 +4022,31 @@
         <div class="player p1" id="player1">
           <div class="play-history" id="history1"></div>
           <div class="avatar">👤</div>
-          <div class="player-name" id="playerName1">Anda</div><div class="player-title" id="playerTitle1">PEMULA</div>
+          <div class="player-identity"><div class="player-name" id="playerName1">Anda</div><div class="player-title" id="playerTitle1">PEMULA</div></div>
           <div class="mini-cards" id="mini1"></div>
         </div>
         <div class="player p2" id="player2">
           <div class="play-history" id="history2"></div>
           <div class="avatar">👤</div>
-          <div class="player-name">Pemain 2</div><div class="player-title" id="playerTitle2">PEMULA</div>
+          <div class="player-identity"><div class="player-name">Pemain 2</div><div class="player-title" id="playerTitle2">PEMULA</div></div>
           <div class="mini-cards" id="mini2"></div>
         </div>
         <div class="player p3" id="player3">
           <div class="play-history" id="history3"></div>
           <div class="avatar">👤</div>
-          <div class="player-name">Pemain 3</div><div class="player-title" id="playerTitle3">PEMULA</div>
+          <div class="player-identity"><div class="player-name">Pemain 3</div><div class="player-title" id="playerTitle3">PEMULA</div></div>
           <div class="mini-cards" id="mini3"></div>
         </div>
         <div class="player p4" id="player4">
           <div class="play-history" id="history4"></div>
           <div class="avatar">👤</div>
-          <div class="player-name">Pemain 4</div><div class="player-title" id="playerTitle4">PEMULA</div>
+          <div class="player-identity"><div class="player-name">Pemain 4</div><div class="player-title" id="playerTitle4">PEMULA</div></div>
           <div class="mini-cards" id="mini4"></div>
         </div>
         <div class="player p5" id="player5">
           <div class="play-history" id="history5"></div>
           <div class="avatar">👤</div>
-          <div class="player-name">Pemain 5</div><div class="player-title" id="playerTitle5">PEMULA</div>
+          <div class="player-identity"><div class="player-name">Pemain 5</div><div class="player-title" id="playerTitle5">PEMULA</div></div>
           <div class="mini-cards" id="mini5"></div>
         </div>
         <!-- <div class="drag-note-float">
