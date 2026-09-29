@@ -7858,12 +7858,14 @@
         if(!game?.stats||game._lifetimeCounted)return;
         game._lifetimeCounted=true;
         const s=featureStats(),st=game.stats;
+        s.games=Number(s.games)||0;
+        s.rank1=Number(s.rank1)||0;
         s.games++;
         if(game.lastResult?.winner===0)s.wins++;
         const delta=Array.isArray(game.lastResult?.delta)?game.lastResult.delta:[];
         if(delta.length===playerCount && !(game.lastResult?.reason==="ALL_DEAD" || delta.every(v=>Number(v)===-2))){
           const maxDelta=Math.max(...delta);
-          if(Number(delta[0])===Number(maxDelta)) s.rank1=(s.rank1||0)+1;
+          if(Number(delta[0])===Number(maxDelta)) s.rank1++;
         }
         if(game.lastResult?.reason==="TENHO")s.tenho++;
         s.dead+=game.dead.filter(Boolean).length;
