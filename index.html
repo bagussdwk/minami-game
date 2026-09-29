@@ -4356,7 +4356,11 @@
 
       function updateSpectatorControls() {
         const wrap = document.getElementById("watchSpeedWrap");
-        if (!wrap || !game) return;
+        if (!wrap) return;
+        if (!game) {
+          wrap.style.display = "none";
+          return;
+        }
         const visible = !game.over && !!game.dead[0];
         wrap.style.display = visible ? "inline-flex" : "none";
         wrap.querySelectorAll(".watch-speed-btn").forEach((btn) => {
@@ -7400,6 +7404,7 @@
         document.getElementById("scoreTopBtn").style.display = "none";
         document.getElementById("newGameTopBtn").style.display = "none";
         document.getElementById("quickChatBtn").style.display = "none";
+        document.getElementById("watchSpeedWrap").style.display = "none";
         const gameEl = document.getElementById("game");
         gameEl.classList.remove("active", "players-4", "players-5");
         for (let i = 1; i <= 5; i++) {
