@@ -7492,7 +7492,7 @@
           if (game.turn === 0) {
             // P1 hanya mati tangan jika pada saat gilirannya tiba
             // ternyata tidak mempunyai DASAR awal yang legal.
-            if (!game.hasBase[0] && !hasAnyBase(game.hands[0]) && !game.hands[0].some(isJoker)) {
+            if (!game.hasBase[0] && !hasAnyBase(game.hands[0])) {
               markDead(0);
               game.firstRoundDone[0] = true;
 
