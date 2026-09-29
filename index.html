@@ -4753,6 +4753,10 @@
             ? game.firstRoundDone
             : Array(playerCount).fill(false);
           game.displayRound = Number(game.displayRound) || 1;
+          game.displayRoundAnchor =
+            Number.isInteger(game.displayRoundAnchor)
+              ? game.displayRoundAnchor
+              : game.turn;
           game.history = Array.isArray(game.history)
             ? game.history
             : Array.from({ length: playerCount }, () => []);
@@ -6308,12 +6312,13 @@
         // Satu putaran meja selesai ketika perpindahan giliran
         // melewati ujung turnOrder dan kembali ke bagian awal.
         // Ini tetap akurat walaupun ada pemain yang sudah MATI.
-        const nextPos = order.indexOf(next);
-        if (
-          currentPos >= 0 &&
-          nextPos >= 0 &&
-          nextPos <= currentPos
-        ) {
+        // Putaran meja ditentukan oleh pemain yang menjadi titik awal game.
+        // Contoh mulai P2: P2 -> P3 -> P4 -> P1 -> P2 = putaran berikutnya.
+        // Pemain yang mati tidak mengubah patokan ini.
+        const roundAnchor = Number.isInteger(game.displayRoundAnchor)
+          ? game.displayRoundAnchor
+          : order[0];
+        if (game.turn !== roundAnchor && next === roundAnchor) {
           game.displayRound = (Number(game.displayRound) || 1) + 1;
         }
 
@@ -7338,6 +7343,7 @@
           deathSeq: 0,
           turnCount: 0,
           displayRound: 1,
+          displayRoundAnchor: prevOrder[0],
           hasBase: Array(playerCount).fill(false),
           firstRoundDone: Array(playerCount).fill(false),
           history: Array.from({ length: playerCount }, () => []),
