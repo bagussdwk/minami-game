@@ -6635,11 +6635,11 @@
           });
         };
 
-        // AI iseng: baca dasar yang sudah ada di meja dan cari cucuk
-        // 2 kartu (Joker + kartu nyata). Contoh 7-8-9 di meja,
-        // lalu AI punya Joker + J -> Joker mengisi 10 dan J mengisi J.
-        // extendBaseOptions() tetap menjadi validator utama, jadi tidak
-        // ada langkah ilegal yang bisa dipilih.
+        // AI iseng: cari "cucuk" secara terarah agar tidak membuat browser
+        // sendat saat meja sudah penuh. Untuk pola Joker + kartu nyata yang
+        // benar-benar mengisi satu celah, kartu nyata harus berjarak 2 rank
+        // dari salah satu ujung dasar. Contoh 7-8-9 + Joker-J:
+        // Joker mengisi 10, lalu J menyambung.
         if (game.aiProfiles?.[i] === "iseng" && Math.random() < 0.68) {
           const jokers = h.filter(isJoker);
           const realCards = h.filter((c) => !isJoker(c));
@@ -6648,8 +6648,23 @@
             game.melds.forEach((m, mi) => {
               if (m.type !== "base" || !m.ordered || m.ordered.length < 3) return;
 
+              const left = m.ordered[0];
+              const right = m.ordered[m.ordered.length - 1];
+
+              // Saring kartu nyata sebelum memanggil validator berat.
+              // Hanya kartu dengan bunga sama dan selisih rank 2 yang
+              // mungkin menjadi pasangan Joker + kartu nyata taktis.
+              const possible = realCards.filter((c) => {
+                if (c.suit !== (left?.suit || right?.suit)) return false;
+                const ro = rankOrder[c.rank];
+                const dl = left && !isJoker(left) ? Math.abs(ro - rankOrder[left.rank]) : 99;
+                const dr = right && !isJoker(right) ? Math.abs(ro - rankOrder[right.rank]) : 99;
+                return dl === 2 || dr === 2;
+              });
+              if (!possible.length) return;
+
               jokers.forEach((jokerCard) => {
-                realCards.forEach((realCard) => {
+                possible.forEach((realCard) => {
                   const cards = [jokerCard, realCard];
                   const chk = addToMeld(cards, mi);
                   if (!chk.ok) return;
@@ -6657,8 +6672,6 @@
                   const opts = extendBaseOptions(m, cards);
                   if (!opts.length) return;
 
-                  // Joker baru harus benar-benar mengisi posisi di tengah,
-                  // bukan sekadar ditempel sebagai Joker kosong.
                   const tactical = opts.some((o) => {
                     const ji = o.ordered.findIndex(
                       (c, idx) => isJoker(c) && idx >= m.ordered.length - 1,
