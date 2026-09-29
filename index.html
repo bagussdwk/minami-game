@@ -7776,6 +7776,12 @@
 
         const totalDealt = playerCount * 20;
 
+        // Bersihkan DOM meja terlebih dahulu. Tanpa render ini, meld/POT/history
+        // dari match sebelumnya masih terlihat di bawah overlay pembagian kartu.
+        // Tangan P1 disembunyikan dulu supaya tidak sempat berkedip sebelum overlay muncul.
+        setYourHandOverlayHidden(true);
+        render();
+
         showDealAnimation(playerCount, totalDealt, () => {
           renderDeadCards(game.deadCards, game.jokerIndex, true);
 
