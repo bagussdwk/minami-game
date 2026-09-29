@@ -3908,6 +3908,35 @@
         🎴 MULAI PERMAINAN
       </button>
     </section>
+
+    <section class="setup setup-mode-two" id="setupMinami2">
+      <div class="setup-brand">♠ 2 DECK + JOKER &nbsp;•&nbsp; MINAMI 2</div>
+      <h1 class="setup-logo">MINAMI 2</h1>
+      <div class="setup-cards" aria-hidden="true">
+        <div class="setup-card">7♣</div>
+        <div class="setup-card red">Q♥</div>
+        <div class="setup-card joker-mark">🃏</div>
+        <div class="setup-card red">4♦</div>
+        <div class="setup-card">9♠</div>
+      </div>
+
+      <div class="setup-section-label">Pilih jumlah pemain</div>
+      <div class="player-buttons minami2-player-buttons">
+        <button class="player-btn active" type="button" data-player-minami2="4">
+          <span class="player-btn-main">4 Pemain</span>
+          <span class="player-btn-sub">Mode 4 pemain</span>
+        </button>
+        <button class="player-btn" type="button" data-player-minami2="5">
+          <span class="player-btn-main">5 Pemain</span>
+          <span class="player-btn-sub">Mode 5 pemain</span>
+        </button>
+      </div>
+
+      <button class="start-btn setup-start" id="startMinami2Btn" type="button">
+        🃏 MULAI PERMAINAN
+      </button>
+    </section>
+
     <section class="game" id="game">
       <div class="game-status-ribbon" aria-live="polite">
         <button type="button" class="move-history-top-btn" id="moveHistoryBtn" title="Lihat semua riwayat kartu yang diturunkan">🕘 History</button>
@@ -7891,4 +7920,16 @@
 <style id="minami-extra-features">
 .quick-chat-fab{display:none!important}.quick-chat-hand-btn{display:inline-flex;align-items:center;justify-content:center;width:38px;min-width:38px;height:34px;padding:0!important;background:rgba(243,207,112,.10)!important;border-color:rgba(243,207,112,.25)!important;color:#f3cf70!important;font-size:17px!important;line-height:1!important}.player-reaction-bubble{position:absolute;left:50%;bottom:calc(100% + 7px);transform:translateX(-50%) translateY(6px) scale(.94);z-index:80;max-width:150px;min-width:max-content;padding:7px 10px;border-radius:12px;background:rgba(5,31,22,.96);border:1px solid rgba(243,207,112,.35);color:#f7e7b0;font-size:10px;font-weight:900;line-height:1.2;text-align:center;white-space:nowrap;box-shadow:0 7px 18px rgba(0,0,0,.34);opacity:0;pointer-events:none}.player-reaction-bubble::after{content:"";position:absolute;left:50%;bottom:-5px;width:9px;height:9px;transform:translateX(-50%) rotate(45deg);background:rgba(5,31,22,.96);border-right:1px solid rgba(243,207,112,.35);border-bottom:1px solid rgba(243,207,112,.35)}.player-reaction-bubble.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1);animation:minamiBubbleIn .22s ease}.player-reaction-bubble.joker{background:rgba(67,47,7,.97);border-color:rgba(243,195,59,.65);color:#ffe18a}.player-reaction-bubble.pot{border-color:rgba(100,240,176,.4);color:#a9f4cf}.player-reaction-bubble.chat{background:rgba(22,49,73,.97);border-color:rgba(126,201,255,.4);color:#d8efff}@keyframes minamiBubbleIn{from{opacity:0;transform:translateX(-50%) translateY(7px) scale(.92)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}.quick-chat-box{width:min(420px,calc(100% - 20px))}.quick-chat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.quick-chat-option{min-height:46px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);color:#dff3e9;font-size:12px}.feature-modal-box{width:min(620px,calc(100% - 18px));max-height:82vh;overflow:auto}.feature-tabs{display:flex;gap:6px;margin-bottom:12px}.feature-tab{flex:1;padding:9px;background:rgba(255,255,255,.05);color:#9fb8ad;border:1px solid rgba(255,255,255,.08);font-size:10px}.feature-tab.active{background:rgba(243,207,112,.11);border-color:rgba(243,207,112,.28);color:#f3cf70}.feature-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.feature-stat-grid>div{padding:10px 7px;border-radius:10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);text-align:center}.feature-stat-grid b{display:block;color:#f3cf70;font-size:18px}.feature-stat-grid span{display:block;margin-top:3px;color:#aacdc0;font-size:8px}.feature-current-card{margin-top:9px;padding:10px;border-radius:10px;background:rgba(243,207,112,.055);border:1px solid rgba(243,207,112,.12);font-size:10px;color:#d8eee3}.feature-current-card b{display:block;color:#f3cf70;margin-bottom:3px}.achievement-grid{display:grid;gap:7px}.achievement-card{display:grid;grid-template-columns:38px 1fr 28px;align-items:center;gap:9px;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.04)}.achievement-card.locked{opacity:.46;filter:saturate(.4)}.achievement-icon{font-size:23px;text-align:center}.achievement-card b{display:block;color:#f3cf70;font-size:11px}.achievement-card span{display:block;margin-top:2px;color:#aacdc0;font-size:9px}.achievement-card em{text-align:center;color:#7ff0b0;font-style:normal}.table.action-pop{animation:minamiTablePop .38s ease}.table.pot-action{animation:minamiPotPop .48s ease}.table.joker-action{animation:minamiJokerPop .52s ease}@keyframes minamiTablePop{0%{transform:scale(1)}45%{transform:scale(1.006)}100%{transform:scale(1)}}@keyframes minamiPotPop{0%{filter:brightness(1)}35%{filter:brightness(1.18)}100%{filter:brightness(1)}}@keyframes minamiJokerPop{0%{box-shadow:0 0 0 rgba(243,207,112,0)}40%{box-shadow:0 0 38px rgba(243,207,112,.28)}100%{box-shadow:0 0 0 rgba(243,207,112,0)}}.player.reaction-flash .player-alert{opacity:0!important}body.table-theme-ocean{background:radial-gradient(circle at center,#176b83 0%,#0b4255 48%,#062832 100%)}body.table-theme-ember{background:radial-gradient(circle at center,#813d2b 0%,#4c2119 48%,#2b110d 100%)}body.table-theme-slate{background:radial-gradient(circle at center,#56616b 0%,#303a43 48%,#171d23 100%)}body.table-theme-neon{background:radial-gradient(circle at center,#164f4c 0%,#152c58 48%,#0b1328 100%)}.result-mvp{margin:10px 0;padding:10px;border-radius:10px;background:rgba(243,207,112,.08);border:1px solid rgba(243,207,112,.18);text-align:center}.result-mvp b,.result-mvp span{display:block}.result-mvp b{color:#f3cf70;font-size:11px}.result-mvp span{margin-top:3px;color:#d8eee3;font-size:10px}
 @media(max-width:700px),(hover:none) and (pointer:coarse){.quick-chat-fab{right:8px;bottom:105px;width:36px;height:36px;font-size:16px}.feature-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<style id="minami2-menu-style">
+  .setup-mode-two { margin-top: 0; }
+  .setup-mode-two .setup-brand {
+    background: rgba(126, 201, 255, 0.07);
+    border-color: rgba(126, 201, 255, 0.14);
+  }
+  .setup-mode-two .setup-logo { color: #d8efff; }
+  .setup-mode-two .start-btn.setup-start {
+    background: linear-gradient(145deg, #d8efff, #9bcde8);
+    color: #13242d;
+  }
 </style>
