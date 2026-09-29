@@ -6234,11 +6234,18 @@
             " poin</div></div>";
 
           b.innerHTML += podiumHtml;
-          nextGameBtn.style.display = "none";
+          // Setelah Game mencapai 25, "Lanjut Permainan" tetap tersedia.
+          // Tombol ini langsung memulai Game baru, sedangkan tombol bawah
+          // mengembalikan pemain ke menu awal.
+          nextGameBtn.style.display = "block";
+          nextGameBtn.textContent = "▶ Lanjut Permainan";
           finalNewGameBtn.style.display = "block";
+          finalNewGameBtn.textContent = "🏠 Kembali ke Menu Awal";
         } else {
           nextGameBtn.style.display = "block";
-          finalNewGameBtn.style.display = "none";
+          nextGameBtn.textContent = "▶ Lanjut Permainan";
+          finalNewGameBtn.style.display = "block";
+          finalNewGameBtn.textContent = "🏠 Kembali ke Menu Awal";
         }
 
         document.getElementById("resultModal").classList.add("show");
@@ -8121,22 +8128,35 @@
         setResultTableMode(false);
         document.getElementById("resultModal").classList.remove("show");
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+        const reachedTarget = !!game?.scores?.some((x) => Number(x) >= 25);
+
+        if (reachedTarget) {
+          // Game sampai 25 sudah selesai. Lanjut langsung membuat Game baru
+          // dari awal, tanpa kembali ke halaman pilih pemain.
+          clearSavedGame();
+          window.minamiScores = null;
+          window.minamiScoreHistory = [];
+          window.minamiAISpeed = 1;
+          window.minamiNextOrder = null;
+          window.minamiDirection = 1;
+          resetPersistentAIRoster();
+
+          const oldPlayerCount = playerCount;
+          game = null;
+          playerCount = oldPlayerCount;
+          startGame();
+          return;
+        }
+
+        // Belum mencapai 25: lanjut ke match berikutnya dengan roster AI,
+        // poin game dan arah giliran yang sudah dipertahankan.
         startGame();
       };
       document.getElementById("finalNewGameBtn").onclick = () => {
-        clearSavedGame();
-        window.minamiScores = null;
-        window.minamiScoreHistory = [];
-        window.minamiAISpeed = 1;
-        window.minamiNextOrder = null;
-        window.minamiDirection = 1;
-        resetPersistentAIRoster();
+        // Kembali benar-benar ke menu awal.
+        doNewGame();
         document.getElementById("resultModal").classList.remove("show");
-        document.getElementById("scoreTopBtn").style.display = "none";
-        document.getElementById("newGameTopBtn").style.display = "none";
-        document.getElementById("game").classList.remove("active");
-        document.getElementById("setup").style.display = "";
-        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
 
       const MINAMI_FEATURE_KEY="minamiFeatureStatsV2", MINAMI_ACH_KEY="minamiAchievementsV1";
