@@ -6237,15 +6237,17 @@
           // Setelah Game mencapai 25, "Lanjut Permainan" tetap tersedia.
           // Tombol ini langsung memulai Game baru, sedangkan tombol bawah
           // mengembalikan pemain ke menu awal.
+          // Game sampai 25: tampilkan 3 pilihan.
           nextGameBtn.style.display = "block";
           nextGameBtn.textContent = "▶ Lanjut Permainan";
           finalNewGameBtn.style.display = "block";
           finalNewGameBtn.textContent = "🏠 Kembali ke Menu Awal";
         } else {
+          // Match biasa: masih berada dalam Game yang sama.
+          // Jangan tampilkan tombol kembali ke menu awal.
           nextGameBtn.style.display = "block";
           nextGameBtn.textContent = "▶ Lanjut Permainan";
-          finalNewGameBtn.style.display = "block";
-          finalNewGameBtn.textContent = "🏠 Kembali ke Menu Awal";
+          finalNewGameBtn.style.display = "none";
         }
 
         document.getElementById("resultModal").classList.add("show");
