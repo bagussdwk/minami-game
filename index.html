@@ -358,6 +358,36 @@
         color: #f2e4b9;
         font-size: 11px;
       }
+      /* Layar tanggung/tablet kecil: rapatkan tumpukan kartu mati agar
+         24 kartu P4 tidak memakan area meja saat viewport 701-1100px. */
+      @media (min-width: 701px) and (max-width: 1100px) {
+        .joker-corner {
+          left: 9px;
+          padding: 2px 3px;
+        }
+
+        .joker-corner .dead-card-stack {
+          max-width: 82px;
+          overflow: hidden;
+        }
+
+        .joker-corner .dead-card-stack .card {
+          width: 22px;
+          height: 32px;
+          font-size: 9px;
+          border-radius: 4px;
+          margin-left: -19px;
+        }
+
+        .joker-corner .dead-card-stack .card:first-child {
+          margin-left: 0;
+        }
+
+        .joker-corner .dead-card-stack .joker-revealed {
+          transform: translateY(-1px);
+        }
+      }
+
       @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
         .topbar {
           padding: 0 8px;
