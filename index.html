@@ -7603,6 +7603,30 @@
   }
 </style>
 
+<style id="dead-stack-final-compact">
+  /* Final: P4 memiliki 24 kartu mati, jadi kartu harus benar-benar overlap. */
+  @media (min-width: 701px) and (max-width: 1790px) {
+    .joker-corner #jokerCard .dead-card-stack {
+      display: flex !important;
+      width: max-content !important;
+      gap: 0 !important;
+      overflow: visible !important;
+    }
+
+    .joker-corner #jokerCard .dead-card-stack .card,
+    .joker-corner #jokerCard .dead-card-stack .card:first-child {
+      width: 25px !important;
+      height: 36px !important;
+      flex: 0 0 25px !important;
+      margin-left: -24px !important;
+    }
+
+    .joker-corner #jokerCard .dead-card-stack .card:first-child {
+      margin-left: 0 !important;
+    }
+  }
+</style>
+
 <style id="mobile-table-safe-zone">
   .score-history-subtitle {
     margin: -2px 0 8px;
