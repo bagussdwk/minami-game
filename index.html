@@ -8132,13 +8132,18 @@
       function updateAchievements(){
         const s=featureStats(),u=new Set(unlockedAchievements());
         const a=[
-          ["first-win","🏆","First Win","Menang 1 game",(s.gameWins||0)>=1],
+          ["first-win","🏆","First Win","Menang 1 match",(s.matchWins||0)>=1],
+          ["first-champion","👑","First Champion","Menang 1 Game sampai 25 poin",(s.gameWins||0)>=1],
           ["tenho","🃏","TENHO!","Mendapatkan TENHO",(s.tenho||0)>=1],
           ["pot-master","♟️","POT Hunter","Membuat 5 POT",(s.pots||0)>=5],
           ["joker-master","🃏","Joker Master","Memainkan Joker 5 kali",(s.jokers||0)>=5],
           ["combo-master","🔥","Combo Master","Menurunkan 5 kartu sekaligus",(s.bestCombo||0)>=5],
-          ["marathon","🎴","Marathon","Menyelesaikan 10 game",(s.games||0)>=10],
-          ["streak-3","⚡","Winning Streak","Menang 3 game berturut-turut",(Number(localStorage.getItem("minamiWinStreak"))||0)>=3]
+          ["mvp","⭐","MVP","Menjadi MVP 1 kali",(s.mvp||0)>=1],
+          ["rank-climber","📈","Rank Climber","Mengumpulkan 10 Rank 1",(s.rank1||0)>=10],
+          ["marathon","🎴","Marathon","Menyelesaikan 10 Game sampai 25",(s.games||0)>=10],
+          ["triple-champion","🏆","Triple Champion","Menang 3 Game sampai 25",(s.gameWins||0)>=3],
+          ["veteran","🎖️","Veteran","Menyelesaikan 25 match",(s.matches||0)>=25],
+          ["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut",(Number(localStorage.getItem("minamiWinStreak"))||0)>=3]
         ];
         let ch=false;
         a.forEach(x=>{if(x[4]&&!u.has(x[0])){u.add(x[0]);ch=true;showPlayFeedback(x[1]+" ACHIEVEMENT: "+x[2],false)}});
@@ -8223,7 +8228,7 @@
             return '<div><b>'+(pct!==null?pct+"%":(s[x[0]]||0))+'</b><span>'+x[1]+'</span></div>';
           }).join('')+'</div>';
       }
-      function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menangkan game pertama."],["tenho","🃏","TENHO!","Keluar dengan TENHO dan dapatkan bonus."],["pot-master","♟️","POT Hunter","Berhasil mengambil POT."],["joker-master","🃏","Joker Master","Gunakan Joker dengan tepat."],["combo-master","🔥","Combo Master","Buat combo dengan jumlah kartu tinggi."],["marathon","🎴","Marathon","Mainkan banyak game."],["streak-3","⚡","Winning Streak","Menangkan 3 game berturut-turut."]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div class="achievement-info"><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
+      function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menangkan match untuk pertama kali."],["first-champion","👑","First Champion","Menang Game pertama sampai 25 poin."],["tenho","🃏","TENHO!","Keluar dengan TENHO dan dapatkan bonus."],["pot-master","♟️","POT Hunter","Buat 5 POT dalam permainan."],["joker-master","🃏","Joker Master","Mainkan Joker 5 kali."],["combo-master","🔥","Combo Master","Turunkan 5 kartu atau lebih sekaligus."],["mvp","⭐","MVP","Menjadi MVP dalam 1 match."],["rank-climber","📈","Rank Climber","Kumpulkan 10 Rank 1."],["marathon","🎴","Marathon","Selesaikan 10 Game sampai 25 poin."],["triple-champion","🏆","Triple Champion","Menang 3 Game sampai 25 poin."],["veteran","🎖️","Veteran","Selesaikan 25 match."],["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut."]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div class="achievement-info"><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
       function renderFeaturePanels(){renderFeatureStats();renderAchievements()}
       function getAIReactionText(i,label,joker){const p=game?.aiProfiles?.[i]||"balanced";if(label==="Mati")return"💀 MATI";if(joker)return p==="jokerHunter"?"😎 JOKER!":"🃏 Joker!";if(label.includes("POT"))return p==="potHunter"?"🔥 POT!":"😏 POT";if(label.includes("Dasar"))return p==="aggressive"?"⚔️ Gas!":"🎴 Turun";return"👍 Jalan"}
       function showPlayerBubble(i,textValue,kind="chat"){const el=document.getElementById("player"+(i+1));if(!el)return;let b=el.querySelector(".player-reaction-bubble");if(!b){b=document.createElement("div");b.className="player-reaction-bubble";el.appendChild(b)}b.textContent=textValue;b.className="player-reaction-bubble "+kind;b.classList.remove("show");void b.offsetWidth;b.classList.add("show");clearTimeout(b._hideTimer);b._hideTimer=setTimeout(()=>{b.classList.remove("show")},2100)}
