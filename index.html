@@ -5750,12 +5750,12 @@
               turn: game.turnOrder.indexOf(i),
             });
         }
-        // Nilai sisa kartu paling besar mendapat poin paling kecil.
+        // Nilai sisa kartu paling kecil mendapat poin paling besar.
         // Semakin kecil nilai sisa kartu, semakin tinggi poin yang diterima.
         // Jika sama, ikuti urutan giliran.
         alive.sort(
           (a, b) =>
-            b.v - a.v ||
+            a.v - b.v ||
             (game.dead[a.i] ? 0 : 1) - (game.dead[b.i] ? 0 : 1) ||
             (game.dead[a.i] && game.dead[b.i]
               ? (game.deadOrder[a.i] ?? 999) - (game.deadOrder[b.i] ?? 999)
