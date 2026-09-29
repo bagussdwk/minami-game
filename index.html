@@ -374,7 +374,7 @@
           width: clamp(20px, 1.4vw, 25px);
           height: clamp(29px, 2vw, 36px);
           font-size: clamp(8px, .6vw, 11px);
-          margin-left: clamp(-24px, -1.35vw, -21px);
+          margin-left: calc(-1 * (clamp(20px, 1.4vw, 25px) - 2px));
         }
 
         .joker-corner .dead-card-stack .card:first-child {
