@@ -5687,18 +5687,30 @@
               : a.turn - b.turn),
         );
         const scoreDelta = Array(playerCount).fill(0);
+        // Skala poin tetap mengikuti jumlah pemain, bukan jumlah pemain yang hidup.
+        // 5 pemain:
+        //   normal = +3, +2, +1, 0, -1
+        //   WIN/TENHO = +5/+7, +2, +1, 0, -1
+        // 4 pemain:
+        //   normal = +2, +1, 0, -1
+        //   WIN/TENHO = +4/+7, +1, 0, -1
+        // Jika ada MATI TANGAN, slot yang mati menjadi -2; slot poin lainnya
+        // tidak bergeser. Jika WIN/TENHO terjadi, bonus posisi pertama normal
+        // (+3 untuk 5P atau +2 untuk 4P) hangus.
+        const hasTopWinner = winner !== null;
         const winnerBonus =
-          reason === "TENHO" ? 7 : winner !== null ? playerCount : 0;
-        if (winner !== null) scoreDelta[winner] = winnerBonus;
-        // Jika ada pemain yang mati sebelum dasar, poin pemain yang hidup
-        // hanya memakai peringkat yang tersisa. Contoh 5 pemain dengan 2 mati:
-        // Contoh 5 pemain dengan 2 mati: 3, 2, 1, -2, -2.
-        const ptsNoDead = [-1, 0, 1, 2, 3].slice(0, alive.length);
-        const ptsWithDead = Array.from(
-          { length: alive.length },
-          (_, k) => alive.length - 1 - k,
-        );
-        const pts = deadPlayers.length ? ptsWithDead : ptsNoDead;
+          reason === "TENHO" ? 7 : hasTopWinner ? playerCount : playerCount - 2;
+        if (hasTopWinner) scoreDelta[winner] = winnerBonus;
+
+        const normalPoints =
+          playerCount === 5
+            ? [3, 2, 1, 0, -1]
+            : [2, 1, 0, -1];
+        const pointsAfterWin =
+          playerCount === 5
+            ? [2, 1, 0, -1]
+            : [1, 0, -1];
+        const pts = hasTopWinner ? pointsAfterWin : normalPoints;
         alive.forEach((x, k) => (scoreDelta[x.i] = pts[k]));
         deadPlayers.forEach((i) => (scoreDelta[i] = -2));
         for (let i = 0; i < playerCount; i++) game.scores[i] += scoreDelta[i];
