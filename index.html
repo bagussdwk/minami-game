@@ -4586,6 +4586,7 @@
         if (!game) return;
 
         document.getElementById("setup").style.display = "none";
+        document.getElementById("setupMinami2").style.display = "none";
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
         document.getElementById("quickChatBtn").style.display = game.over ? "none" : "block";
@@ -7167,6 +7168,7 @@
         saveGameState();
 
         document.getElementById("setup").style.display = "none";
+        document.getElementById("setupMinami2").style.display = "none";
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
         document.getElementById("quickChatBtn").style.display = "block";
@@ -7369,6 +7371,7 @@
           if (playerEl) playerEl.style.display = "";
         }
         document.getElementById("setup").style.display = "";
+        document.getElementById("setupMinami2").style.display = "";
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
       const musicToggle = document.getElementById("musicToggle");
