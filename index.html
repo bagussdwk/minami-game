@@ -4559,9 +4559,9 @@
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
         document.getElementById("quickChatBtn").style.display = game.over ? "none" : "block";
-        document
-          .getElementById("game")
-          .classList.add("active", "players-" + playerCount);
+        const gameEl = document.getElementById("game");
+        gameEl.classList.remove("players-4", "players-5");
+        gameEl.classList.add("active", "players-" + playerCount);
 
         for (let i = 1; i <= 5; i++) {
           document.getElementById("player" + i).style.display =
@@ -7198,7 +7198,7 @@
             playerCount = Number(b.dataset.player);
             document.getElementById("rulePreview").innerHTML =
               playerCount === 4
-                ? "4 pemain → 8 kartu mati → 96 kartu → 24 kartu/pemain"
+                ? "4 pemain → 24 kartu mati → 80 kartu → 20 kartu/pemain"
                 : "5 pemain → 4 kartu mati → 100 kartu → 20 kartu/pemain";
           }),
       );
