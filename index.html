@@ -5810,6 +5810,7 @@
       function markDead(i) {
         if (!game.dead[i]) {
           game.dead[i] = true;
+          if (game.round === 1 && !game.hasBase[i]) game.deadReason[i] = "NO_BASE";
           game.deadOrder[i] = game.deathSeq++;
           if(game.stats)game.stats.dead[i]=true;
           setAIReaction(i,"Mati",false);
@@ -7417,6 +7418,7 @@
           targetMeld: null,
           potRanks: new Set(),
           dead: Array(playerCount).fill(false),
+          deadReason: Array(playerCount).fill(null),
           deadOrder: Array(playerCount).fill(null),
           deathSeq: 0,
           turnCount: 0,
@@ -7870,11 +7872,11 @@
         if(game.lastResult?.winner===0)s.wins++;
         const delta=Array.isArray(game.lastResult?.delta)?game.lastResult.delta:[];
         if(delta.length===playerCount && !(game.lastResult?.reason==="ALL_DEAD" || delta.every(v=>Number(v)===-2))){
-          const maxDelta=Math.max(...delta);
-          if(Number(delta[0])===Number(maxDelta)) s.rank1++;
+          const maxDelta=Math.max(...delta.map(v=>Number(v)));
+          if(Number(delta[0])===maxDelta) s.rank1++;
         }
         if(game.lastResult?.reason==="TENHO")s.tenho++;
-        s.dead+=game.dead.filter(Boolean).length;
+        s.dead+=(Array.isArray(game.deadReason)?game.deadReason.filter(x=>x==="NO_BASE").length:0);
         const mvp=getGameMVP();
         if(mvp?.i===0)s.mvp=(s.mvp||0)+1;
         s.bestStreak=Math.max(s.bestStreak||0,Number(localStorage.getItem("minamiWinStreak"))||0);
