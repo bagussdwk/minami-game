@@ -4565,7 +4565,6 @@
         if (!game) return;
         try {
           const payload = JSON.stringify({
-            savedAt: Date.now(),
             game: {
               ...game,
               potRanks: Array.from(game.potRanks || []),
@@ -4591,7 +4590,6 @@
             sessionStorage.setItem(
               MINAMI_SAVE_KEY,
               JSON.stringify({
-                savedAt: Date.now(),
                 game: {
                   ...game,
                   potRanks: Array.from(game.potRanks || []),
@@ -4700,9 +4698,7 @@
         // Timer AI lama selalu dibersihkan agar tidak ada dua giliran AI
         // yang berjalan bersamaan setelah beberapa kali refresh.
         if (game.turn !== 0 && !game.dead[game.turn]) {
-          // Setelah refresh, jangan ulangi delay berpikir 2–4 detik.
-          // Giliran AI yang sedang berlangsung langsung dilanjutkan.
-          scheduleAITurn(80);
+          scheduleAITurn();
         } else if (game.turn === 0 && game.round >= 2 && !humanHasMove()) {
           markDead(0);
           game.firstRoundDone[0] = true;
@@ -4713,35 +4709,29 @@
 
       function restoreSavedGame() {
         try {
-          let localRaw = null;
-          let sessionRaw = null;
+          let raw = null;
           try {
-            localRaw = localStorage.getItem(MINAMI_SAVE_KEY);
+            raw = localStorage.getItem(MINAMI_SAVE_KEY);
           } catch (e) {}
-          try {
-            sessionRaw = sessionStorage.getItem(MINAMI_SAVE_KEY);
-          } catch (e) {}
+          if (!raw) {
+            try {
+              raw = sessionStorage.getItem(MINAMI_SAVE_KEY);
+            } catch (e) {}
+          }
+          if (!raw) return false;
 
-          // Pilih state yang paling baru. Ini mencegah refresh pertama
-          // memulihkan salinan localStorage yang tertinggal dari sessionStorage.
-          let localSaved = null;
-          let sessionSaved = null;
+          let saved;
           try {
-            localSaved = localRaw ? JSON.parse(localRaw) : null;
-          } catch (e) {}
-          try {
-            sessionSaved = sessionRaw ? JSON.parse(sessionRaw) : null;
-          } catch (e) {}
-
-          const candidates = [localSaved, sessionSaved].filter(
-            (x) => x && x.game,
-          );
-          if (!candidates.length) return false;
-
-          candidates.sort(
-            (a, b) => (Number(b.savedAt) || 0) - (Number(a.savedAt) || 0),
-          );
-          const saved = candidates[0];
+            saved = JSON.parse(raw);
+          } catch (e) {
+            // Jika salinan localStorage rusak, coba cadangan sessionStorage.
+            try {
+              const backup = sessionStorage.getItem(MINAMI_SAVE_KEY);
+              saved = backup ? JSON.parse(backup) : null;
+            } catch (e2) {
+              saved = null;
+            }
+          }
           if (!saved || !saved.game) return false;
 
           game = saved.game;
