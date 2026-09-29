@@ -4752,6 +4752,7 @@
           game.firstRoundDone = Array.isArray(game.firstRoundDone)
             ? game.firstRoundDone
             : Array(playerCount).fill(false);
+          game.displayRound = Number(game.displayRound) || 1;
           game.history = Array.isArray(game.history)
             ? game.history
             : Array.from({ length: playerCount }, () => []);
@@ -5598,9 +5599,10 @@
         // Indikator Putaran mengikuti putaran meja sebenarnya:
         // setiap semua pemain mendapat satu giliran = 1 putaran.
         // Fase aturan tetap disimpan di game.round agar logika permainan tidak berubah.
-        const cycleRound = Math.floor((Number(game.turnCount) || 0) / playerCount) + 1;
+        // Putaran meja dihitung dari perpindahan nyata di turnOrder.
+        // Jadi pemain yang sudah mati tidak membuat hitungan putaran macet.
         document.getElementById("roundInfo").textContent =
-          Math.max(Number(game.round) || 1, cycleRound);
+          Math.max(Number(game.round) || 1, Number(game.displayRound) || 1);
       }
       function removeSelectedFromHand() {
         let inds = [...game.selected].sort((a, b) => b - a);
@@ -6302,6 +6304,18 @@
         // (1 = wajib dasar, 2+ = permainan terbuka).
         game.turnCount = Number(game.turnCount) || 0;
         game.turnCount++;
+
+        // Satu putaran meja selesai ketika perpindahan giliran
+        // melewati ujung turnOrder dan kembali ke bagian awal.
+        // Ini tetap akurat walaupun ada pemain yang sudah MATI.
+        const nextPos = order.indexOf(next);
+        if (
+          currentPos >= 0 &&
+          nextPos >= 0 &&
+          nextPos <= currentPos
+        ) {
+          game.displayRound = (Number(game.displayRound) || 1) + 1;
+        }
 
         game.turn = next;
 
@@ -7323,6 +7337,7 @@
           deadOrder: Array(playerCount).fill(null),
           deathSeq: 0,
           turnCount: 0,
+          displayRound: 1,
           hasBase: Array(playerCount).fill(false),
           firstRoundDone: Array(playerCount).fill(false),
           history: Array.from({ length: playerCount }, () => []),
