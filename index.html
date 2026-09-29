@@ -4767,6 +4767,10 @@
         }
 
         if (game.over) {
+          // Saat refresh ketika modal kemenangan sedang terbuka, render ulang
+          // meja dari save terakhir supaya kartu, POT, dasar, history, dan
+          // posisi pemain tetap terlihat seperti sebelum refresh.
+          render();
           document.getElementById("resultModal").classList.remove("show");
           if (game.lastResult) {
             showResult(
