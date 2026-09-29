@@ -5273,7 +5273,8 @@
         if (
           cs.length === 1 &&
           isJoker(cs[0]) &&
-          (!game.hasBase[0] || game.round > 1)
+          game.round > 1 &&
+          game.hasBase[0]
         ) {
           discardJoker();
           return;
@@ -6273,8 +6274,10 @@
         nextTurn();
       }
       function discardJoker() {
-        if (!game.hasBase[0] && game.round > 1) {
-          alert("Joker baru bisa dibuang setelah Dasar awal.");
+        if (game.round === 1 || !game.hasBase[0]) {
+          alert(
+            "Pada awal permainan wajib turun dasar. Joker tidak boleh dibuang.",
+          );
           return;
         }
         let i = game.hands[0].findIndex(isJoker);
@@ -6291,9 +6294,8 @@
       }
       function humanHasMove() {
         if (game.round === 1 && !game.hasBase[0]) {
-          // Jika belum punya Dasar dan tidak ada Dasar legal, Joker boleh
-          // dibuang sebagai nyawa giliran. Itu bukan MATI TANGAN.
-          return hasAnyBase(game.hands[0]) || game.hands[0].some(isJoker);
+          // Putaran pertama wajib turun DASAR. Joker tidak boleh dibuang sebagai nyawa.
+          return hasAnyBase(game.hands[0]);
         }
         const h = game.hands[0];
         for (const m of game.melds) {
@@ -6379,8 +6381,7 @@
           game.turn === 0 &&
           game.round === 1 &&
           !game.hasBase[0] &&
-          !hasAnyBase(game.hands[0]) &&
-          !game.hands[0].some(isJoker)
+          !hasAnyBase(game.hands[0])
         ) {
           markDead(0);
           game.firstRoundDone[0] = true;
@@ -6884,12 +6885,6 @@
             playCardPlaceSound();
             logMove(i, "Dasar", best.cards);
             game.hasBase[i] = true;
-            game.firstRoundDone[i] = true;
-          } else if (h.some(isJoker)) {
-            const jc = h.find(isJoker);
-            h.splice(h.indexOf(jc), 1);
-            logMove(i, "Buang Joker", [jc]);
-            game.discardedJoker = true;
             game.firstRoundDone[i] = true;
           } else {
             markDead(i);
