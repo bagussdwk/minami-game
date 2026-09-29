@@ -7050,7 +7050,7 @@
 
       function startGame() {
         let d = shuffle(deck()),
-          deadCount = playerCount === 4 ? 8 : 4,
+          deadCount = d.length - playerCount * 20,
           deadCards = d.splice(0, deadCount),
           jokerIndex = Math.floor(Math.random() * deadCards.length),
           joker = deadCards[jokerIndex],
@@ -7141,7 +7141,7 @@
         // ANIMASI PEMBAGIAN KARTU
         // =====================================================
 
-        const totalDealt = playerCount === 4 ? 96 : 100;
+        const totalDealt = playerCount * 20;
 
         showDealAnimation(playerCount, totalDealt, () => {
           renderDeadCards(game.deadCards, game.jokerIndex, true);
