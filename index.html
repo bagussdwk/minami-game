@@ -4564,80 +4564,30 @@
       function saveGameState() {
         if (!game) return;
         try {
-          const payload = JSON.stringify({
-            savedAt: Date.now(),
-            game: {
-              ...game,
-              potRanks: Array.from(game.potRanks || []),
-            },
-            nextOrder: Array.isArray(window.minamiNextOrder)
-              ? window.minamiNextOrder
-              : null,
-            direction: window.minamiDirection ?? game.direction ?? 1,
-            scoreHistory: Array.isArray(window.minamiScoreHistory)
-              ? window.minamiScoreHistory
-              : [],
-          });
-
-          // Simpan di dua tempat. sessionStorage menjadi cadangan jika
-          // localStorage gagal/terhapus saat browser melakukan refresh.
-          localStorage.setItem(MINAMI_SAVE_KEY, payload);
-          try {
-            sessionStorage.setItem(MINAMI_SAVE_KEY, payload);
-          } catch (e) {}
+          localStorage.setItem(
+            MINAMI_SAVE_KEY,
+            JSON.stringify({
+              game: {
+                ...game,
+                potRanks: Array.from(game.potRanks || []),
+              },
+              nextOrder: Array.isArray(window.minamiNextOrder)
+                ? window.minamiNextOrder
+                : null,
+              direction: window.minamiDirection ?? game.direction ?? 1,
+              scoreHistory: Array.isArray(window.minamiScoreHistory)
+                ? window.minamiScoreHistory
+                : [],
+            }),
+          );
         } catch (e) {
-          // Jika localStorage gagal, tetap coba sessionStorage.
-          try {
-            sessionStorage.setItem(
-              MINAMI_SAVE_KEY,
-              JSON.stringify({
-                savedAt: Date.now(),
-                game: {
-                  ...game,
-                  potRanks: Array.from(game.potRanks || []),
-                },
-                nextOrder: Array.isArray(window.minamiNextOrder)
-                  ? window.minamiNextOrder
-                  : null,
-                direction: window.minamiDirection ?? game.direction ?? 1,
-                scoreHistory: Array.isArray(window.minamiScoreHistory)
-                  ? window.minamiScoreHistory
-                  : [],
-              }),
-            );
-          } catch (e2) {}
+          // Abaikan jika penyimpanan browser tidak tersedia.
         }
       }
-
-      let minamiAITimer = null;
-
-      function scheduleAITurn(delay = null) {
-        if (!game || game.over || game.turn === 0 || game.dead[game.turn]) return;
-        if (minamiAITimer) {
-          clearTimeout(minamiAITimer);
-          minamiAITimer = null;
-        }
-
-        const wait = delay == null ? getAIDelay() : delay;
-        minamiAITimer = setTimeout(() => {
-          minamiAITimer = null;
-          if (!game || game.over || game.turn === 0 || game.dead[game.turn]) return;
-          aiTurn();
-        }, wait);
-      }
-
-      window.addEventListener("pagehide", () => {
-        try {
-          saveGameState();
-        } catch (e) {}
-      });
 
       function clearSavedGame() {
         try {
           localStorage.removeItem(MINAMI_SAVE_KEY);
-        } catch (e) {}
-        try {
-          sessionStorage.removeItem(MINAMI_SAVE_KEY);
         } catch (e) {}
       }
 
@@ -4697,12 +4647,14 @@
         render();
 
         // Setelah refresh, lanjutkan giliran tanpa mengulang pembagian kartu.
-        // Timer AI lama selalu dibersihkan agar tidak ada dua giliran AI
-        // yang berjalan bersamaan setelah beberapa kali refresh.
         if (game.turn !== 0 && !game.dead[game.turn]) {
-          // Setelah refresh, jangan ulangi delay berpikir 2–4 detik.
-          // Giliran AI yang sedang berlangsung langsung dilanjutkan.
-          scheduleAITurn(80);
+          const delay = getAIDelay();
+
+          setTimeout(() => {
+            if (!game.over && game.turn !== 0 && !game.dead[game.turn]) {
+              aiTurn();
+            }
+          }, delay);
         } else if (game.turn === 0 && game.round >= 2 && !humanHasMove()) {
           markDead(0);
           game.firstRoundDone[0] = true;
@@ -4713,35 +4665,10 @@
 
       function restoreSavedGame() {
         try {
-          let localRaw = null;
-          let sessionRaw = null;
-          try {
-            localRaw = localStorage.getItem(MINAMI_SAVE_KEY);
-          } catch (e) {}
-          try {
-            sessionRaw = sessionStorage.getItem(MINAMI_SAVE_KEY);
-          } catch (e) {}
+          const raw = localStorage.getItem(MINAMI_SAVE_KEY);
+          if (!raw) return false;
 
-          // Pilih state yang paling baru. Ini mencegah refresh pertama
-          // memulihkan salinan localStorage yang tertinggal dari sessionStorage.
-          let localSaved = null;
-          let sessionSaved = null;
-          try {
-            localSaved = localRaw ? JSON.parse(localRaw) : null;
-          } catch (e) {}
-          try {
-            sessionSaved = sessionRaw ? JSON.parse(sessionRaw) : null;
-          } catch (e) {}
-
-          const candidates = [localSaved, sessionSaved].filter(
-            (x) => x && x.game,
-          );
-          if (!candidates.length) return false;
-
-          candidates.sort(
-            (a, b) => (Number(b.savedAt) || 0) - (Number(a.savedAt) || 0),
-          );
-          const saved = candidates[0];
+          const saved = JSON.parse(raw);
           if (!saved || !saved.game) return false;
 
           game = saved.game;
@@ -6343,7 +6270,13 @@
         // Saat Anda masih hidup, AI berpikir 2–4 detik.
         // Setelah Anda mati, mode tontonan dipercepat agar game tidak lama.
         if (game.turn !== 0) {
-          scheduleAITurn();
+          const delay = getAIDelay();
+
+          setTimeout(() => {
+            if (!game.over && game.turn !== 0 && !game.dead[game.turn]) {
+              aiTurn();
+            }
+          }, delay);
         }
       }
       function hasAnyBase(h) {
@@ -6675,15 +6608,6 @@
                 3;
           }
           if (extra.jokerDiscard) score += extra.jokerDiscard;
-
-          // AI iseng suka membaca meja dan sesekali melakukan "cucuk":
-          // memakai Joker + kartu nyata untuk menyambung dasar yang sudah ada.
-          // Ini sengaja diberi bonus besar agar aksi taktis bisa mengalahkan
-          // pilihan normal, tetapi hanya untuk profil iseng.
-          if (extra.isengTrick && game.aiProfiles?.[i] === "iseng") {
-            score -= 95;
-          }
-
           const personality=game.aiProfiles?.[i]||"balanced";
           if(personality==="aggressive"){score-=cards.length*1.7;if(kind==="pot")score-=7}
           else if(personality==="saver"){score+=cards.length*1.35;if(kind==="base")score+=3}
@@ -6701,74 +6625,6 @@
             ...extra,
           });
         };
-
-        // AI iseng: cari "cucuk" secara terarah agar tidak membuat browser
-        // sendat saat meja sudah penuh. Untuk pola Joker + kartu nyata yang
-        // benar-benar mengisi satu celah, kartu nyata harus berjarak 2 rank
-        // dari salah satu ujung dasar. Contoh 7-8-9 + Joker-J:
-        // Joker mengisi 10, lalu J menyambung.
-        if (game.aiProfiles?.[i] === "iseng" && Math.random() < 0.68) {
-          const jokers = h.filter(isJoker);
-          const realCards = h.filter((c) => !isJoker(c));
-
-          if (jokers.length && realCards.length) {
-            game.melds.forEach((m, mi) => {
-              if (m.type !== "base" || !m.ordered || m.ordered.length < 3) return;
-
-              const left = m.ordered[0];
-              const right = m.ordered[m.ordered.length - 1];
-
-              // Saring kartu nyata sebelum memanggil validator berat.
-              // Hanya kartu dengan bunga sama dan selisih rank 2 yang
-              // mungkin menjadi pasangan Joker + kartu nyata taktis.
-              const possible = realCards.filter((c) => {
-                if (c.suit !== (left?.suit || right?.suit)) return false;
-                const ro = rankOrder[c.rank];
-                const dl = left && !isJoker(left) ? Math.abs(ro - rankOrder[left.rank]) : 99;
-                const dr = right && !isJoker(right) ? Math.abs(ro - rankOrder[right.rank]) : 99;
-                return dl === 2 || dr === 2;
-              });
-              if (!possible.length) return;
-
-              jokers.forEach((jokerCard) => {
-                possible.forEach((realCard) => {
-                  const cards = [jokerCard, realCard];
-                  const chk = addToMeld(cards, mi);
-                  if (!chk.ok) return;
-
-                  const opts = extendBaseOptions(m, cards);
-                  if (!opts.length) return;
-
-                  const tactical = opts.some((o) => {
-                    const ji = o.ordered.findIndex(
-                      (c, idx) => isJoker(c) && idx >= m.ordered.length - 1,
-                    );
-                    return ji >= 0 && o.ordered.length >= 5;
-                  });
-                  if (!tactical) return;
-
-                  addCandidate(cards, "add", mi, {
-                    isengTrick: true,
-                    trickLabel: "Cucuk",
-                  });
-                });
-              });
-            });
-          }
-        }
-
-        // Kalau Cucuk ditemukan, langsung gunakan kandidat taktis tersebut.
-        // Ini penting agar AI iseng tidak lanjut menghitung seluruh kombinasi
-        // POT/dasar yang mahal. AI biasa tetap memakai pencarian lengkap.
-        if (out.length) {
-          return out.sort(
-            (a, b) =>
-              a.score - b.score ||
-              a.jok - b.jok ||
-              b.flexSaved - a.flexSaved ||
-              b.cards.length - a.cards.length,
-          );
-        }
 
         // Sambung dasar/POT. Untuk perilaku normal AI, POT dibatasi maksimal
         // 3 kartu agar Joker tidak dibuang terlalu cepat.
@@ -6863,7 +6719,6 @@
         );
       }
       function aiTurn() {
-        minamiAITimer = null;
         if (game.over || game.turn === 0) return;
         let i = game.turn,
           h = game.hands[i];
@@ -6937,12 +6792,11 @@
                 } else mm.cards.push(...cand.cards);
 
                 playCardPlaceSound();
-                const moveLabel = cand.trickLabel === "Cucuk"
-                  ? "Cucuk"
-                  : mm.type === "pot"
-                    ? "Tambah POT"
-                    : "Tambah Dasar";
-                logMove(i, moveLabel, cand.cards);
+                logMove(
+                  i,
+                  mm.type === "pot" ? "Tambah POT" : "Tambah Dasar",
+                  cand.cards,
+                );
               }
             }
           } else markDead(i);
@@ -7399,20 +7253,7 @@
               : 0) + 1,
           currentDelta: Array(playerCount).fill(0),
           aiSpeed: Number(window.minamiAISpeed) || 1,
-          aiProfiles: (() => {
-            const profiles = Array.from(
-              { length: playerCount },
-              (_, i) => i === 0 ? "human" : (["aggressive","saver","potHunter","jokerHunter"][i-1] || "balanced"),
-            );
-            // Setiap game ada satu AI "iseng" secara acak agar perilakunya
-            // tidak selalu bisa ditebak. Profil lain tetap dipertahankan.
-            if (playerCount > 1) {
-              const aiIndexes = Array.from({ length: playerCount - 1 }, (_, k) => k + 1);
-              const picked = aiIndexes[Math.floor(Math.random() * aiIndexes.length)];
-              profiles[picked] = "iseng";
-            }
-            return profiles;
-          })(),
+          aiProfiles: Array.from({ length: playerCount }, (_, i) => i === 0 ? "human" : (["aggressive","saver","potHunter","jokerHunter","balanced"][i-1] || "balanced")),
           stats: { moves:Array(playerCount).fill(0), cardsPlayed:Array(playerCount).fill(0), bases:Array(playerCount).fill(0), pots:Array(playerCount).fill(0), jokers:Array(playerCount).fill(0), maxCombo:Array(playerCount).fill(0), dead:Array(playerCount).fill(false) },
           over: false,
         };
@@ -7491,7 +7332,14 @@
           }
 
           // Jika pemain pertama adalah AI, cek DASAR saat giliran AI tersebut.
-          scheduleAITurn(1000 + Math.floor(Math.random() * 4001));
+          setTimeout(
+            () => {
+              if (!game.over && game.turn !== 0 && !game.dead[game.turn]) {
+                aiTurn();
+              }
+            },
+            1000 + Math.floor(Math.random() * 4001),
+          );
         });
       }
 
@@ -7810,7 +7658,7 @@
       function renderFeatureStats(){const b=document.getElementById("featureStatsPanel");if(!b)return;const s=featureStats(),games=s.games||0,wins=s.wins||0,winRate=games?Math.round(wins/games*100):0;b.innerHTML='<div class="feature-stat-grid">'+[['games','Game selesai'],['wins','WIN'],['winRate','Win Rate'],['tenho','TENHO'],['pots','POT'],['jokers','Joker dimainkan'],['bestCombo','Combo terbesar'],['cards','Kartu dimainkan'],['cardsPerGame','Kartu/game'],['bestStreak','Win streak terbaik'],['dead','Mati Tangan']].map(x=>'<div><b>'+(x[0]==="winRate"?winRate+"%":(s[x[0]]||0))+'</b><span>'+x[1]+'</span></div>').join('')+'</div>';}
       function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menang 1 game"],["tenho","🃏","TENHO!","Mendapatkan TENHO"],["pot-master","♟️","POT Hunter","Membuat 5 POT"],["joker-master","🃏","Joker Master","Memainkan Joker 5 kali"],["combo-master","🔥","Combo Master","Menurunkan 5 kartu sekaligus"],["marathon","🎴","Marathon","Menyelesaikan 10 game"],["streak-3","⚡","Winning Streak","Menang 3 game berturut-turut"]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
       function renderFeaturePanels(){renderFeatureStats();renderAchievements()}
-      function getAIReactionText(i,label,joker){const p=game?.aiProfiles?.[i]||"balanced";if(label==="Mati")return"💀 MATI";if(label==="Cucuk")return p==="iseng"?"😈 CUCUK!":"🎯 Cucuk";if(joker)return p==="jokerHunter"?"😎 JOKER!":"🃏 Joker!";if(label.includes("POT"))return p==="potHunter"?"🔥 POT!":"😏 POT";if(label.includes("Dasar"))return p==="aggressive"?"⚔️ Gas!":"🎴 Turun";return"👍 Jalan"}
+      function getAIReactionText(i,label,joker){const p=game?.aiProfiles?.[i]||"balanced";if(label==="Mati")return"💀 MATI";if(joker)return p==="jokerHunter"?"😎 JOKER!":"🃏 Joker!";if(label.includes("POT"))return p==="potHunter"?"🔥 POT!":"😏 POT";if(label.includes("Dasar"))return p==="aggressive"?"⚔️ Gas!":"🎴 Turun";return"👍 Jalan"}
       function showPlayerBubble(i,textValue,kind="chat"){const el=document.getElementById("player"+(i+1));if(!el)return;let b=el.querySelector(".player-reaction-bubble");if(!b){b=document.createElement("div");b.className="player-reaction-bubble";el.appendChild(b)}b.textContent=textValue;b.className="player-reaction-bubble "+kind;b.classList.remove("show");void b.offsetWidth;b.classList.add("show");clearTimeout(b._hideTimer);b._hideTimer=setTimeout(()=>{b.classList.remove("show")},2100)}
       function setAIReaction(i,label,joker=false){if(!game||i===0)return;if(!game.reactions)game.reactions=Array(playerCount).fill(null);const textValue=getAIReactionText(i,label,joker);game.reactions[i]={text:textValue,until:Date.now()+1800};showPlayerBubble(i,textValue,joker?"joker":label.includes("POT")?"pot":"reaction")}
       function animateTableAction(label,joker=false){const t=document.querySelector(".table");if(!t)return;t.classList.remove("action-pop","joker-action","pot-action");void t.offsetWidth;t.classList.add(joker?"joker-action":label.toLowerCase().includes("pot")?"pot-action":"action-pop");setTimeout(()=>t.classList.remove("action-pop","joker-action","pot-action"),500)}
