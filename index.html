@@ -7676,7 +7676,9 @@
         }catch(e){ return { name:"Anda" }; }
       }
       function getPlayerName(i){
-        return getPlayerName(i);
+        if(i === 0) return getPlayerProfile().name;
+        const profile = game?.aiProfilesData?.[i];
+        return profile?.name || "Pemain " + (i + 1);
       }
       function applyPlayerProfile(){
         const name = getPlayerProfile().name;
