@@ -3638,6 +3638,14 @@
         cursor: pointer;
       }
       .hamburger-btn:hover { filter: brightness(1.12); }
+      /* Menu tetap bisa dibuka di atas animasi pembagian kartu. */
+      .hamburger-btn {
+        position: relative;
+        z-index: 10001;
+      }
+      #menuModal {
+        z-index: 10002 !important;
+      }
       .menu-modal-box {
         width: min(390px, calc(100% - 24px));
         max-height: 82vh;
@@ -4170,8 +4178,8 @@
               <h3>Putaran 1 — Wajib Dasar</h3>
               <p>
                 Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu,
-                berurutan, dan satu bunga. Jika tidak punya Dasar legal, pemain
-                mati.
+                berurutan, dan satu bunga. Boleh menggunakan kartu yang menjadi
+                Joker. Jika tidak punya Dasar legal, pemain mati.
               </p>
             </div>
           </div>
@@ -4182,7 +4190,10 @@
               <p>
                 Joker mengisi angka yang hilang. Pada Dasar 3 kartu, Joker boleh
                 di awal, tengah, atau akhir. Pada Dasar 4+ kartu, Joker tidak
-                boleh di ujung.
+                boleh di ujung. Joker dapat digunakan sebagai penembak untuk
+                menyerang Dasar yang sudah turun atau mematikan kartu lawan.
+                Pemain dapat memanfaatkan Joker untuk mengubah susunan
+                permainan dan mendapatkan keuntungan strategis.
               </p>
             </div>
           </div>
@@ -6858,6 +6869,19 @@
         overlay.id = "dealOverlay";
         overlay.className = "deal-overlay players-" + playerCount;
 
+        let dealTimer = null;
+        let dealCancelled = false;
+        window.minamiDealCancel = () => {
+          dealCancelled = true;
+          if (dealTimer) {
+            clearTimeout(dealTimer);
+            dealTimer = null;
+          }
+          overlay.remove();
+          setYourHandOverlayHidden(false);
+          window.minamiDealCancel = null;
+        };
+
         const box = document.createElement("div");
         box.className = "deal-box";
 
@@ -6921,10 +6945,14 @@
         }
 
         function dealNext() {
+          if (dealCancelled) return;
+
           if (dealt >= order.length) {
             // Semua kartu sudah selesai dibagikan
-            setTimeout(() => {
+            dealTimer = setTimeout(() => {
+              if (dealCancelled) return;
               overlay.remove();
+              window.minamiDealCancel = null;
 
               // Setelah pembagian selesai, tampilkan kembali kartu tangan.
               setYourHandOverlayHidden(false);
@@ -6958,7 +6986,9 @@
 
           count.textContent = `${dealt} / ${totalCards}`;
 
-          setTimeout(() => {
+          dealTimer = setTimeout(() => {
+            dealTimer = null;
+            if (dealCancelled) return;
             card.remove();
             dealNext();
           }, 60);
@@ -7349,6 +7379,11 @@
         document.getElementById("resultModal").classList.add("show");
       };
       const doNewGame = () => {
+        // Batalkan animasi pembagian jika Restart ditekan saat deal berlangsung.
+        if (typeof window.minamiDealCancel === "function") {
+          window.minamiDealCancel();
+        }
+
         // Hentikan game lama terlebih dahulu agar timer AI yang masih menunggu
         // tidak melanjutkan giliran setelah kembali ke menu awal.
         if (game) game.over = true;
