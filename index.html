@@ -3656,7 +3656,23 @@
       .menu-rank-foot{margin-top:4px;color:#789f90;font-size:7px;font-weight:800}.menu-rank-foot span:last-child{color:#f3cf70}
       .menu-profile-note{margin-top:6px;color:#789f90;font-size:8px;line-height:1.35}
       @media(max-width:700px){.menu-profile-edit input{font-size:12px}.menu-profile-save{min-width:62px}}
-    </style>
+    
+      .menu-profile-rank{cursor:pointer;position:relative;transition:.18s ease}
+      .menu-profile-rank:hover{border-color:rgba(243,207,112,.32);background:rgba(243,207,112,.11);transform:translateY(-1px)}
+      .menu-profile-rank:active{transform:scale(.99)}
+      .rank-guide-modal{position:fixed;inset:0;z-index:12000;display:none;align-items:center;justify-content:center;padding:12px;background:rgba(2,18,12,.68);backdrop-filter:blur(4px)}
+      .rank-guide-modal.show{display:flex}
+      .rank-guide-box{width:min(430px,calc(100% - 18px));max-height:82vh;overflow:auto;padding:14px;border-radius:16px;background:linear-gradient(145deg,#073c29,#052619);border:1px solid rgba(243,207,112,.25);box-shadow:0 25px 70px rgba(0,0,0,.5)}
+      .rank-guide-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.09)}
+      .rank-guide-title{margin:0;color:#f3cf70;font-size:16px;font-weight:900}.rank-guide-sub{margin-top:3px;color:#9fc6b7;font-size:8px}
+      .rank-guide-close{width:30px;height:30px;padding:0;border-radius:50%;background:rgba(255,255,255,.07);color:#fff;font-size:19px}
+      .rank-guide-list{display:grid;gap:6px}
+      .rank-guide-item{display:grid;grid-template-columns:34px 1fr;gap:8px;align-items:center;padding:8px;border-radius:10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07)}
+      .rank-guide-item.current{border-color:rgba(243,207,112,.38);background:rgba(243,207,112,.08)}
+      .rank-guide-icon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:rgba(243,207,112,.09);font-size:20px}
+      .rank-guide-name{color:#f3cf70;font-size:10px;font-weight:900;letter-spacing:.6px}.rank-guide-condition{margin-top:2px;color:#d8eee3;font-size:8px;line-height:1.35}
+      .rank-guide-note{margin-top:9px;padding:8px;border-radius:9px;background:rgba(255,255,255,.035);color:#9fc6b7;font-size:8px;line-height:1.4}
+</style>
     <style id="menu-and-table-themes">
       .hamburger-btn {
         width: 34px;
@@ -4183,7 +4199,7 @@
             <div class="menu-profile-main">
               <div class="menu-profile-label">PROFIL PEMAIN</div>
               <div class="menu-profile-current" id="profileCurrentName">Anda</div>
-              <div class="menu-profile-rank" id="menuProfileRank">
+              <div class="menu-profile-rank" id="menuProfileRank" role="button" tabindex="0" aria-label="Lihat semua gelar dan syaratnya">
                 <div class="menu-rank-head"><span id="menuRankIcon">🌱</span><b id="menuRankName">PEMULA</b><em id="menuRankCount">0 Rank 1</em></div>
                 <div class="menu-rank-track"><span id="menuRankProgress"></span></div>
                 <div class="menu-rank-foot"><span id="menuRankNext">5 Rank 1 ke NOVICE</span><span id="menuRankPercent">0%</span></div>
@@ -4213,6 +4229,17 @@
             <button class="table-theme-btn theme-ocean" data-table-theme="ocean">🌊 Ocean</button><button class="table-theme-btn theme-ember" data-table-theme="ember">🔥 Ember</button><button class="table-theme-btn theme-slate" data-table-theme="slate">🩶 Slate</button><button class="table-theme-btn theme-neon" data-table-theme="neon">✨ Neon</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="rank-guide-modal" id="rankGuideModal">
+      <div class="rank-guide-box">
+        <div class="rank-guide-head">
+          <div><h2 class="rank-guide-title">🏅 Gelar MINAMI</h2><div class="rank-guide-sub">Tekan gelar di profil untuk melihat seluruh tingkatan</div></div>
+          <button type="button" class="rank-guide-close" id="rankGuideClose">×</button>
+        </div>
+        <div class="rank-guide-list" id="rankGuideList"></div>
+        <div class="rank-guide-note">Rank 1 bertambah saat Anda menjadi peraih delta poin tertinggi pada pertandingan/ronde yang dihitung. Grandmaster membutuhkan 100 Rank 1, minimal 25 Game selesai, dan 10 Win Game.</div>
       </div>
     </div>
 
@@ -8186,6 +8213,28 @@
           openPlayerAction(pi);
         });
       }
+      function renderRankGuide(){
+        const box=document.getElementById("rankGuideList"); if(!box)return;
+        const s=featureStats(), r=Math.max(0,Number(s.rank1)||0), g=Math.max(0,Number(s.games)||0), w=Math.max(0,Number(s.gameWins)||0);
+        const info=getMinamiRankInfo();
+        const rows=[
+          ["🌱","PEMULA","0–4 Rank 1"],
+          ["🃏","NOVICE","5–14 Rank 1"],
+          ["⚔️","PLAYER","15–29 Rank 1"],
+          ["🔥","EXPERT","30–59 Rank 1"],
+          ["💎","MASTER","60–99 Rank 1"],
+          ["👑","GRANDMASTER I","100 Rank 1 + minimal 25 Game selesai + 10 Win Game"],
+          ["👑","GRANDMASTER II","150 Rank 1 + minimal 25 Game selesai + 10 Win Game"],
+          ["👑","GRANDMASTER III","200 Rank 1 + minimal 25 Game selesai + 10 Win Game"],
+          ["👑","GRANDMASTER IV","250 Rank 1 + minimal 25 Game selesai + 10 Win Game"]
+        ];
+        box.innerHTML=rows.map(x=>'<div class="rank-guide-item '+(info?.name==="GRANDMASTER" ? (x[1]==="GRANDMASTER "+(info.level||1)?"current":"") : x[1]===info?.name?"current":"")+'"><div class="rank-guide-icon">'+x[0]+'</div><div><div class="rank-guide-name">'+x[1]+'</div><div class="rank-guide-condition">'+x[2]+'</div></div></div>').join('');
+        if(r>=300) box.insertAdjacentHTML("beforeend",'<div class="rank-guide-note">Setelah Grandmaster IV, setiap tambahan 50 Rank 1 menaikkan level Grandmaster berikutnya.</div>');
+      }
+      document.getElementById("menuProfileRank").onclick=()=>{renderRankGuide();document.getElementById("rankGuideModal").classList.add("show")};
+      document.getElementById("menuProfileRank").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();document.getElementById("menuProfileRank").click()}};
+      document.getElementById("rankGuideClose").onclick=()=>document.getElementById("rankGuideModal").classList.remove("show");
+      document.getElementById("rankGuideModal").onclick=e=>{if(e.target.id==="rankGuideModal")e.currentTarget.classList.remove("show")};
       document.getElementById("quickChatBtn").onclick=showQuickChat;
       document.getElementById("quickChatClose").onclick=()=>document.getElementById("quickChatModal").classList.remove("show");
       document.getElementById("quickChatModal").onclick=e=>{if(e.target.id==="quickChatModal")e.currentTarget.classList.remove("show")};
