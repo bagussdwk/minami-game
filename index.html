@@ -7436,13 +7436,16 @@
           currentDelta: Array(playerCount).fill(0),
           aiSpeed: Number(window.minamiAISpeed) || 1,
           aiProfiles: Array.from({ length: playerCount }, (_, i) => i === 0 ? "human" : (["aggressive","saver","potHunter","jokerHunter","balanced"][i-1] || "balanced")),
-          aiProfilesData: [null, ...randomAIProfiles(Math.max(0, playerCount - 1))],
+          aiProfilesData: (Array.isArray(window.minamiMatchAIProfiles) && window.minamiMatchAIProfiles.length === playerCount)
+            ? window.minamiMatchAIProfiles.map(p => p ? { ...p } : p)
+            : [null, ...randomAIProfiles(Math.max(0, playerCount - 1))],
           stats: { moves:Array(playerCount).fill(0), cardsPlayed:Array(playerCount).fill(0), bases:Array(playerCount).fill(0), pots:Array(playerCount).fill(0), jokers:Array(playerCount).fill(0), maxCombo:Array(playerCount).fill(0), dead:Array(playerCount).fill(false) },
           over: false,
         };
 
         game.deadCards = deadCards;
         game.jokerIndex = jokerIndex;
+        window.minamiMatchAIProfiles = game.aiProfilesData.map(p => p ? { ...p } : p);
 
         window.minamiScores = game.scores;
         window.minamiAISpeed = game.aiSpeed || 1;
@@ -7640,6 +7643,7 @@
         window.minamiScores = null;
         window.minamiScoreHistory = [];
         window.minamiAISpeed = 1;
+        window.minamiMatchAIProfiles = null;
         window.minamiNextOrder = null;
         window.minamiDirection = 1;
         document.getElementById("scoreModal").classList.remove("show");
