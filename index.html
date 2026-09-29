@@ -4814,8 +4814,7 @@
           window.minamiAISpeed = Number(game.aiSpeed) || 1;
           window.minamiScoreHistory = Array.isArray(saved.scoreHistory)
             ? saved.scoreHistory
-            : [];\n          migrateHistoricalRank1();
-          window.minamiDirection =
+            : [];\n          window.minamiDirection =
             saved.direction === -1 ? -1 : game.direction === -1 ? -1 : 1;
           window.minamiNextOrder = Array.isArray(saved.nextOrder)
             ? saved.nextOrder.slice()
@@ -7841,21 +7840,6 @@
       const MINAMI_FEATURE_KEY="minamiFeatureStatsV1", MINAMI_ACH_KEY="minamiAchievementsV1";
       function featureStats(){try{const x=JSON.parse(localStorage.getItem(MINAMI_FEATURE_KEY)||"null");return x&&typeof x==="object"?x:{games:0,wins:0,rank1:0,tenho:0,pots:0,cards:0,jokers:0,bestCombo:0,dead:0,cardsPerGame:0,mvp:0,bestStreak:0}}catch(e){return{games:0,wins:0,rank1:0,tenho:0,pots:0,cards:0,jokers:0,bestCombo:0,dead:0,cardsPerGame:0,mvp:0,bestStreak:0}}}
       function saveFeatureStats(s){try{localStorage.setItem(MINAMI_FEATURE_KEY,JSON.stringify(s))}catch(e){}}
-      function migrateHistoricalRank1(){
-        try{
-          const history=Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[];
-          if(!history.length)return;
-          const rank1=history.reduce((count,row)=>{
-            const delta=Array.isArray(row?.delta)?row.delta:[];
-            if(!delta.length)return count;
-            const max=Math.max(...delta.map(Number));
-            return Number(delta[0])===Number(max)?count+1:count;
-          },0);
-          const s=featureStats();
-          s.rank1=rank1;
-          saveFeatureStats(s);
-        }catch(e){}
-      }
       function updateLifetimeStatsFromAction(i, orderedCards, label){
         if(!game?.stats)return;
         const s=featureStats();
