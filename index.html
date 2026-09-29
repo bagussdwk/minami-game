@@ -8187,9 +8187,9 @@
       }
       function renderFeatureStats(){
         const b=document.getElementById("featureStatsPanel");if(!b)return;
-        const s=featureStats();
         const history=Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[];
         syncRank1FromScoreHistory();
+        const s=featureStats();
         const games=s.games||0,gameWins=s.gameWins||0;
         const gameWinRate=games?Math.round(gameWins/games*100):0;
         const rank1=s.rank1||0,rank1Rate=s.matches?Math.round(rank1/s.matches*100):0;
