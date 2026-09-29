@@ -3625,6 +3625,10 @@
   }
 </style>
 
+    <style id="ai-profile-photo-style">
+      .avatar.profile-photo{overflow:hidden;padding:0;background:#173f2d}
+      .avatar.profile-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:center top}
+    </style>
 <style id="menu-profile-style">
       .menu-profile-card{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:11px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)}
       .menu-profile-avatar{width:40px;height:40px;min-width:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(145deg,#f3cf70,#b8872c);color:#173f2d;font-size:21px;box-shadow:0 5px 12px rgba(0,0,0,.22)}
@@ -4767,6 +4771,9 @@
 
           game = saved.game;
           playerCount = Number(game.playerCount) || 4;
+          if(!Array.isArray(game.aiProfilesData) || game.aiProfilesData.length < playerCount){
+            game.aiProfilesData = [null, ...randomAIProfiles(Math.max(0, playerCount - 1))];
+          }
           game.potRanks = new Set(
             Array.isArray(game.potRanks) ? game.potRanks : [],
           );
@@ -4815,6 +4822,7 @@
             : null;
 
           resumeRestoredGame();
+          applyPlayerProfilesToTable();
           return true;
         } catch (e) {
           clearSavedGame();
@@ -7331,6 +7339,39 @@
         } catch (e) {}
       }
 
+      const MINAMI_AI_PROFILE_POOL = [
+        { name:"Raka", photo:"https://i.pravatar.cc/160?img=12" },
+        { name:"Dimas", photo:"https://i.pravatar.cc/160?img=13" },
+        { name:"Fajar", photo:"https://i.pravatar.cc/160?img=14" },
+        { name:"Rizky", photo:"https://i.pravatar.cc/160?img=15" },
+        { name:"Andi", photo:"https://i.pravatar.cc/160?img=16" },
+        { name:"Bima", photo:"https://i.pravatar.cc/160?img=17" },
+        { name:"Yoga", photo:"https://i.pravatar.cc/160?img=18" },
+        { name:"Arif", photo:"https://i.pravatar.cc/160?img=19" },
+        { name:"Nando", photo:"https://i.pravatar.cc/160?img=20" },
+        { name:"Rian", photo:"https://i.pravatar.cc/160?img=21" },
+        { name:"Aldi", photo:"https://i.pravatar.cc/160?img=22" },
+        { name:"Kevin", photo:"https://i.pravatar.cc/160?img=23" }
+      ];
+      function randomAIProfiles(count){
+        const pool = shuffle(MINAMI_AI_PROFILE_POOL.slice());
+        return Array.from({length:count}, (_,idx) => {
+          const p = pool[idx % pool.length];
+          return { name:p.name, photo:p.photo };
+        });
+      }
+      function applyAIProfiles(){
+        if(!game?.aiProfilesData) return;
+        for(let i=1;i<playerCount;i++){
+          const p=game.aiProfilesData[i], el=document.getElementById("player"+(i+1));
+          if(!el||!p) continue;
+          const avatar=el.querySelector(".avatar"), name=el.querySelector(".player-name");
+          if(avatar){ avatar.innerHTML='<img src="'+p.photo+'" alt="" />'; avatar.classList.add("profile-photo"); }
+          if(name) name.textContent=p.name;
+        }
+      }
+      function applyPlayerProfilesToTable(){ applyPlayerProfile(); applyAIProfiles(); }
+
       function startGame() {
         let d = shuffle(deck()),
           deadCount = d.length - playerCount * 20,
@@ -7386,6 +7427,7 @@
           currentDelta: Array(playerCount).fill(0),
           aiSpeed: Number(window.minamiAISpeed) || 1,
           aiProfiles: Array.from({ length: playerCount }, (_, i) => i === 0 ? "human" : (["aggressive","saver","potHunter","jokerHunter","balanced"][i-1] || "balanced")),
+          aiProfilesData: [null, ...randomAIProfiles(Math.max(0, playerCount - 1))],
           stats: { moves:Array(playerCount).fill(0), cardsPlayed:Array(playerCount).fill(0), bases:Array(playerCount).fill(0), pots:Array(playerCount).fill(0), jokers:Array(playerCount).fill(0), maxCombo:Array(playerCount).fill(0), dead:Array(playerCount).fill(false) },
           over: false,
         };
@@ -7423,6 +7465,8 @@
         for (let i = 1; i <= 5; i++)
           document.getElementById("player" + i).style.display =
             i <= playerCount ? "block" : "none";
+
+        applyPlayerProfilesToTable();
 
         // =====================================================
         // ANIMASI PEMBAGIAN KARTU
