@@ -4694,11 +4694,11 @@
 
         render();
 
-        // Setelah refresh, lanjutkan giliran tanpa mengulang pembagian kartu.
-        // Timer AI lama selalu dibersihkan agar tidak ada dua giliran AI
-        // yang berjalan bersamaan setelah beberapa kali refresh.
+        // Setelah refresh, jika giliran sedang milik AI, lanjutkan langsung.
+        // Jangan mulai ulang delay 2–4 detik dari nol; refresh saat AI sedang
+        // berpikir harus terasa seperti melanjutkan giliran yang sama.
         if (game.turn !== 0 && !game.dead[game.turn]) {
-          scheduleAITurn();
+          scheduleAITurn(0);
         } else if (game.turn === 0 && game.round >= 2 && !humanHasMove()) {
           markDead(0);
           game.firstRoundDone[0] = true;
