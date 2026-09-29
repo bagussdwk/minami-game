@@ -443,11 +443,10 @@
         }
       }
       .player-head{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;width:100%!important;margin:0!important;padding:0!important;gap:0!important;line-height:0!important}
-      .player-head .avatar{flex:0 0 auto!important;margin:5px auto 2px!important}
+      .player-head .player-title{display:block!important;width:100%!important;height:7px!important;line-height:7px!important;margin:0 0 1px!important;padding:0!important;background:transparent!important;border:0!important;font-size:5px!important;text-align:center!important;text-transform:uppercase;letter-spacing:.3px;font-weight:900;color:rgba(243,207,112,.92);white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.55);position:static!important;transform:none!important}
+      .player-head .avatar{flex:0 0 auto!important;margin:0 auto 2px!important}
       .player-identity{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;width:100%!important;margin:0!important;padding:0!important;gap:0!important;line-height:0!important}
-      .player-name{display:inline-block!important;width:max-content!important;max-width:100%!important;margin:0!important;padding:3px 8px 2px!important;background:rgba(0,0,0,.42)!important;border:0!important;border-radius:20px!important;line-height:8px!important;height:13px!important;font-size:8px!important;font-weight:700!important;white-space:nowrap!important;box-sizing:border-box!important}
-      .player-title{display:block!important;width:100%!important;height:5px!important;line-height:5px!important;margin:-3px 0 0!important;padding:0!important;background:transparent!important;border:0!important;font-size:4.8px!important;text-align:center!important;text-transform:uppercase;letter-spacing:.2px;font-weight:900;color:rgba(243,207,112,.88);white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.5);position:static!important;transform:none!important}
-      .player-name + .player-title{margin-top:-3px!important}
+      .player-name{display:inline-block!important;width:max-content!important;max-width:100%!important;margin:0 auto!important;padding:3px 8px 2px!important;background:rgba(0,0,0,.42)!important;border:0!important;border-radius:20px!important;line-height:8px!important;height:13px!important;font-size:8px!important;font-weight:700!important;white-space:nowrap!important;box-sizing:border-box!important}
       .minami-rank-card{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:10px 11px;border-radius:12px;background:linear-gradient(135deg,rgba(243,207,112,.09),rgba(255,255,255,.035));border:1px solid rgba(243,207,112,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
       .minami-rank-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;flex:0 0 42px;border-radius:11px;background:rgba(243,207,112,.10);border:1px solid rgba(243,207,112,.18);font-size:24px;box-shadow:0 4px 12px rgba(0,0,0,.16)}
       .minami-rank-main{flex:1;min-width:0}
@@ -8561,4 +8560,12 @@
     background: linear-gradient(145deg, #d8efff, #9bcde8);
     color: #13242d;
   }
+</style>
+
+<style>
+/* ===== FINAL PLAYER TITLE POSITION ===== */
+      .player-head .player-title{display:block!important;width:100%!important;height:7px!important;line-height:7px!important;margin:0 0 1px!important;text-align:center!important}
+      .player-head .avatar{margin:0 auto 2px!important}
+      .player-head .player-identity{width:100%!important;align-items:center!important}
+      .player-head .player-name{margin:0 auto!important}
 </style>
