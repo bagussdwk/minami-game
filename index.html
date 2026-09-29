@@ -7863,9 +7863,9 @@
         updateAchievements();
       }
       function updateLifetimeStatsFromGame(){
-        if(!game?.stats||game._lifetimeCounted)return;
+        if(!game||game._lifetimeCounted)return;
         game._lifetimeCounted=true;
-        const s=featureStats(),st=game.stats;
+        const s=featureStats(),st=game.stats||{};
         s.games=Number(s.games)||0;
         s.rank1=Number(s.rank1)||0;
         s.games++;
