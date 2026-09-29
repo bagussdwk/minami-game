@@ -4501,18 +4501,18 @@
           title.textContent = "MATCH COMPLETE";
           sub.textContent =
             (winner === 0
-              ? "Anda"
+              ? getPlayerName(0)
               : winner === null
                 ? "Pertandingan selesai"
-                : "Pemain " + (winner + 1)) + " mencapai target 25 poin.";
+                : getPlayerName(winner)) + " mencapai target 25 poin.";
         } else if (reason === "TENHO") {
           icon.textContent = "🃏";
           title.textContent = "TENHO!";
-          sub.textContent = winner === 0 ? "Anda" : "Pemain " + (winner + 1);
+          sub.textContent = winner === 0 ? getPlayerName(0) : getPlayerName(winner);
         } else if (winner !== null) {
           icon.textContent = "🏆";
           title.textContent = "WIN!";
-          sub.textContent = winner === 0 ? "Anda" : "Pemain " + (winner + 1);
+          sub.textContent = winner === 0 ? getPlayerName(0) : getPlayerName(winner);
         } else {
           icon.textContent = "🎴";
           title.textContent = "GAME SELESAI";
@@ -4586,7 +4586,7 @@
                   '<div class="score-history-cell ' +
                   (p === 0 ? "you" : "") +
                   '"><b>' +
-                  (p === 0 ? "Anda" : "P" + (p + 1)) +
+                  getPlayerName(p) +
                   "</b><br>" +
                   (Number(row.points[p]) || 0) +
                   "</div>",
@@ -5610,7 +5610,7 @@
           d.className = "score-chip";
           d.innerHTML =
             "<b>" +
-            (i === 0 ? "Anda" : "P" + (i + 1)) +
+            getPlayerName(i) +
             '</b><div style="margin-top:5px;color:#f3cf70;font-size:12px">Game Ini: ' +
             (Number(currentGamePoints[i]) >= 0 ? "+" : "") +
             (Number(currentGamePoints[i]) || 0) +
