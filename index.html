@@ -442,8 +442,8 @@
           grid-template-columns: 1fr;
         }
       }
-      .player-title{display:block;margin-top:2px;font-size:6.5px;line-height:1;text-transform:uppercase;letter-spacing:.65px;font-weight:900;color:rgba(243,207,112,.88);white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.5)}
-      @media(max-width:700px),(hover:none) and (pointer:coarse){.player-title{font-size:5.8px;letter-spacing:.45px;margin-top:1px}}
+      .player-title{display:block;margin-top:0;font-size:6px;line-height:.9;text-transform:uppercase;letter-spacing:.65px;font-weight:900;color:rgba(243,207,112,.88);white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+      @media(max-width:700px),(hover:none) and (pointer:coarse){.player-title{font-size:5.4px;letter-spacing:.35px;margin-top:0;line-height:.9}}
       .logo {
         font-size: 26px;
         font-weight: 800;
@@ -3642,6 +3642,13 @@
       .menu-profile-edit input:focus{border-color:rgba(243,207,112,.5);box-shadow:0 0 0 2px rgba(243,207,112,.08)}
       .menu-profile-save{height:34px;padding:7px 10px;border-radius:8px;background:linear-gradient(145deg,#f3cf70,#c99739);color:#18251d;font-size:10px;font-weight:900}
       .menu-profile-save:hover{filter:brightness(1.08)}
+      .menu-profile-rank{margin-top:5px;padding:6px 7px 6px;border-radius:8px;background:linear-gradient(135deg,rgba(243,207,112,.08),rgba(255,255,255,.025));border:1px solid rgba(243,207,112,.13)}
+      .menu-rank-head,.menu-rank-foot{display:flex;align-items:center;justify-content:space-between;gap:6px}
+      .menu-rank-head{line-height:1}
+      .menu-rank-head span{font-size:12px}.menu-rank-head b{flex:1;color:#f3cf70;font-size:9px;letter-spacing:.55px}.menu-rank-head em{color:#aacdc0;font-size:7px;font-style:normal;font-weight:800}
+      .menu-rank-track{height:4px;margin-top:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+      .menu-rank-track span{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#b8872c,#f5d37a);transition:width .35s ease}
+      .menu-rank-foot{margin-top:4px;color:#789f90;font-size:7px;font-weight:800}.menu-rank-foot span:last-child{color:#f3cf70}
       .menu-profile-note{margin-top:6px;color:#789f90;font-size:8px;line-height:1.35}
       @media(max-width:700px){.menu-profile-edit input{font-size:12px}.menu-profile-save{min-width:62px}}
     </style>
@@ -4164,8 +4171,13 @@
           <div class="menu-profile-card">
             <div class="menu-profile-avatar">👤</div>
             <div class="menu-profile-main">
-              <div class="menu-profile-label">Nama pemain</div>
+              <div class="menu-profile-label">PROFIL PEMAIN</div>
               <div class="menu-profile-current" id="profileCurrentName">Anda</div>
+              <div class="menu-profile-rank" id="menuProfileRank">
+                <div class="menu-rank-head"><span id="menuRankIcon">🌱</span><b id="menuRankName">PEMULA</b><em id="menuRankCount">0 Rank 1</em></div>
+                <div class="menu-rank-track"><span id="menuRankProgress"></span></div>
+                <div class="menu-rank-foot"><span id="menuRankNext">5 Rank 1 ke NOVICE</span><span id="menuRankPercent">0%</span></div>
+              </div>
               <div class="menu-profile-edit">
                 <input type="text" id="profileNameInput" maxlength="18" placeholder="Masukkan nama..." autocomplete="nickname" />
                 <button type="button" class="menu-profile-save" id="profileNameSave">Simpan</button>
@@ -7730,6 +7742,16 @@
         if(current) current.textContent = name;
         const input = document.getElementById("profileNameInput");
         if(input && document.activeElement !== input) input.value = name === "Anda" ? "" : name;
+        const rank=getMinamiRankInfo();
+        const icon=document.getElementById("menuRankIcon"), title=document.getElementById("menuRankName");
+        const count=document.getElementById("menuRankCount"), bar=document.getElementById("menuRankProgress");
+        const next=document.getElementById("menuRankNext"), pct=document.getElementById("menuRankPercent");
+        if(icon) icon.textContent=rank.icon;
+        if(title) title.textContent=rank.name+(rank.level?" "+rank.level:"");
+        if(count) count.textContent=(rank.current||0)+" Rank 1";
+        if(bar) bar.style.width=(rank.progress||0)+"%";
+        if(next) next.textContent=rank.name==="GRANDMASTER" ? "50 Rank 1 ke "+rank.nextLabel : (Math.max(0,(rank.next||0)-(rank.current||0))+" Rank 1 ke "+rank.nextLabel);
+        if(pct) pct.textContent=(rank.progress||0)+"%";
       }
       function savePlayerProfile(){
         const input = document.getElementById("profileNameInput");
