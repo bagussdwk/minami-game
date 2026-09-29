@@ -358,33 +358,27 @@
         color: #f2e4b9;
         font-size: 11px;
       }
-      /* Layar tanggung/tablet kecil: rapatkan tumpukan kartu mati agar
-         24 kartu P4 tidak memakan area meja saat viewport 701-1100px. */
-      @media (min-width: 701px) and (max-width: 1100px) {
+      /* Responsif tumpukan kartu mati untuk semua lebar desktop/tablet.
+         Lebar stack dibatasi supaya 24 kartu P4 tidak menutup area meja. */
+      @media (min-width: 701px) and (max-width: 1790px) {
         .joker-corner {
-          left: 9px;
-          padding: 2px 3px;
+          left: clamp(7px, 1vw, 16px);
         }
 
         .joker-corner .dead-card-stack {
-          max-width: 82px;
+          max-width: clamp(58px, 5vw, 90px);
           overflow: hidden;
         }
 
         .joker-corner .dead-card-stack .card {
-          width: 22px;
-          height: 32px;
-          font-size: 9px;
-          border-radius: 4px;
-          margin-left: -19px;
+          width: clamp(20px, 1.4vw, 25px);
+          height: clamp(29px, 2vw, 36px);
+          font-size: clamp(8px, .6vw, 11px);
+          margin-left: clamp(-21px, -1.2vw, -18px);
         }
 
         .joker-corner .dead-card-stack .card:first-child {
           margin-left: 0;
-        }
-
-        .joker-corner .dead-card-stack .joker-revealed {
-          transform: translateY(-1px);
         }
       }
 
