@@ -4793,6 +4793,97 @@
         }
       }
 
+      // Perbaiki save lama yang dibuat sebelum Joker bisa dihitung sebagai POT.
+      // Hanya dijalankan sekali pada save yang belum memiliki marker V2.
+      function repairSavedResidualScoring() {
+        if (!game || !game.over || !game.lastResult || game._residualScoringV2) return false;
+
+        const oldDelta = Array.isArray(game.lastResult.delta)
+          ? game.lastResult.delta.slice(0, playerCount)
+          : Array.isArray(game.currentDelta)
+            ? game.currentDelta.slice(0, playerCount)
+            : Array(playerCount).fill(0);
+
+        while (oldDelta.length < playerCount) oldDelta.push(0);
+
+        // Hitung ulang kombinasi sisa dengan rule terbaru.
+        for (let i = 0; i < playerCount; i++) {
+          if (i === game.lastResult.winner) continue;
+          if (game.dead?.[i] && !game.hasBase?.[i]) continue;
+          const arranged = autoArrangeResidualHand(game.hands[i] || []);
+          game.hands[i] = arranged.residual;
+        }
+
+        const winner = game.lastResult.winner;
+        const reason = game.lastResult.reason || "NORMAL";
+        const deadPlayers = [];
+        const alive = [];
+
+        for (let i = 0; i < playerCount; i++) {
+          if (game.dead?.[i] && !game.hasBase?.[i]) deadPlayers.push(i);
+          else if (i !== winner) {
+            alive.push({
+              i,
+              v: handValue(game.hands[i] || []),
+              turn: Array.isArray(game.turnOrder) ? game.turnOrder.indexOf(i) : 999,
+            });
+          }
+        }
+
+        alive.sort(
+          (a, b) =>
+            a.v - b.v ||
+            (game.deadOrder?.[b.i] ?? 999) - (game.deadOrder?.[a.i] ?? 999),
+        );
+
+        const scoreDelta = Array(playerCount).fill(0);
+        const hasTopWinner = winner !== null && winner !== undefined;
+        const winnerBonus =
+          reason === "TENHO"
+            ? 7
+            : hasTopWinner
+              ? playerCount
+              : playerCount - 2;
+
+        if (hasTopWinner) scoreDelta[winner] = winnerBonus;
+
+        const normalPoints =
+          playerCount === 5 ? [3, 2, 1, 0, -1] : [2, 1, 0, -1];
+        const pointsAfterWin =
+          playerCount === 5 ? [2, 1, 0, -1] : [1, 0, -1];
+        const pts = hasTopWinner ? pointsAfterWin : normalPoints;
+
+        alive.forEach((x, k) => {
+          scoreDelta[x.i] = pts[k] ?? 0;
+        });
+        deadPlayers.forEach((i) => {
+          scoreDelta[i] = -2;
+        });
+
+        const oldScores = Array.isArray(game.scores)
+          ? game.scores.slice(0, playerCount)
+          : Array(playerCount).fill(0);
+        while (oldScores.length < playerCount) oldScores.push(0);
+
+        game.scores = oldScores.map(
+          (v, i) => (Number(v) || 0) - (Number(oldDelta[i]) || 0) + scoreDelta[i],
+        );
+        game.currentDelta = scoreDelta.slice();
+        game.lastResult.delta = scoreDelta.slice();
+
+        if (Array.isArray(window.minamiScoreHistory) && window.minamiScoreHistory.length) {
+          const idx = window.minamiScoreHistory.length - 1;
+          const row = window.minamiScoreHistory[idx];
+          if (row && (Number(row.game) === Number(game.gameNumber) || idx === window.minamiScoreHistory.length - 1)) {
+            row.delta = scoreDelta.slice();
+            row.total = game.scores.slice();
+          }
+        }
+
+        game._residualScoringV2 = true;
+        return oldDelta.some((v, i) => Number(v) !== Number(scoreDelta[i]));
+      }
+
       function restoreSavedGame() {
         try {
           let raw = null;
@@ -4882,6 +4973,12 @@
           window.minamiNextOrder = Array.isArray(saved.nextOrder)
             ? saved.nextOrder.slice()
             : null;
+
+          // Save lama dari sebelum perbaikan POT+Joker dikoreksi sekali saat refresh.
+          // Setelah diberi marker V2, refresh berikutnya tidak mengubah poin lagi.
+          if (game.over) {
+            repairSavedResidualScoring();
+          }
 
           resumeRestoredGame();
           applyPlayerProfilesToTable();
@@ -5987,6 +6084,7 @@
           reason,
           delta: scoreDelta.slice(),
         };
+        game._residualScoringV2 = true;
         recordLifetimeRank1(scoreDelta, reason);
 
         // Progress AI juga disimpan per pemain. Nama/foto/gelar tetap sama
