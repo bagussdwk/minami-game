@@ -3682,6 +3682,8 @@
         cursor: pointer;
       }
       .menu-action:hover { filter: brightness(1.1); }
+      .menu-game-only { display: none; }
+      #menuModal.game-active .menu-game-only { display: block; }
       .table-theme-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0,1fr));
@@ -4137,11 +4139,11 @@
         <div class="menu-section">
           <div class="menu-section-title">Permainan</div>
           <div class="menu-music-row"><div class="menu-music-label">🎵 Musik</div><div class="music-inline-options"><button type="button" class="music-choice" id="musicOnBtn">ON <span class="music-check">✓</span></button><button type="button" class="music-choice" id="musicOffBtn">OFF <span class="music-check">✓</span></button></div></div>
-          <button class="menu-action" id="menuRestartBtn">⟳ Restart Pertandingan <span>›</span></button>
+          <button class="menu-action menu-game-only" id="menuRestartBtn">⟳ Restart Pertandingan <span>›</span></button>
           <button class="menu-action" id="menuRulesBtn">📜 Aturan Permainan <span>›</span></button>
           <button class="menu-action" id="menuStatsBtn">📊 Statistik & Achievement <span>›</span></button>
         </div>
-        <div class="menu-section">
+        <div class="menu-section menu-game-only">
           <div class="menu-section-title">Background Meja</div>
           <div class="table-theme-grid">
             <button class="table-theme-btn theme-standard" data-table-theme="standard">🌿 Standar</button>
@@ -4603,6 +4605,7 @@
 
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
+        document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
         document.getElementById("quickChatBtn").style.display = game.over ? "none" : "block";
@@ -7413,6 +7416,7 @@
         }
         document.getElementById("setup").style.display = "";
         document.getElementById("setupMinami2").style.display = "";
+        document.getElementById("menuModal").classList.remove("game-active");
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
       const musicToggle = document.getElementById("musicToggle");
@@ -7434,6 +7438,7 @@
       };
 
       const menuModal = document.getElementById("menuModal");
+      if (!game) menuModal.classList.remove("game-active");
       const closeMenu = () => {
         menuModal.classList.remove("show");
         document.body.classList.remove("menu-open");
