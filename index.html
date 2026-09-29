@@ -7952,6 +7952,41 @@
         if(ch)localStorage.setItem(MINAMI_ACH_KEY,JSON.stringify([...u]));
       }
       function getGameMVP(){if(!game?.stats)return null;let best=null;for(let i=0;i<playerCount;i++){const st=game.stats,v=(st.cardsPlayed[i]||0)+(st.pots[i]||0)*3+(st.jokers[i]||0)*2+(st.bases[i]||0)+(game.lastResult?.winner===i?10:0),x={i,value:v,name:getPlayerName(i)};if(!best||v>best.value)best=x}return best}
+      function getMinamiRankInfo(){
+        const s=featureStats();
+        const rank1=Math.max(0,Number(s.rank1)||0);
+        const games=Math.max(0,Number(s.games)||0);
+        const gameWins=Math.max(0,Number(s.gameWins)||0);
+        const tiers=[
+          {name:"PEMULA",icon:"🌱",min:0,next:5},
+          {name:"NOVICE",icon:"🃏",min:5,next:15},
+          {name:"PLAYER",icon:"⚔️",min:15,next:30},
+          {name:"EXPERT",icon:"🔥",min:30,next:60},
+          {name:"MASTER",icon:"💎",min:60,next:100}
+        ];
+        if(rank1>=100){
+          const gmLevel=Math.floor((rank1-100)/50)+1;
+          const currentMin=100+(gmLevel-1)*50;
+          const next=currentMin+50;
+          return {
+            name:"GRANDMASTER",icon:"👑",level:gmLevel,min:currentMin,next,
+            current:rank1,nextLabel:"GRANDMASTER "+(gmLevel+1),
+            progress:Math.min(100,Math.round((rank1-currentMin)/(next-currentMin)*100)),
+            eligible:games>=25&&gameWins>=10,
+            locked:false
+          };
+        }
+        let tier=tiers[0];
+        for(let i=tiers.length-1;i>=0;i--){
+          if(rank1>=tiers[i].min){tier=tiers[i];break;}
+        }
+        const progress=Math.min(100,Math.round((rank1-tier.min)/(tier.next-tier.min)*100));
+        return {
+          name:tier.name,icon:tier.icon,level:0,min:tier.min,next:tier.next,
+          current:rank1,nextLabel:tiers.find(x=>x.min===tier.next)?.name||"GRANDMASTER",
+          progress
+        };
+      }
       function renderFeatureStats(){
         const b=document.getElementById("featureStatsPanel");if(!b)return;
         const s=featureStats();
@@ -7967,11 +8002,10 @@
           });
           if(recovered>0){s.rank1=recovered;saveFeatureStats(s);}
         }
-        const matches=s.matches||0,matchWins=s.matchWins||0;
         const games=s.games||0,gameWins=s.gameWins||0;
-        const matchWinRate=matches?Math.round(matchWins/matches*100):0;
         const gameWinRate=games?Math.round(gameWins/games*100):0;
-        const rank1=s.rank1||0,rank1Rate=matches?Math.round(rank1/matches*100):0;
+        const rank1=s.rank1||0,rank1Rate=s.matches?Math.round(rank1/s.matches*100):0;
+        const rank=getMinamiRankInfo();
         const stats=[
           ["matches","Match selesai"],
           ["games","Game selesai"],
@@ -7980,10 +8014,32 @@
           ["tenho","TENHO"],["pots","POT"],["jokers","Joker dimainkan"],
           ["bestCombo","Combo terbesar"],["bestStreak","Win streak terbaik"],["dead","Mati Tangan"]
         ];
-        b.innerHTML='<div class="feature-stat-grid">'+stats.map(x=>{
-          const pct=x[0]==="matchWinRate"?matchWinRate:x[0]==="gameWinRate"?gameWinRate:x[0]==="rank1Rate"?rank1Rate:null;
-          return '<div><b>'+(pct!==null?pct+"%":(s[x[0]]||0))+'</b><span>'+x[1]+'</span></div>';
-        }).join('')+'</div>';
+        b.innerHTML=
+          '<div class="minami-rank-card">'+
+            '<div class="minami-rank-icon">'+rank.icon+'</div>'+
+            '<div class="minami-rank-main">'+
+              '<div class="minami-rank-label">RANK</div>'+
+              '<div class="minami-rank-name">'+rank.name+(rank.level?' '+rank.level:'')+'</div>'+
+              '<div class="minami-rank-progress-text">'+
+                rank.current+' / '+rank.next+' Rank 1 • '+rank.progress+'%'+
+              '</div>'+
+              '<div class="minami-rank-progress"><span style="width:'+rank.progress+'%"></span></div>'+
+              '<div class="minami-rank-next">'+
+                (rank.name==="GRANDMASTER"
+                  ? 'Berikutnya: '+rank.nextLabel+' • '+Math.max(0,rank.next-rank.current)+' Rank 1 lagi'
+                  : 'Berikutnya: '+rank.nextLabel+' • '+Math.max(0,rank.next-rank.current)+' Rank 1 lagi')+
+              '</div>'+
+              (rank.name==="GRANDMASTER"
+                ? '<div class="minami-rank-note">Grandmaster naik 1 level setiap 50 Rank 1.</div>'
+                : rank.name==="MASTER"
+                  ? '<div class="minami-rank-note">100 Rank 1 + minimal 25 Game selesai + 10 Win Game untuk Grandmaster.</div>'
+                  : '')+
+            '</div>'+
+          '</div>'+
+          '<div class="feature-stat-grid">'+stats.map(x=>{
+            const pct=x[0]==="gameWinRate"?gameWinRate:x[0]==="rank1Rate"?rank1Rate:null;
+            return '<div><b>'+(pct!==null?pct+"%":(s[x[0]]||0))+'</b><span>'+x[1]+'</span></div>';
+          }).join('')+'</div>';
       }
       function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menang 1 game"],["tenho","🃏","TENHO!","Mendapatkan TENHO"],["pot-master","♟️","POT Hunter","Membuat 5 POT"],["joker-master","🃏","Joker Master","Memainkan Joker 5 kali"],["combo-master","🔥","Combo Master","Menurunkan 5 kartu sekaligus"],["marathon","🎴","Marathon","Menyelesaikan 10 game"],["streak-3","⚡","Winning Streak","Menang 3 game berturut-turut"]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
       function renderFeaturePanels(){renderFeatureStats();renderAchievements()}
