@@ -5615,7 +5615,17 @@
         if (!cards.length) return { ok: false, msg: "Pilih kartu dulu." };
         if (m.type === "pot") {
           let r = m.rank;
-          if (cards.some((c) => !isJoker(c) && c.rank !== r))
+          const realCards = cards.filter((c) => !isJoker(c));
+
+          // POT yang sudah ada tidak boleh ditembak hanya dengan Joker.
+          if (!realCards.length) {
+            return {
+              ok: false,
+              msg: "Joker tidak bisa ditambahkan sendirian ke POT. Sertakan kartu angka " + r + ".",
+            };
+          }
+
+          if (realCards.some((c) => c.rank !== r))
             return {
               ok: false,
               msg: "Semua kartu tambahan harus angka " + r + " atau Joker.",
@@ -6550,6 +6560,15 @@
           const remaining = h.filter((c) => !cards.includes(c));
           const nextValue = handValue(remaining);
           let score = nextValue;
+
+          // Langkah yang langsung menghabiskan tangan selalu menjadi prioritas.
+          // Joker tetap boleh dibuang pada kondisi normal/awal permainan.
+          if (!remaining.length) score -= 1000;
+
+          // Saat tangan sudah sedikit, pengurangan nilai sisa lebih penting
+          // daripada sekadar membuang satu kartu.
+          if (h.length <= 5 && nextValue <= 10) score -= 120;
+
           // Prinsip pro: kartu yang masih fleksibel lebih berharga daripada sekadar
           // jumlah kartu yang berhasil dikeluarkan.
           const savedFlex = remaining.reduce(
@@ -6607,22 +6626,36 @@
           });
         };
 
-        // Sambung dasar/POT. POT umumnya dicicil satu kartu per giliran.
+        // Sambung dasar/POT. POT normal maksimal 3 kartu.
+        // Pengecualian: AI boleh memakai lebih dari 3 jika langkah itu
+        // membantu WIN/TENHO atau memangkas sisa nilai tangan secara signifikan.
         game.melds.forEach((m, mi) => {
-          const maxAdd = m.type === "pot" ? 1 : 5;
+          const maxAdd = m.type === "pot" ? 4 : 5;
           subsets(h, maxAdd).forEach((cards) => {
-            if (m.type === "pot" && cards.length !== 1) return;
+            if (m.type === "pot") {
+              // POT lama tidak boleh ditambah Joker sendirian.
+              const real = cards.filter((c) => !isJoker(c));
+              if (!real.length) return;
+            }
             const chk = addToMeld(cards, mi);
             if (chk.ok) addCandidate(cards, "add", mi);
           });
         });
-        // POT baru: maksimal 3 kartu, agar Q-Q-Q-Q tidak langsung habis.
+
+        // POT baru normal: maksimal 3 kartu.
         subsets(h, 3).forEach((cards) => {
           if (cards.length === 3) {
             const m = potCards(cards);
             if (m) addCandidate(cards, "pot");
           }
         });
+
+        // Jika tangan sudah sedikit, boleh buka POT dengan seluruh sisa tangan.
+        // Contoh: 5 + Joker + Joker + Joker -> langsung POT 5 dan WIN.
+        if (h.length <= 5) {
+          const fullPot = potCards(h);
+          if (fullPot) addCandidate(h.slice(), "pot", null, { finish: true });
+        }
         // Dasar baru: tidak harus terpanjang. Cari juga dasar pendek agar kartu fleksibel tersisa.
         subsets(h, 5).forEach((cards) => {
           const b = makeBaseCards(cards);
