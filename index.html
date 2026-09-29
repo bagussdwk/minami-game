@@ -4987,20 +4987,22 @@
             .map((c, i) => (isJoker(c) ? i : -1))
             .filter((i) => i >= 0);
           if (ordered.length >= 4 && jokerIndexes.length) {
-            // Joker yang sudah ada di dasar sebelumnya
-            // tetap mempertahankan posisi/angka yang sudah ditetapkan.
+            // Joker yang sudah ada di dasar sebelumnya tetap mempertahankan
+            // posisi/angka yang sudah ditetapkan. Hanya Joker yang benar-benar
+            // berasal dari kartu tambahan yang dilarang berada di ujung.
             //
-            // Contoh:
-            // Joker(A) - 2 - 3
-            // + 4
-            // = Joker(A) - 2 - 3 - 4
+            // Penting:
+            // Q-K-Joker(A) + 10-Joker(J)
+            // harus menjadi 10-Joker(J)-Q-K-Joker(A).
+            // Jadi jangan menentukan Joker baru berdasarkan indeks posisi,
+            // karena penambahan dari kiri akan menggeser Joker lama.
 
-            const oldJokerIndexes = m.ordered
-              .map((c, i) => (isJoker(c) ? i : -1))
-              .filter((i) => i >= 0);
+            const oldJokerIds = new Set(
+              m.ordered.filter((c) => isJoker(c)).map((c) => c.id),
+            );
 
             const newJokerIndexes = jokerIndexes.filter(
-              (i) => i >= m.ordered.length,
+              (i) => !oldJokerIds.has(ordered[i].id),
             );
 
             // Joker baru tidak boleh berada di ujung.
@@ -5011,7 +5013,7 @@
             }
 
             // Joker lama boleh tetap berada di ujung
-            // karena posisinya sudah ditetapkan saat dasar dibuat.
+            // karena posisinya sudah ditetapkan sebelumnya.
           }
           out.push({ side, ordered, start: newStart, end: newEnd, add });
         }
