@@ -7119,9 +7119,9 @@
         const yourHand = document.querySelector(".your-hand");
         if (yourHand) yourHand.style.removeProperty("display");
 
-        document
-          .getElementById("game")
-          .classList.add("active", "players-" + playerCount);
+        const gameEl = document.getElementById("game");
+        gameEl.classList.remove("players-4", "players-5");
+        gameEl.classList.add("active", "players-" + playerCount);
 
         // Saat pembagian kartu: semua kartu mati masih tertutup
         renderDeadCards(deadCards, jokerIndex, false);
@@ -7308,7 +7308,12 @@
         document.getElementById("scoreTopBtn").style.display = "none";
         document.getElementById("newGameTopBtn").style.display = "none";
         document.getElementById("quickChatBtn").style.display = "none";
-        document.getElementById("game").classList.remove("active");
+        const gameEl = document.getElementById("game");
+        gameEl.classList.remove("active", "players-4", "players-5");
+        for (let i = 1; i <= 5; i++) {
+          const playerEl = document.getElementById("player" + i);
+          if (playerEl) playerEl.style.display = "";
+        }
         document.getElementById("setup").style.display = "";
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
