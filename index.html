@@ -7859,7 +7859,12 @@
         game._lifetimeCounted=true;
         const s=featureStats(),st=game.stats;
         s.games++;
-        if(game.lastResult?.winner===0)s.wins++;\n        const delta=Array.isArray(game.lastResult?.delta)?game.lastResult.delta:[];\n        if(delta.length===playerCount && !(game.lastResult?.reason==="ALL_DEAD" || delta.every(v=>Number(v)===-2))){\n          const maxDelta=Math.max(...delta);\n          if(Number(delta[0])===Number(maxDelta)) s.rank1=(s.rank1||0)+1;\n        }
+        if(game.lastResult?.winner===0)s.wins++;
+        const delta=Array.isArray(game.lastResult?.delta)?game.lastResult.delta:[];
+        if(delta.length===playerCount && !(game.lastResult?.reason==="ALL_DEAD" || delta.every(v=>Number(v)===-2))){
+          const maxDelta=Math.max(...delta);
+          if(Number(delta[0])===Number(maxDelta)) s.rank1=(s.rank1||0)+1;
+        }
         if(game.lastResult?.reason==="TENHO")s.tenho++;
         s.dead+=game.dead.filter(Boolean).length;
         const mvp=getGameMVP();
