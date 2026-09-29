@@ -4700,7 +4700,9 @@
         // Timer AI lama selalu dibersihkan agar tidak ada dua giliran AI
         // yang berjalan bersamaan setelah beberapa kali refresh.
         if (game.turn !== 0 && !game.dead[game.turn]) {
-          scheduleAITurn();
+          // Setelah refresh, jangan ulangi delay berpikir 2–4 detik.
+          // Giliran AI yang sedang berlangsung langsung dilanjutkan.
+          scheduleAITurn(80);
         } else if (game.turn === 0 && game.round >= 2 && !humanHasMove()) {
           markDead(0);
           game.firstRoundDone[0] = true;
