@@ -8117,11 +8117,6 @@
                 rank.current+' / '+rank.next+' Rank 1 • '+rank.progress+'%'+
               '</div>'+
               '<div class="minami-rank-progress"><span style="width:'+rank.progress+'%"></span></div>'+
-              '<div class="minami-rank-next">'+
-                (rank.name==="GRANDMASTER"
-                  ? 'Berikutnya: '+rank.nextLabel+' • '+Math.max(0,rank.next-rank.current)+' Rank 1 lagi'
-                  : 'Berikutnya: '+rank.nextLabel+' • '+Math.max(0,rank.next-rank.current)+' Rank 1 lagi')+
-              '</div>'+
               (rank.name==="GRANDMASTER"
                 ? '<div class="minami-rank-note">Grandmaster naik 1 level setiap 50 Rank 1.</div>'
                 : rank.name==="MASTER"
