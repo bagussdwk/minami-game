@@ -4823,7 +4823,18 @@
           game = saved.game;
           playerCount = Number(game.playerCount) || 4;
           if(!Array.isArray(game.aiProfilesData) || game.aiProfilesData.length < playerCount){
-            game.aiProfilesData = [null, ...randomAIProfiles(Math.max(0, playerCount - 1))];
+            game.aiProfilesData = [null, ...loadPersistentAIRoster(Math.max(0, playerCount - 1))];
+          } else {
+            game.aiProfilesData = game.aiProfilesData.map((p,i)=>{
+              if(i===0 || !p)return p;
+              return {
+                ...p,
+                rank1:Number(p.rank1)||0,
+                games:Number(p.games)||0,
+                gameWins:Number(p.gameWins)||0,
+                title:minamiRankTitleFromStats(p.rank1,p.games,p.gameWins)
+              };
+            });
           }
           game.potRanks = new Set(
             Array.isArray(game.potRanks) ? game.potRanks : [],
@@ -5977,6 +5988,31 @@
           delta: scoreDelta.slice(),
         };
         recordLifetimeRank1(scoreDelta, reason);
+
+        // Progress AI juga disimpan per pemain. Nama/foto/gelar tetap sama
+        // sepanjang GAME sampai target 25 tercapai; gelar mengikuti Rank 1 AI.
+        if(Array.isArray(game.aiProfilesData)){
+          for(let i=1;i<playerCount;i++){
+            const p=game.aiProfilesData[i];
+            if(!p)continue;
+            p.rank1=Number(p.rank1)||0;
+            p.games=Number(p.games)||0;
+            p.gameWins=Number(p.gameWins)||0;
+            if(reason!=="ALL_DEAD" && !scoreDelta.every(v=>Number(v)===-2)){
+              const max=Math.max(...scoreDelta.map(v=>Number(v)));
+              if(Number(scoreDelta[i])===max)p.rank1++;
+            }
+            const finalGame=game.scores.some(x=>Number(x)>=25);
+            if(finalGame){
+              p.games++;
+              if(game.scores[i]>=25)p.gameWins++;
+            }
+            p.title=minamiRankTitleFromStats(p.rank1,p.games,p.gameWins);
+          }
+          savePersistentAIRoster();
+          window.minamiMatchAIProfiles=game.aiProfilesData.map(p=>p?{...p}:p);
+        }
+
         if(game.stats){game.stats.winner=winner;game.stats.reason=reason;game.stats.delta=scoreDelta.slice()}
         window.minamiWinStreak=winner===0?(Number(localStorage.getItem("minamiWinStreak"))||0)+1:0;localStorage.setItem("minamiWinStreak",String(window.minamiWinStreak));
         updateLifetimeStatsFromGame();updateAchievements();renderFeatureStats();renderAchievements();playMinamiSfx(reason==="TENHO"?"tenho":winner!==null?"win":"dead");
@@ -7412,11 +7448,14 @@
         { name:"Aldi", photo:"https://i.pravatar.cc/160?img=22" },
         { name:"Kevin", photo:"https://i.pravatar.cc/160?img=23" }
       ];
-      function minamiRankTitle(rank1){
+      const MINAMI_AI_ROSTER_KEY = "minamiAIRosterV1";
+
+      function minamiRankTitleFromStats(rank1, games=0, gameWins=0){
         const rank=Number(rank1)||0;
-        if(rank>=100){
-          const info=getMinamiRankInfo();
-          if(info && info.name==="GRANDMASTER") return "GRANDMASTER "+(info.level||1);
+        const finished=Math.max(0,Number(games)||0);
+        const wins=Math.max(0,Number(gameWins)||0);
+        if(rank>=100 && finished>=25 && wins>=10){
+          return "GRANDMASTER "+(Math.floor((rank-100)/50)+1);
         }
         if(rank>=60)return "MASTER";
         if(rank>=30)return "EXPERT";
@@ -7424,27 +7463,72 @@
         if(rank>=5)return "NOVICE";
         return "PEMULA";
       }
-      function randomAITitle(){
-        const titles=["PEMULA","NOVICE","PLAYER","EXPERT","MASTER"];
-        return titles[Math.floor(Math.random()*titles.length)];
+
+      function minamiRankTitle(rank1){
+        const s=featureStats();
+        return minamiRankTitleFromStats(rank1,s.games,s.gameWins);
       }
+
+      function randomAIProfiles(count){
+        const pool = shuffle(MINAMI_AI_PROFILE_POOL.slice());
+        return Array.from({length:count}, (_,idx) => {
+          const p = pool[idx % pool.length];
+          return {
+            name:p.name,
+            photo:p.photo,
+            rank1:0,
+            games:0,
+            gameWins:0,
+            title:"PEMULA"
+          };
+        });
+      }
+
+      function loadPersistentAIRoster(count){
+        try{
+          const raw=localStorage.getItem(MINAMI_AI_ROSTER_KEY);
+          const saved=raw?JSON.parse(raw):null;
+          if(Array.isArray(saved)&&saved.length===count&&saved.every(p=>p&&p.name&&p.photo)){
+            return saved.map(p=>({
+              name:p.name,
+              photo:p.photo,
+              rank1:Number(p.rank1)||0,
+              games:Number(p.games)||0,
+              gameWins:Number(p.gameWins)||0,
+              title:minamiRankTitleFromStats(p.rank1,p.games,p.gameWins)
+            }));
+          }
+        }catch(e){}
+        const roster=randomAIProfiles(count);
+        try{localStorage.setItem(MINAMI_AI_ROSTER_KEY,JSON.stringify(roster));}catch(e){}
+        return roster;
+      }
+
+      function savePersistentAIRoster(){
+        if(!game?.aiProfilesData)return;
+        try{
+          localStorage.setItem(
+            MINAMI_AI_ROSTER_KEY,
+            JSON.stringify(game.aiProfilesData.slice(1,playerCount))
+          );
+        }catch(e){}
+      }
+
+      function resetPersistentAIRoster(){
+        try{localStorage.removeItem(MINAMI_AI_ROSTER_KEY)}catch(e){}
+        window.minamiMatchAIProfiles=null;
+      }
+
       function refreshPlayerTitles(){
         const t=document.getElementById("playerTitle1");
         if(t)t.textContent=minamiRankTitle(featureStats().rank1);
         if(game?.aiProfilesData){
           for(let i=1;i<playerCount;i++){
+            const p=game.aiProfilesData[i];
             const e=document.getElementById("playerTitle"+(i+1));
-            if(e)e.textContent=game.aiProfilesData[i]?.title||"PLAYER";
+            if(e)e.textContent=p ? minamiRankTitleFromStats(p.rank1,p.games,p.gameWins) : "PEMULA";
           }
         }
-      }
-      function randomAIProfiles(count){
-        const pool = shuffle(MINAMI_AI_PROFILE_POOL.slice());
-        const titles = shuffle(["PEMULA","NOVICE","PLAYER","EXPERT","MASTER"]);
-        return Array.from({length:count}, (_,idx) => {
-          const p = pool[idx % pool.length];
-          return { name:p.name, photo:p.photo, title:titles[idx % titles.length] };
-        });
       }
       function applyAIProfiles(){
         if(!game?.aiProfilesData) return;
@@ -7454,7 +7538,7 @@
           const avatar=el.querySelector(".avatar"), name=el.querySelector(".player-name"), title=el.querySelector(".player-title");
           if(avatar){ avatar.innerHTML='<img src="'+p.photo+'" alt="" />'; avatar.classList.add("profile-photo"); }
           if(name) name.textContent=p.name;
-          if(title) title.textContent=p.title||"PLAYER";
+          if(title) title.textContent=minamiRankTitleFromStats(p.rank1,p.games,p.gameWins);
         }
       }
       function applyPlayerProfilesToTable(){ applyPlayerProfile(); applyAIProfiles(); refreshPlayerTitles(); }
@@ -7517,7 +7601,7 @@
           aiProfiles: Array.from({ length: playerCount }, (_, i) => i === 0 ? "human" : (["aggressive","saver","potHunter","jokerHunter","balanced"][i-1] || "balanced")),
           aiProfilesData: (Array.isArray(window.minamiMatchAIProfiles) && window.minamiMatchAIProfiles.length === playerCount)
             ? window.minamiMatchAIProfiles.map(p => p ? { ...p } : p)
-            : [null, ...randomAIProfiles(Math.max(0, playerCount - 1))],
+            : [null, ...loadPersistentAIRoster(Math.max(0, playerCount - 1))],
           stats: { moves:Array(playerCount).fill(0), cardsPlayed:Array(playerCount).fill(0), bases:Array(playerCount).fill(0), pots:Array(playerCount).fill(0), jokers:Array(playerCount).fill(0), maxCombo:Array(playerCount).fill(0), dead:Array(playerCount).fill(false) },
           over: false,
         };
@@ -7722,7 +7806,7 @@
         window.minamiScores = null;
         window.minamiScoreHistory = [];
         window.minamiAISpeed = 1;
-        window.minamiMatchAIProfiles = null;
+        resetPersistentAIRoster();
         window.minamiNextOrder = null;
         window.minamiDirection = 1;
         document.getElementById("scoreModal").classList.remove("show");
@@ -7932,6 +8016,7 @@
         window.minamiAISpeed = 1;
         window.minamiNextOrder = null;
         window.minamiDirection = 1;
+        resetPersistentAIRoster();
         document.getElementById("resultModal").classList.remove("show");
         document.getElementById("scoreTopBtn").style.display = "none";
         document.getElementById("newGameTopBtn").style.display = "none";
@@ -7978,6 +8063,26 @@
         saveFeatureStats(s);
         updateAchievements();
       }
+      function syncRank1FromScoreHistory(){
+        const history=Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[];
+        if(!history.length)return false;
+        let counted=0;
+        history.forEach(row=>{
+          const delta=Array.isArray(row?.delta)?row.delta:[];
+          if(delta.length!==playerCount || delta.every(v=>Number(v)===-2))return;
+          const max=Math.max(...delta.map(v=>Number(v)));
+          if(Number(delta[0])===max)counted++;
+        });
+        const s=featureStats();
+        const current=Number(s.rank1)||0;
+        if(counted>current){
+          s.rank1=counted;
+          saveFeatureStats(s);
+          return true;
+        }
+        return false;
+      }
+
       function recordLifetimeRank1(delta, reason){
         if(!Array.isArray(delta)||delta.length!==playerCount)return;
         if(reason==="ALL_DEAD"||delta.every(v=>Number(v)===-2))return;
@@ -8084,17 +8189,7 @@
         const b=document.getElementById("featureStatsPanel");if(!b)return;
         const s=featureStats();
         const history=Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[];
-        if((Number(s.rank1)||0)===0&&history.length){
-          let recovered=0;
-          history.forEach(row=>{
-            const delta=Array.isArray(row?.delta)?row.delta:[];
-            if(delta.length===playerCount&&!(delta.every(v=>Number(v)===-2))){
-              const max=Math.max(...delta.map(v=>Number(v)));
-              if(Number(delta[0])===max)recovered++;
-            }
-          });
-          if(recovered>0){s.rank1=recovered;saveFeatureStats(s);}
-        }
+        syncRank1FromScoreHistory();
         const games=s.games||0,gameWins=s.gameWins||0;
         const gameWinRate=games?Math.round(gameWins/games*100):0;
         const rank1=s.rank1||0,rank1Rate=s.matches?Math.round(rank1/s.matches*100):0;
