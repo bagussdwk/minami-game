@@ -6608,6 +6608,15 @@
                 3;
           }
           if (extra.jokerDiscard) score += extra.jokerDiscard;
+
+          // AI iseng suka membaca meja dan sesekali melakukan "cucuk":
+          // memakai Joker + kartu nyata untuk menyambung dasar yang sudah ada.
+          // Ini sengaja diberi bonus besar agar aksi taktis bisa mengalahkan
+          // pilihan normal, tetapi hanya untuk profil iseng.
+          if (extra.isengTrick && game.aiProfiles?.[i] === "iseng") {
+            score -= 95;
+          }
+
           const personality=game.aiProfiles?.[i]||"balanced";
           if(personality==="aggressive"){score-=cards.length*1.7;if(kind==="pot")score-=7}
           else if(personality==="saver"){score+=cards.length*1.35;if(kind==="base")score+=3}
@@ -6625,6 +6634,48 @@
             ...extra,
           });
         };
+
+        // AI iseng: baca dasar yang sudah ada di meja dan cari cucuk
+        // 2 kartu (Joker + kartu nyata). Contoh 7-8-9 di meja,
+        // lalu AI punya Joker + J -> Joker mengisi 10 dan J mengisi J.
+        // extendBaseOptions() tetap menjadi validator utama, jadi tidak
+        // ada langkah ilegal yang bisa dipilih.
+        if (game.aiProfiles?.[i] === "iseng" && Math.random() < 0.68) {
+          const jokers = h.filter(isJoker);
+          const realCards = h.filter((c) => !isJoker(c));
+
+          if (jokers.length && realCards.length) {
+            game.melds.forEach((m, mi) => {
+              if (m.type !== "base" || !m.ordered || m.ordered.length < 3) return;
+
+              jokers.forEach((jokerCard) => {
+                realCards.forEach((realCard) => {
+                  const cards = [jokerCard, realCard];
+                  const chk = addToMeld(cards, mi);
+                  if (!chk.ok) return;
+
+                  const opts = extendBaseOptions(m, cards);
+                  if (!opts.length) return;
+
+                  // Joker baru harus benar-benar mengisi posisi di tengah,
+                  // bukan sekadar ditempel sebagai Joker kosong.
+                  const tactical = opts.some((o) => {
+                    const ji = o.ordered.findIndex(
+                      (c, idx) => isJoker(c) && idx >= m.ordered.length - 1,
+                    );
+                    return ji >= 0 && o.ordered.length >= 5;
+                  });
+                  if (!tactical) return;
+
+                  addCandidate(cards, "add", mi, {
+                    isengTrick: true,
+                    trickLabel: "Cucuk",
+                  });
+                });
+              });
+            });
+          }
+        }
 
         // Sambung dasar/POT. Untuk perilaku normal AI, POT dibatasi maksimal
         // 3 kartu agar Joker tidak dibuang terlalu cepat.
@@ -6792,11 +6843,12 @@
                 } else mm.cards.push(...cand.cards);
 
                 playCardPlaceSound();
-                logMove(
-                  i,
-                  mm.type === "pot" ? "Tambah POT" : "Tambah Dasar",
-                  cand.cards,
-                );
+                const moveLabel = cand.trickLabel === "Cucuk"
+                  ? "Cucuk"
+                  : mm.type === "pot"
+                    ? "Tambah POT"
+                    : "Tambah Dasar";
+                logMove(i, moveLabel, cand.cards);
               }
             }
           } else markDead(i);
@@ -7253,7 +7305,20 @@
               : 0) + 1,
           currentDelta: Array(playerCount).fill(0),
           aiSpeed: Number(window.minamiAISpeed) || 1,
-          aiProfiles: Array.from({ length: playerCount }, (_, i) => i === 0 ? "human" : (["aggressive","saver","potHunter","jokerHunter","balanced"][i-1] || "balanced")),
+          aiProfiles: (() => {
+            const profiles = Array.from(
+              { length: playerCount },
+              (_, i) => i === 0 ? "human" : (["aggressive","saver","potHunter","jokerHunter"][i-1] || "balanced"),
+            );
+            // Setiap game ada satu AI "iseng" secara acak agar perilakunya
+            // tidak selalu bisa ditebak. Profil lain tetap dipertahankan.
+            if (playerCount > 1) {
+              const aiIndexes = Array.from({ length: playerCount - 1 }, (_, k) => k + 1);
+              const picked = aiIndexes[Math.floor(Math.random() * aiIndexes.length)];
+              profiles[picked] = "iseng";
+            }
+            return profiles;
+          })(),
           stats: { moves:Array(playerCount).fill(0), cardsPlayed:Array(playerCount).fill(0), bases:Array(playerCount).fill(0), pots:Array(playerCount).fill(0), jokers:Array(playerCount).fill(0), maxCombo:Array(playerCount).fill(0), dead:Array(playerCount).fill(false) },
           over: false,
         };
@@ -7658,7 +7723,7 @@
       function renderFeatureStats(){const b=document.getElementById("featureStatsPanel");if(!b)return;const s=featureStats(),games=s.games||0,wins=s.wins||0,winRate=games?Math.round(wins/games*100):0;b.innerHTML='<div class="feature-stat-grid">'+[['games','Game selesai'],['wins','WIN'],['winRate','Win Rate'],['tenho','TENHO'],['pots','POT'],['jokers','Joker dimainkan'],['bestCombo','Combo terbesar'],['cards','Kartu dimainkan'],['cardsPerGame','Kartu/game'],['bestStreak','Win streak terbaik'],['dead','Mati Tangan']].map(x=>'<div><b>'+(x[0]==="winRate"?winRate+"%":(s[x[0]]||0))+'</b><span>'+x[1]+'</span></div>').join('')+'</div>';}
       function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menang 1 game"],["tenho","🃏","TENHO!","Mendapatkan TENHO"],["pot-master","♟️","POT Hunter","Membuat 5 POT"],["joker-master","🃏","Joker Master","Memainkan Joker 5 kali"],["combo-master","🔥","Combo Master","Menurunkan 5 kartu sekaligus"],["marathon","🎴","Marathon","Menyelesaikan 10 game"],["streak-3","⚡","Winning Streak","Menang 3 game berturut-turut"]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
       function renderFeaturePanels(){renderFeatureStats();renderAchievements()}
-      function getAIReactionText(i,label,joker){const p=game?.aiProfiles?.[i]||"balanced";if(label==="Mati")return"💀 MATI";if(joker)return p==="jokerHunter"?"😎 JOKER!":"🃏 Joker!";if(label.includes("POT"))return p==="potHunter"?"🔥 POT!":"😏 POT";if(label.includes("Dasar"))return p==="aggressive"?"⚔️ Gas!":"🎴 Turun";return"👍 Jalan"}
+      function getAIReactionText(i,label,joker){const p=game?.aiProfiles?.[i]||"balanced";if(label==="Mati")return"💀 MATI";if(label==="Cucuk")return p==="iseng"?"😈 CUCUK!":"🎯 Cucuk";if(joker)return p==="jokerHunter"?"😎 JOKER!":"🃏 Joker!";if(label.includes("POT"))return p==="potHunter"?"🔥 POT!":"😏 POT";if(label.includes("Dasar"))return p==="aggressive"?"⚔️ Gas!":"🎴 Turun";return"👍 Jalan"}
       function showPlayerBubble(i,textValue,kind="chat"){const el=document.getElementById("player"+(i+1));if(!el)return;let b=el.querySelector(".player-reaction-bubble");if(!b){b=document.createElement("div");b.className="player-reaction-bubble";el.appendChild(b)}b.textContent=textValue;b.className="player-reaction-bubble "+kind;b.classList.remove("show");void b.offsetWidth;b.classList.add("show");clearTimeout(b._hideTimer);b._hideTimer=setTimeout(()=>{b.classList.remove("show")},2100)}
       function setAIReaction(i,label,joker=false){if(!game||i===0)return;if(!game.reactions)game.reactions=Array(playerCount).fill(null);const textValue=getAIReactionText(i,label,joker);game.reactions[i]={text:textValue,until:Date.now()+1800};showPlayerBubble(i,textValue,joker?"joker":label.includes("POT")?"pot":"reaction")}
       function animateTableAction(label,joker=false){const t=document.querySelector(".table");if(!t)return;t.classList.remove("action-pop","joker-action","pot-action");void t.offsetWidth;t.classList.add(joker?"joker-action":label.toLowerCase().includes("pot")?"pot-action":"action-pop");setTimeout(()=>t.classList.remove("action-pop","joker-action","pot-action"),500)}
