@@ -5103,7 +5103,7 @@
 
           game = saved.game;
           // Simpan mode di state agar refresh tidak mengubah MINAMI 1/2.
-          game.mode = Number(game.mode) === 2 ? 2 : 1;
+          game.mode = Number(game.mode) === 3 ? 3 : (Number(game.mode) === 2 ? 2 : 1);
           minamiMode = game.mode;
           playerCount = Number(game.playerCount) || 4;
           if(!Array.isArray(game.aiProfilesData) || game.aiProfilesData.length < playerCount){
@@ -7993,7 +7993,7 @@
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
         document.getElementById("setupJoker").style.display = "none";
-        minamiMode = Number(game.mode) === 2 ? 2 : 1;
+        minamiMode = Number(game.mode) === 3 ? 3 : (Number(game.mode) === 2 ? 2 : 1);
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
@@ -8138,7 +8138,7 @@
       document.getElementById("addBtn").onclick = addMeld;
       document.getElementById("potBtn").onclick = makePot;
       function updateActiveRulesForMode() {
-        const mode = Number(game?.mode) === 2 ? 2 : 1;
+        const mode = Number(game?.mode) === 3 ? 3 : (Number(game?.mode) === 2 ? 2 : 1);
         const subtitle = document.querySelector("#activeRulesModal .rules-subtitle");
         const cards = document.querySelectorAll("#activeRulesModal .rule-card");
         const note = document.querySelector("#activeRulesModal .rules-note");
