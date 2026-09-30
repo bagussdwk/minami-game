@@ -4356,7 +4356,7 @@
           <div class="menu-section-title">Permainan</div>
           <div class="menu-music-row"><div class="menu-music-label">🎵 Musik</div><div class="music-inline-options"><button type="button" class="music-choice" id="musicOnBtn">ON <span class="music-check">✓</span></button><button type="button" class="music-choice" id="musicOffBtn">OFF <span class="music-check">✓</span></button></div></div>
           <button class="menu-action menu-game-only" id="menuRestartBtn">⟳ Restart Pertandingan <span>›</span></button>
-          <button class="menu-action" id="menuRulesBtn">📜 Aturan Permainan <span>›</span></button>
+          <button class="menu-action menu-rules-legacy" id="menuRulesBtn" style="display:none">📜 Aturan Permainan <span>›</span></button>
           <button class="menu-action" id="menuStatsBtn">📊 Statistik & Achievement <span>›</span></button>
         </div>
         <div class="menu-section menu-game-only">
@@ -8077,7 +8077,39 @@
         game.round === 1 && !game.hasBase[0] ? playBase() : createNewBase();
       document.getElementById("addBtn").onclick = addMeld;
       document.getElementById("potBtn").onclick = makePot;
+      function updateActiveRulesForMode() {
+        const mode = Number(game?.mode) === 2 ? 2 : 1;
+        const subtitle = document.querySelector("#activeRulesModal .rules-subtitle");
+        const cards = document.querySelectorAll("#activeRulesModal .rule-card");
+        const note = document.querySelector("#activeRulesModal .rules-note");
+        if (subtitle) {
+          subtitle.textContent =
+            mode === 2
+              ? "Panduan aturan MINAMI 2 yang sedang digunakan"
+              : "Panduan aturan MINAMI 1 yang sedang digunakan";
+        }
+
+        // Kartu aturan pertama adalah satu-satunya bagian yang berbeda.
+        if (cards[0]) {
+          const p = cards[0].querySelector("p");
+          if (p) {
+            p.textContent =
+              mode === 2
+                ? "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Pada putaran pertama, Dasar awal wajib murni tanpa Joker. Setelah semua pemain menyelesaikan Dasar awal atau mati, Joker boleh digunakan seperti aturan Joker biasa."
+                : "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Boleh menggunakan kartu yang menjadi Joker. Jika tidak punya Dasar legal, pemain mati.";
+          }
+        }
+
+        if (note) {
+          note.innerHTML =
+            mode === 2
+              ? "💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar awal murni tanpa Joker. Setelah itu permainan terbuka untuk Dasar, tambahan, dan POT. Joker kemudian dapat digunakan seperti aturan biasa."
+              : "💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar yang sah. Setelah itu permainan terbuka untuk Dasar, tambahan, dan POT. Joker fleksibel, tetapi jangan digunakan tanpa alasan karena nilainya tinggi jika tersisa.";
+        }
+      }
+
       document.getElementById("activeRulesBtn").onclick = () => {
+        updateActiveRulesForMode();
         setYourHandOverlayHidden(true);
         document.getElementById("activeRulesModal").classList.add("show");
       };
