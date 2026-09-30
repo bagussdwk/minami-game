@@ -1195,14 +1195,14 @@
       @media (max-width: 700px) {
         /* MINAMI 2: kartu mati tetap terlihat sebagai tumpukan,
            bukan deretan kartu panjang. */
-        .joker-corner #jokerCard .minami2-dead-stack {
+        .joker-corner #jokerCard .minami2-dead-stack, .joker-corner #jokerCard .joker-mode-dead-stack {
           width: max-content !important;
           max-width: 96px !important;
           overflow: visible !important;
         }
 
-        .joker-corner #jokerCard .minami2-dead-stack .card,
-        .joker-corner #jokerCard .minami2-dead-stack .card:first-child {
+        .joker-corner #jokerCard .minami2-dead-stack .card, .joker-corner #jokerCard .joker-mode-dead-stack .card,
+        .joker-corner #jokerCard .minami2-dead-stack .card:first-child, .joker-corner #jokerCard .joker-mode-dead-stack .card:first-child {
           width: 28px !important;
           height: 41px !important;
           flex: 0 0 28px !important;
@@ -4012,98 +4012,7 @@
 <style id="minami-ui-safe-result-help">
 .help-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.help-modal-head h2{margin:0}.help-close-x{width:34px;height:34px;min-width:34px;padding:0;border-radius:50%;background:rgba(255,255,255,.09);color:#fff;font-size:22px;line-height:1}body.result-table-mode .table.game-victory{animation:minamiVictoryTable 1.8s ease-in-out infinite}body.result-table-mode .player.victory-player{animation:minamiVictoryPlayer 1.45s ease-in-out infinite;z-index:100}.result-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}.result-actions .start-btn{margin:0;flex:1 1 180px}.result-table-btn{display:none;position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:1200;min-width:190px;background:linear-gradient(145deg,#f1cb70,#d9a441);color:#18251d;box-shadow:0 10px 25px rgba(0,0,0,.3)}body.result-table-mode .result-table-btn{display:inline-flex;align-items:center;justify-content:center}body.result-table-mode .your-hand{display:block!important}body.result-table-mode #resultModal{display:none!important}@media(max-width:700px){.result-actions{gap:7px}.result-actions .start-btn{font-size:12px;padding:11px 10px}.result-table-btn{bottom:8px;min-width:170px;font-size:12px}}
 </style>
-  <style id="joker-v3-clean-layout">
-.joker-setup-options{max-width:560px;margin:0 auto}.joker-setup-options .start-btn{width:100%}.joker-game{display:none;width:min(1280px,calc(100% - 24px));margin:10px auto 30px}.joker-game.active{display:block}
-.joker-game-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;padding:10px 14px;border-radius:12px;background:rgba(4,32,23,.9);border:1px solid rgba(243,207,112,.16)}.joker-game-title{font-size:18px;font-weight:900;letter-spacing:3px;color:#dfc9ff}.joker-game-sub,.joker-game-status{font-size:9px;font-weight:800;color:#aacdc0}
-.joker-table{position:relative;width:100%;height:min(720px,calc(100vh - 120px));min-height:540px;border-radius:34px;background:radial-gradient(ellipse at center,#1b8055 0%,#0d593b 55%,#073522 100%);border:8px solid rgba(53,33,19,.9);box-shadow:0 24px 70px rgba(0,0,0,.42),inset 0 0 0 2px rgba(255,255,255,.08);overflow:hidden}.joker-table:before{content:"";position:absolute;inset:6%;border:1px solid rgba(255,255,255,.09);border-radius:28px;pointer-events:none}
-.joker-table-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;gap:34px;z-index:2}.joker-draw-zone,.joker-marker-zone{display:flex;flex-direction:column;align-items:center;gap:5px}.joker-zone-label{font-size:9px;font-weight:900;color:#cfe8dc;text-transform:uppercase;letter-spacing:.8px}.joker-pile-card,.joker-marker-card{width:58px;height:82px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#171717;border:2px solid rgba(255,255,255,.9);font-size:25px;font-weight:900;box-shadow:0 8px 18px rgba(0,0,0,.3)}.joker-pile-card{background:repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);color:#fff}.joker-marker-card{background:#fff4cc;border-color:#f3c33b;color:#5b4305}.joker-pile-count{font-size:8px;color:#b9d5ca}
-.joker-seat{position:absolute;width:108px;text-align:center;z-index:5;padding:6px;border-radius:12px;background:rgba(3,26,18,.66);border:1px solid rgba(255,255,255,.1);box-shadow:0 8px 18px rgba(0,0,0,.2)}.joker-avatar{width:40px;height:40px;margin:0 auto 3px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e5b34e;color:#18251d;border:2px solid rgba(255,255,255,.45)}.joker-seat strong{display:block;font-size:10px}.joker-seat small{display:block;margin-top:2px;color:#a9cbbd;font-size:8px}.joker-set-badge{display:none;margin-top:3px;color:#7ff0b0;font-size:8px;font-style:normal;font-weight:900;letter-spacing:1px}.joker-seat.is-set .joker-set-badge{display:block}
-.joker-seat-p1{left:50%;bottom:14px;transform:translateX(-50%)}.joker-seat-p2{right:7%;bottom:16%;transform:translateY(50%)}.joker-seat-p3{right:7%;top:14%}.joker-seat-p4{left:7%;top:14%}.joker-seat-p5{left:7%;bottom:16%;transform:translateY(50%)}
-.joker-discard-stack{position:absolute;z-index:4;width:74px;height:82px;text-align:center;color:#b9d5ca;font-size:7px;font-weight:800}.joker-discard-stack b{display:flex;width:44px;height:60px;margin:4px auto 0;align-items:center;justify-content:center;border-radius:7px;background:repeating-linear-gradient(45deg,#26345a,#26345a 4px,#3c4e80 4px,#3c4e80 8px);border:1px solid #fff;color:#fff;font-size:18px;box-shadow:0 5px 12px rgba(0,0,0,.25)}.joker-discard-p1{left:50%;bottom:108px;transform:translateX(-50%)}.joker-discard-p2{right:20%;bottom:24%}.joker-discard-p3{right:20%;top:24%}.joker-discard-p4{left:20%;top:24%}.joker-discard-p5{left:20%;bottom:24%}
-.joker-hand-preview{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:min(720px,66%);padding:4px 8px;border-radius:10px;background:rgba(3,25,18,.84);border:1px solid rgba(255,255,255,.08);z-index:7}.joker-hand-title{font-size:7px;color:#9fc6b7;text-align:center;margin-bottom:2px}.joker-hand-cards{display:flex;justify-content:center;gap:2px;overflow:hidden}.joker-hand-cards span{width:28px;height:40px;border-radius:4px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 4px,#3b4b78 4px,#3b4b78 8px);border:1px solid #fff;font-size:11px;display:flex;align-items:center;justify-content:center}
-@media(max-width:700px),(hover:none) and (pointer:coarse){.joker-game{width:calc(100% - 8px);margin-top:5px}.joker-table{height:calc(100vh - 70px);min-height:500px;border-width:5px;border-radius:22px}.joker-seat{width:76px}.joker-avatar{width:31px;height:31px}.joker-seat-p1{bottom:14px}.joker-seat-p2{right:1%;bottom:17%}.joker-seat-p3{right:1%;top:12%}.joker-seat-p4{left:1%;top:12%}.joker-seat-p5{left:1%;bottom:17%}.joker-discard-p1{bottom:92px}.joker-discard-p2{right:10%;bottom:28%}.joker-discard-p3{right:10%;top:28%}.joker-discard-p4{left:10%;top:28%}.joker-discard-p5{left:10%;bottom:28%}.joker-hand-preview{width:94%}.joker-hand-cards span{width:21px;height:30px;font-size:8px}}
-@media(max-width:700px) and (orientation:portrait){.joker-seat-p5,.joker-discard-p5{display:none}}
-</style><style id="joker-modal-click-fix">
-  /* JOKER v3 tetap menjadi layar permainan, tetapi semua modal/menu global
-     harus selalu berada di atas meja JOKER agar tombol tetap bisa diklik. */
-  #menuModal,
-  #featureModal,
-  #quickChatModal,
-  #playerActionModal,
-  #scoreModal,
-  #resultModal,
-  #activeRulesModal,
-  #moveHistoryModal,
-  #rankGuideModal {
-    z-index: 20000 !important;
-  }
-
-  #featureModal.show,
-  #quickChatModal.show,
-  #playerActionModal.show,
-  #scoreModal.show,
-  #resultModal.show,
-  #activeRulesModal.show,
-  #moveHistoryModal.show,
-  #rankGuideModal.show {
-    pointer-events: auto !important;
-  }
-
-  #menuModal.show {
-    z-index: 21000 !important;
-  }
-
-  #menuModal .menu-modal-box,
-  #featureModal .feature-modal-box,
-  #quickChatModal .quick-chat-box,
-  #playerActionModal .player-action-box,
-  #scoreModal .score-modal-box,
-  #resultModal .modal-box,
-  #activeRulesModal .rules-modal-box,
-  #moveHistoryModal .modal-box,
-  #rankGuideModal .rank-guide-box {
-    position: relative;
-    z-index: 20001 !important;
-  }
-</style>
-<style id="joker-pointer-layer-fix">
-  /* Saat hamburger dibuka, seluruh meja JOKER tidak boleh menerima pointer. */
-  body.joker-menu-open .joker-game,
-  body.joker-menu-open .joker-game * {
-    pointer-events: none !important;
-  }
-  body.joker-menu-open #menuModal,
-  body.joker-menu-open #menuModal * {
-    pointer-events: auto !important;
-  }
-  #menuBtn { position: relative !important; z-index: 40000 !important; pointer-events: auto !important; }
-  #menuModal { z-index: 40001 !important; }
-  #featureModal { z-index: 40002 !important; pointer-events: auto !important; }
-  #featureModal .feature-modal-box,
-  #featureModal button,
-  #featureModal .feature-tab,
-  #featureModal .score-modal-close {
-    pointer-events: auto !important;
-  }
-</style>
-<style id="joker-definitive-modal-layer-fix">
-body.joker-mode-active .topbar{z-index:90000 !important;pointer-events:auto !important}
-body.joker-mode-active #menuBtn{position:relative !important;z-index:90010 !important;pointer-events:auto !important}
-body.joker-mode-active #menuModal.show{position:fixed !important;inset:0 !important;z-index:100000 !important;display:flex !important;pointer-events:auto !important}
-body.joker-mode-active #menuModal.show .menu-modal-box{position:relative !important;z-index:100001 !important;pointer-events:auto !important}
-body.joker-mode-active #menuModal.show .menu-action,
-body.joker-mode-active #menuModal.show button,
-body.joker-mode-active #menuModal.show input{position:relative;z-index:100002 !important;pointer-events:auto !important}
-body.joker-mode-active #featureModal.show{position:fixed !important;inset:0 !important;z-index:110000 !important;display:flex !important;pointer-events:auto !important}
-body.joker-mode-active #featureModal.show .feature-modal-box{position:relative !important;z-index:110001 !important;pointer-events:auto !important}
-body.joker-mode-active #featureModal.show button,
-body.joker-mode-active #featureModal.show .feature-tab{pointer-events:auto !important;position:relative !important;z-index:110002 !important}
-body.joker-menu-open #jokerGame,
-body.joker-menu-open #jokerGame *{pointer-events:none !important}
-body.joker-menu-open #menuModal,
-body.joker-menu-open #menuModal *{pointer-events:auto !important}
-</style>
-</head>
+  </head>
   <body>
     <div class="topbar">
       <div class="logo">MINAMI</div>
@@ -4229,36 +4138,49 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
     </section>
 
     <section class="setup setup-mode-joker" id="setupJoker">
-      <div class="setup-brand">🃏 2 DECK &nbsp;•&nbsp; JOKER</div>
+      <div class="setup-brand">🃏 2 DECK + JOKER &nbsp;•&nbsp; MODE JOKER</div>
       <h1 class="setup-logo">JOKER</h1>
 
       <div class="joker-menu-cards" aria-hidden="true">
         <div class="joker-menu-stack">
           <div class="joker-menu-card joker-menu-card-back"></div>
           <div class="joker-menu-card joker-menu-card-open joker-menu-card-left">
-            <span>Q♠</span>
+            <span>Q</span><b>♠</b>
           </div>
           <div class="joker-menu-card joker-menu-card-open joker-menu-card-middle">
-            <span>7♠</span>
+            <span>🃏</span>
           </div>
           <div class="joker-menu-card joker-menu-card-open joker-menu-card-right">
-            <span>3♠</span>
+            <span>3</span><b>♥</b>
           </div>
         </div>
       </div>
 
-      <div class="joker-setup-options"><div class="setup-section-label">Pilih jumlah pemain</div><div class="player-buttons joker-player-buttons">
-<button class="player-btn active" type="button" data-player-joker="4"><span class="player-btn-main">4 Pemain</span><span class="player-btn-sub">13 kartu per pemain</span></button>
-<button class="player-btn" type="button" data-player-joker="5"><span class="player-btn-main">5 Pemain</span><span class="player-btn-sub">13 kartu per pemain</span></button>
-</div><button class="start-btn setup-start" id="startJokerBtn" type="button">🃏 MULAI PERMAINAN</button></div>
-    </section><section class="joker-game" id="jokerGame" aria-hidden="true">
-<div class="joker-game-top"><div><div class="joker-game-title">JOKER</div><div class="joker-game-sub" id="jokerGameSub">2 Deck • 4 Pemain</div></div><div class="joker-game-status">Putaran 1</div></div>
-<div class="joker-table" id="jokerTable">
-<div class="joker-table-center"><div class="joker-draw-zone"><div class="joker-zone-label">Kartu Tengah</div><div class="joker-pile-card">🂠</div><div class="joker-pile-count" id="jokerPileCount">0 kartu</div></div><div class="joker-marker-zone"><div class="joker-zone-label">Penentu Joker</div><div class="joker-marker-card" id="jokerMarkerCard">?</div></div></div>
-<div class="joker-discard-stack joker-discard-p1" data-seat="0"><span>Buangan P1</span><b>🂠</b></div><div class="joker-discard-stack joker-discard-p2" data-seat="1"><span>Buangan P2</span><b>🂠</b></div><div class="joker-discard-stack joker-discard-p3" data-seat="2"><span>Buangan P3</span><b>🂠</b></div><div class="joker-discard-stack joker-discard-p4" data-seat="3"><span>Buangan P4</span><b>🂠</b></div><div class="joker-discard-stack joker-discard-p5" data-seat="4"><span>Buangan P5</span><b>🂠</b></div>
-<div class="joker-seat joker-seat-p1" data-seat="0"><div class="joker-avatar">🙂</div><strong>P1</strong><small>14 kartu</small><em class="joker-set-badge">SET</em></div><div class="joker-seat joker-seat-p2" data-seat="1"><div class="joker-avatar">🙂</div><strong>P2</strong><small>13 kartu</small><em class="joker-set-badge">SET</em></div><div class="joker-seat joker-seat-p3" data-seat="2"><div class="joker-avatar">🙂</div><strong>P3</strong><small>13 kartu</small><em class="joker-set-badge">SET</em></div><div class="joker-seat joker-seat-p4" data-seat="3"><div class="joker-avatar">🙂</div><strong>P4</strong><small>13 kartu</small><em class="joker-set-badge">SET</em></div><div class="joker-seat joker-seat-p5" data-seat="4"><div class="joker-avatar">🙂</div><strong>P5</strong><small>13 kartu</small><em class="joker-set-badge">SET</em></div>
-<div class="joker-hand-preview"><div class="joker-hand-title">Tangan Saya • bebas disusun</div><div class="joker-hand-cards" id="jokerHandPreview"></div></div>
-</div></section><section class="game" id="game">
+      <div class="setup-section-label">Pilih jumlah pemain</div>
+      <div class="player-buttons joker-player-buttons">
+        <button class="player-btn active" type="button" data-player-joker="4">
+          <span class="player-btn-main">4 Pemain</span>
+          <span class="player-btn-sub">32 kartu mati • 20 kartu/orang</span>
+        </button>
+        <button class="player-btn" type="button" data-player-joker="5">
+          <span class="player-btn-main">5 Pemain</span>
+          <span class="player-btn-sub">12 kartu mati • 20 kartu/orang</span>
+        </button>
+      </div>
+
+      <div class="setup-rules" style="margin:12px auto 16px;max-width:650px;">
+        <div class="setup-rule">🃏 Joker dapat menggantikan kartu apa pun dalam Dasar.</div>
+        <div class="setup-rule">🃏 Dasar 3 kartu boleh memakai Joker di posisi mana pun.</div>
+        <div class="setup-rule">🃏 Dasar 4+ kartu tidak boleh menempatkan Joker di ujung.</div>
+        <div class="setup-rule">🃏 Jika tidak punya Dasar legal di putaran pertama, mati tangan.</div>
+      </div>
+
+      <button class="start-btn setup-start" id="startJokerBtn" type="button">
+        🃏 MULAI JOKER
+      </button>
+    </section>
+
+    <section class="game" id="game">
       <div class="game-status-ribbon" aria-live="polite">
         <button type="button" class="move-history-top-btn" id="moveHistoryBtn" title="Lihat semua riwayat kartu yang diturunkan">🕘 History</button>
         <div class="game-status-divider"></div>
@@ -4477,7 +4399,7 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
           <div class="menu-section-title">Permainan</div>
           <div class="menu-music-row"><div class="menu-music-label">🎵 Musik</div><div class="music-inline-options"><button type="button" class="music-choice" id="musicOnBtn">ON <span class="music-check">✓</span></button><button type="button" class="music-choice" id="musicOffBtn">OFF <span class="music-check">✓</span></button></div></div>
           <button class="menu-action menu-game-only" id="menuRestartBtn">⟳ Restart Pertandingan <span>›</span></button>
-          
+          <button class="menu-action menu-rules-legacy" id="menuRulesBtn" style="display:none">📜 Aturan Permainan <span>›</span></button>
           <button class="menu-action" id="menuStatsBtn">📊 Statistik & Achievement <span>›</span></button>
         </div>
         <div class="menu-section menu-game-only">
@@ -4909,15 +4831,51 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
       }
 
       function saveGameState() {
-        if (!game) return false;
+        if (!game) return;
         try {
-          const payload=JSON.stringify({game:{...game,potRanks:Array.from(game.potRanks||[])},nextOrder:Array.isArray(window.minamiNextOrder)?window.minamiNextOrder:null,direction:window.minamiDirection??game.direction??1,mode:game.mode||minamiMode,scoreHistory:Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[]});
-          localStorage.setItem(MINAMI_SAVE_KEY,payload);
-          try{sessionStorage.setItem(MINAMI_SAVE_KEY,payload)}catch(e){}
-          return true;
-        }catch(e){return false}
-      }
+          const payload = JSON.stringify({
+            game: {
+              ...game,
+              potRanks: Array.from(game.potRanks || []),
+            },
+            nextOrder: Array.isArray(window.minamiNextOrder)
+              ? window.minamiNextOrder
+              : null,
+            direction: window.minamiDirection ?? game.direction ?? 1,
+            mode: game.mode || minamiMode,
+            scoreHistory: Array.isArray(window.minamiScoreHistory)
+              ? window.minamiScoreHistory
+              : [],
+          });
 
+          // Simpan di dua tempat. sessionStorage menjadi cadangan jika
+          // localStorage gagal/terhapus saat browser melakukan refresh.
+          localStorage.setItem(MINAMI_SAVE_KEY, payload);
+          try {
+            sessionStorage.setItem(MINAMI_SAVE_KEY, payload);
+          } catch (e) {}
+        } catch (e) {
+          // Jika localStorage gagal, tetap coba sessionStorage.
+          try {
+            sessionStorage.setItem(
+              MINAMI_SAVE_KEY,
+              JSON.stringify({
+                game: {
+                  ...game,
+                  potRanks: Array.from(game.potRanks || []),
+                },
+                nextOrder: Array.isArray(window.minamiNextOrder)
+                  ? window.minamiNextOrder
+                  : null,
+                direction: window.minamiDirection ?? game.direction ?? 1,
+                scoreHistory: Array.isArray(window.minamiScoreHistory)
+                  ? window.minamiScoreHistory
+                  : [],
+              }),
+            );
+          } catch (e2) {}
+        }
+      }
 
       let minamiAITimer = null;
 
@@ -4967,7 +4925,7 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
         document.getElementById("setupJoker").style.display = "none";
-        minamiMode = Number(game.mode) === 2 ? 2 : 1;
+        minamiMode = Number(game.mode) === 3 ? 3 : (Number(game.mode) === 2 ? 2 : 1);
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
@@ -4981,7 +4939,7 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
             i <= playerCount ? "block" : "none";
         }
 
-        renderDeadCards(game.deadCards, game.jokerIndex, game.mode !== 2);
+        renderDeadCards(game.deadCards, game.jokerIndex, game.mode === 1);
         document.getElementById("jokerInfo").textContent = "";
         document.getElementById("status").textContent = game.over
           ? "Game selesai"
@@ -5255,7 +5213,7 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
         // MINAMI 2 menambahkan 8 Joker fisik: 4 merah + 4 hitam.
         // Joker ikut diacak bersama 104 kartu normal, sehingga bisa masuk
         // tangan pemain ATAU masuk ke kartu mati.
-        if (minamiMode === 2) {
+        if (minamiMode === 2 || minamiMode === 3) {
           for (let i = 1; i <= 4; i++) {
             d.push({ id: "J-R-" + i, suit: null, red: true, rank: null, text: "🃏", set: 3, isJoker: true, jokerColor: "red" });
             d.push({ id: "J-B-" + i, suit: null, red: false, rank: null, text: "🃏", set: 3, isJoker: true, jokerColor: "black" });
@@ -5268,7 +5226,7 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
         // MINAMI 2: Joker adalah kartu fisik, tidak bergantung pada rank.
         if (c.isJoker === true) return true;
         // MINAMI 1: semua kartu dengan rank Joker yang ditentukan menjadi Joker.
-        return !!game && game.mode !== 2 && c.rank === game.jokerRank;
+        return !!game && game.mode === 1 && c.rank === game.jokerRank;
       }
       function cardValue(c) {
         return isJoker(c) ? 25 : val(c.rank);
@@ -5930,15 +5888,6 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
           const nearWin = !game.dead[i] && !game.over && remaining <= 3;
           el.classList.toggle("near-win", nearWin);
           alert.textContent = nearWin && remaining === 1 ? "ONE CARD!" : nearWin ? "TINGGAL " + remaining + " KARTU" : "";
-          // Notifikasi sisa kartu muncul langsung setelah kartu benar-benar
-          // dikeluarkan dari tangan, tanpa menunggu giliran berikutnya.
-          if (nearWin && game.lastNearWinCount?.[i] !== remaining) {
-            game.lastNearWinCount = game.lastNearWinCount || {};
-            game.lastNearWinCount[i] = remaining;
-            alert.classList.remove("near-win-pop");
-            void alert.offsetWidth;
-            alert.classList.add("near-win-pop");
-          }
           const reactionNow=game.reactions?.[i];
           if(reactionNow && reactionNow.until>Date.now()) showPlayerBubble(i,reactionNow.text,"reaction");
 
@@ -5967,13 +5916,13 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
 
         container.innerHTML = "";
 
-        // MINAMI 2: tidak ada kartu Joker yang dibuka dari kartu mati.
+        // MINAMI 2/JOKER: tidak ada kartu Joker yang dibuka dari kartu mati.
         // Seluruh sisa kartu hanya ditampilkan sebagai kartu tertutup.
-        if (game?.mode === 2) {
+        if (game?.mode === 2 || game?.mode === 3) {
           const title = document.querySelector(".joker-corner .center-title");
           if (title) title.textContent = "Kartu Mati (" + deadCards.length + ")";
           const stack = document.createElement("div");
-          stack.className = "dead-card-stack minami2-dead-stack";
+          stack.className = "dead-card-stack minami2-dead-stack joker-mode-dead-stack";
           // MINAMI 2: semua kartu mati dihitung, tetapi visualnya cukup
           // menampilkan satu kartu tertutup sebagai representasi tumpukan.
           if (deadCards.length > 0) {
@@ -8041,7 +7990,6 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
         window.minamiAISpeed = game.aiSpeed || 1;
         saveGameState();
 
-        document.getElementById("activeRulesBtn").style.setProperty("display", "inline-flex", "important");
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
         document.getElementById("setupJoker").style.display = "none";
@@ -8159,13 +8107,24 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
           }),
       );
 
+      document.querySelectorAll("#setupJoker .player-btn[data-player-joker]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            document.querySelectorAll("#setupJoker .player-btn[data-player-joker]").forEach((x) => x.classList.remove("active"));
+            b.classList.add("active");
+            playerCount = Number(b.dataset.playerJoker);
+          }),
+      );
+
       let minamiMode = 1;
       function showSetupMode(mode) {
-        minamiMode = mode === 2 ? 2 : 1;
-        document.getElementById("status").textContent = minamiMode === 1 ? "MINAMI 1" : "MINAMI 2";
+        minamiMode = mode === 3 ? 3 : (mode === 2 ? 2 : 1);
+        document.getElementById("status").textContent =
+          minamiMode === 3 ? "JOKER" : (minamiMode === 2 ? "MINAMI 2" : "MINAMI 1");
       }
       document.getElementById("startBtn").onclick = () => { minamiMode = 1; startGame(); };
       document.getElementById("startMinami2Btn").onclick = () => { minamiMode = 2; startGame(); };
+      document.getElementById("startJokerBtn").onclick = () => { minamiMode = 3; startGame(); };
       document.getElementById("sortSuitBtn").onclick = () => {
         sortCards(game.hands[0], "suit");
         render();
@@ -8185,9 +8144,11 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
         const note = document.querySelector("#activeRulesModal .rules-note");
         if (subtitle) {
           subtitle.textContent =
-            mode === 2
-              ? "Panduan aturan MINAMI 2 yang sedang digunakan"
-              : "Panduan aturan MINAMI 1 yang sedang digunakan";
+            mode === 3
+              ? "Panduan aturan JOKER yang sedang digunakan"
+              : (mode === 2
+                ? "Panduan aturan MINAMI 2 yang sedang digunakan"
+                : "Panduan aturan MINAMI 1 yang sedang digunakan");
         }
 
         // Kartu aturan pertama adalah satu-satunya bagian yang berbeda.
@@ -8195,17 +8156,21 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
           const p = cards[0].querySelector("p");
           if (p) {
             p.textContent =
-              mode === 2
-                ? "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Pada putaran pertama, Dasar awal wajib murni tanpa Joker. Setelah semua pemain menyelesaikan Dasar awal atau mati, Joker boleh digunakan seperti aturan Joker biasa."
-                : "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Boleh menggunakan kartu yang menjadi Joker. Jika tidak punya Dasar legal, pemain mati.";
+              mode === 3
+                ? "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Joker dapat menggantikan kartu apa pun. Dasar 3 kartu boleh memakai Joker di posisi mana pun; Dasar 4+ kartu tidak boleh menempatkan Joker di ujung. Jika tidak punya Dasar legal pada putaran pertama, pemain mati."
+                : (mode === 2
+                  ? "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Pada putaran pertama, Dasar awal wajib murni tanpa Joker. Setelah semua pemain menyelesaikan Dasar awal atau mati, Joker boleh digunakan seperti aturan Joker biasa."
+                  : "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Boleh menggunakan kartu yang menjadi Joker. Jika tidak punya Dasar legal, pemain mati.");
           }
         }
 
         if (note) {
           note.innerHTML =
-            mode === 2
-              ? "💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar awal murni tanpa Joker. Setelah itu permainan terbuka untuk Dasar, tambahan, dan POT. Joker kemudian dapat digunakan seperti aturan biasa."
-              : "💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar yang sah. Setelah itu permainan terbuka untuk Dasar, tambahan, dan POT. Joker fleksibel, tetapi jangan digunakan tanpa alasan karena nilainya tinggi jika tersisa.";
+            mode === 3
+              ? "💡 <b>Intinya:</b> Joker adalah kartu fisik yang fleksibel. Putaran pertama sudah boleh memakai Joker untuk membentuk Dasar. Setelah itu Joker juga dapat menjadi nyawa giliran saat tidak ada langkah legal."
+              : (mode === 2
+                ? "💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar awal murni tanpa Joker. Setelah itu permainan terbuka untuk Dasar, tambahan, dan POT. Joker kemudian dapat digunakan seperti aturan biasa."
+                : "💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar yang sah. Setelah itu permainan terbuka untuk Dasar, tambahan, dan POT. Joker fleksibel, tetapi jangan digunakan tanpa alasan karena nilainya tinggi jika tersisa.");
         }
       }
 
@@ -8320,7 +8285,7 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
         document.getElementById("setup").style.display = "";
         document.getElementById("setupMinami2").style.display = "";
         document.getElementById("setupJoker").style.display = "";
-        // Menu awal menampilkan card MINAMI 1, MINAMI 2, dan JOKER (Coming Soon).
+        // Menu awal selalu menampilkan dua card MINAMI secara bersamaan.
         showSetupMode(minamiMode);
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
@@ -8852,10 +8817,6 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
       
       // Saat pertama kali membuka halaman:
       // jika ada game tersimpan, lanjutkan game tersebut.
-            window.addEventListener("pagehide",()=>{try{saveGameState()}catch(e){}});
-      window.addEventListener("beforeunload",()=>{try{saveGameState()}catch(e){}});
-      document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){try{saveGameState()}catch(e){}}});
-
       restoreSavedGame();
     </script>
   
@@ -8867,7 +8828,6 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
 .achievement-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:rgba(243,207,112,.10);border:1px solid rgba(243,207,112,.15);font-size:23px;text-align:center}
 .achievement-info{min-width:0}.achievement-card b{display:block;color:#f3cf70;font-size:10px;line-height:1.05;letter-spacing:.55px;text-transform:uppercase}.achievement-card span{display:block;margin-top:5px;color:#aacdc0;font-size:8px;font-weight:700;line-height:1.3}.achievement-card em{text-align:center;color:#7ff0b0;font-size:10px;font-style:normal;font-weight:900}
 @media(max-width:700px),(hover:none) and (pointer:coarse){.achievement-grid{grid-template-columns:1fr}.achievement-card{min-height:92px}}
-</style>
 <style id="minami2-dead-card-center-final">
   /* Minami 2: satu kartu mati menjadi representasi tumpukan dan selalu berada di tengah area. */
   .joker-corner #jokerCard .minami2-dead-stack {
@@ -8896,469 +8856,7 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
     justify-content: center !important;
   }
 </style>
-
-<style id="near-win-immediate-final">
-  .player.near-win .player-alert.near-win-pop {
-    animation: minamiNearWinPop .28s ease-out;
-  }
-  @keyframes minamiNearWinPop {
-    0% { transform: scale(.82); opacity: .25; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-</style>
-<script id="joker-v3-clean-init">
-(function(){
-  "use strict";
-  const SUITS=[
-    {s:"♠",c:"black"},{s:"♥",c:"red"},{s:"♦",c:"red"},{s:"♣",c:"black"}
-  ];
-  const RANKS=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-  let jokerState=null;
-
-  function makeDeck(){
-    const d=[];
-    for(let deck=0;deck<2;deck++){
-      SUITS.forEach(s=>RANKS.forEach(r=>d.push({rank:r,suit:s.s,color:s.c,deck})));
-    }
-    return d;
-  }
-  function shuffle(a){
-    for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
-    return a;
-  }
-  function cardText(card){
-    return card.rank+card.suit;
-  }
-  function cardHTML(card,small){
-    const red=card.color==="red"?" red":"";
-    const joker=card.isJoker?" joker-card":"";
-    return '<span class="joker-real-card'+red+joker+(small?' small':'')+'"><b>'+card.rank+'</b><i>'+card.suit+'</i></span>';
-  }
-  function setText(id,value){const e=document.getElementById(id);if(e)e.textContent=value;}
-  function renderHands(){
-    if(!jokerState)return;
-    const hand=document.getElementById("jokerHandPreview");
-    if(hand){
-      hand.innerHTML=jokerState.hands[0].map(c=>cardHTML(c,false)).join("");
-      const cards=[...hand.querySelectorAll(".joker-real-card")];
-
-      cards.forEach((el,i)=>{
-        el.dataset.handIndex=String(i);
-        el.draggable=false;
-        el.title=cardText(jokerState.hands[0][i])+(jokerState.hands[0][i].isJoker?" • JOKER":"");
-
-        // Klik = memilih kartu. Drag hanya dimulai setelah pointer bergerak cukup jauh.
-        el.addEventListener("click",e=>{
-          if(el._jokerDidDrag){el._jokerDidDrag=false;return;}
-          e.stopPropagation();
-          selectCard(Number(el.dataset.handIndex));
-        });
-
-        el.addEventListener("pointerdown",e=>{
-          if(e.button!==undefined && e.button!==0)return;
-          if(jokerState.turn!==0 || jokerState.phase!=="discard")return;
-          el.setPointerCapture?.(e.pointerId);
-          el._jokerPointerId=e.pointerId;
-          el._jokerStartX=e.clientX;
-          el._jokerStartY=e.clientY;
-          el._jokerLastX=e.clientX;
-          el._jokerDragging=false;
-          el._jokerDidDrag=false;
-          el._jokerFrom=Number(el.dataset.handIndex);
-          el._jokerStartRect=el.getBoundingClientRect();
-          el.classList.add("pointer-pressed");
-        });
-
-        el.addEventListener("pointermove",e=>{
-          if(el._jokerPointerId!==e.pointerId)return;
-          const dx=e.clientX-el._jokerStartX;
-          const dy=e.clientY-el._jokerStartY;
-          el._jokerLastX=e.clientX;
-          if(!el._jokerDragging){
-            if(Math.abs(dx)<7 && Math.abs(dy)<7)return;
-            // Hanya gerakan horizontal yang dianggap menyusun kartu.
-            if(Math.abs(dx)<=Math.abs(dy))return;
-            el._jokerDragging=true;
-            el._jokerDidDrag=true;
-            hand.classList.add("dragging-hand");
-            cards.forEach(x=>x.classList.remove("selected"));
-            el.classList.add("dragging");
-          }
-          e.preventDefault();
-          el.style.transform="translate3d("+(dx)+"px,"+(-Math.min(8,Math.abs(dx)*0.04))+"px,0) scale(1.05)";
-        });
-
-        const finishPointer=e=>{
-          if(el._jokerPointerId!==e.pointerId)return;
-          el.releasePointerCapture?.(e.pointerId);
-          el.classList.remove("pointer-pressed");
-          const wasDragging=el._jokerDragging;
-          const from=el._jokerFrom;
-          const x=el._jokerLastX;
-          el.style.transform="";
-          el.classList.remove("dragging");
-          hand.classList.remove("dragging-hand");
-          el._jokerPointerId=null;
-
-          if(wasDragging){
-            const currentCards=[...hand.querySelectorAll(".joker-real-card")].filter(x=>x!==el);
-            let target=from;
-            let best=Infinity;
-            currentCards.forEach((other)=>{
-              const rect=other.getBoundingClientRect();
-              const center=rect.left+rect.width/2;
-              const idx=Number(other.dataset.handIndex);
-              const distance=Math.abs(x-center);
-              if(x<center && idx<from && distance<best){target=idx;best=distance;}
-              if(x<center && idx>from && distance<best){target=idx;best=distance;}
-              if(x>=center && idx!==from && distance<best){target=idx;best=distance;}
-            });
-            // Tentukan posisi berdasarkan titik tengah kartu, tanpa render selama drag.
-            const ordered=[...hand.querySelectorAll(".joker-real-card")];
-            let insert=ordered.findIndex((other)=>{
-              if(other===el)return false;
-              const rect=other.getBoundingClientRect();
-              return x < rect.left+rect.width/2;
-            });
-            if(insert<0)insert=ordered.length-1;
-            if(insert>=0){
-              let to=Number(ordered[insert]?.dataset.handIndex ?? from);
-              if(insert===ordered.length-1 && x>=ordered[insert].getBoundingClientRect().left+ordered[insert].getBoundingClientRect().width/2)to=ordered.length-1;
-              // Hitung indeks final dari urutan DOM saat ini.
-              const ids=ordered.map(x=>Number(x.dataset.handIndex));
-              const remaining=ids.filter(id=>id!==from);
-              let finalIndex=remaining.length;
-              for(let k=0;k<remaining.length;k++){
-                const node=ordered.find(x=>Number(x.dataset.handIndex)===remaining[k]);
-                const rect=node.getBoundingClientRect();
-                if(x < rect.left+rect.width/2){finalIndex=k;break;}
-              }
-              if(finalIndex!==from){
-                const moved=jokerState.hands[0].splice(from,1)[0];
-                jokerState.hands[0].splice(finalIndex,0,moved);
-                jokerState.selected=-1;
-                renderHands();
-              }
-            }
-          }
-          // Beri kesempatan event click normal berjalan setelah pointer dilepas.
-          setTimeout(()=>{el._jokerDidDrag=false;},0);
-        };
-        el.addEventListener("pointerup",finishPointer);
-        el.addEventListener("pointercancel",finishPointer);
-      });
-
-      hand.classList.toggle("dragging-hand",false);
-    }
-
-    jokerState.hands.forEach((h,i)=>{
-      const seat=document.querySelector('.joker-seat[data-seat="'+i+'"]');
-      if(seat){
-        const small=seat.querySelector("small");
-        if(small)small.textContent=h.length+" kartu";
-        seat.classList.toggle("is-active",i===jokerState.turn);
-      }
-    });
-  }
-  function renderDiscard(){
-    if(!jokerState)return;
-    jokerState.discards.forEach((stack,i)=>{
-      const el=document.querySelector('.joker-discard-stack[data-seat="'+i+'"]');
-      if(!el)return;
-      const top=stack[stack.length-1];
-      el.innerHTML='<span>Buangan P'+(i+1)+'</span><b>'+(top?cardHTML(top,true):"🂠")+'</b><small>'+(stack.length?stack.length+" kartu":"kosong")+'</small>';
-      el.classList.toggle("available-pick",i===jokerState.turn-1 || (jokerState.turn===0&&i===jokerState.count-1));
-      if(i===jokerState.turn-1 || (jokerState.turn===0&&i===jokerState.count-1)){
-        el.onclick=()=>takePreviousDiscard();
-      }else el.onclick=()=>showDiscardHistory(i);
-    });
-  }
-  function renderCenter(){
-    if(!jokerState)return;
-    setText("jokerPileCount",jokerState.drawPile.length+" kartu tengah");
-    const marker=document.getElementById("jokerMarkerCard");
-    if(marker)marker.innerHTML=jokerState.marker?cardHTML(jokerState.marker,false):"?";
-  }
-  function showStatus(){
-    const status=document.querySelector(".joker-game-status");
-    if(!status)return;
-    const p=jokerState.turn+1;
-    status.textContent="Giliran P"+p+(jokerState.turn===0?" • pilih kartu lalu BUANG":" • ambil kartu");
-  }
-  function showDiscardHistory(i){
-    const stack=jokerState.discards[i]||[];
-    alert("Buangan P"+(i+1)+"\n"+(stack.length?stack.map(cardText).join("  →  "):"Belum ada buangan"));
-  }
-  function selectCard(index){
-    if(!jokerState||jokerState.turn!==0||jokerState.phase!=="discard")return;
-    if(jokerState.hands[0][index].isJoker){
-      setText("jokerActionHint","Joker tidak boleh dibuang.");
-      return;
-    }
-    jokerState.selected=index;
-    document.querySelectorAll(".joker-real-card").forEach((e,i)=>e.classList.toggle("selected",i===index));
-    setText("jokerActionHint","Kartu dipilih. Tekan BUANG KARTU.");
-  }
-  function discardSelected(){
-    if(!jokerState||jokerState.turn!==0||jokerState.phase!=="discard"||jokerState.selected<0)return;
-    const card=jokerState.hands[0][jokerState.selected];
-    if(card.isJoker){setText("jokerActionHint","Joker tidak boleh dibuang.");return;}
-    jokerState.hands[0].splice(jokerState.selected,1);
-    jokerState.discards[0].push(card);
-    saveJokerState();
-    jokerState.selected=-1;
-    jokerState.turn=1%jokerState.count;
-    jokerState.phase="take";
-    renderAll();
-    setText("jokerActionHint","P2 sekarang boleh mengambil buangan P1 atau 1 kartu dari tengah.");
-  }
-  function takePreviousDiscard(){
-    if(!jokerState||jokerState.phase!=="take")return;
-    const prev=(jokerState.turn-1+jokerState.count)%jokerState.count;
-    const stack=jokerState.discards[prev];
-    if(!stack||!stack.length)return;
-    const card=stack.pop();
-    jokerState.hands[jokerState.turn].push(card);
-    saveJokerState();
-    finishTake();
-  }
-  function takeCenter(){
-    if(!jokerState||jokerState.phase!=="take"||!jokerState.drawPile.length)return;
-    jokerState.hands[jokerState.turn].push(jokerState.drawPile.pop());
-    saveJokerState();
-    finishTake();
-  }
-  function finishTake(){
-    jokerState.phase="discard";
-    jokerState.selected=-1;
-    renderAll();
-    if(jokerState.turn===0){
-      setText("jokerActionHint","Giliran Anda: pilih 1 kartu untuk dibuang. Joker tidak boleh dibuang.");
-    }else{
-      // AI hanya menjalankan langkah sederhana: ambil dari tengah lalu buang kartu non-Joker.
-      setTimeout(aiTurn,450);
-    }
-  }
-  function aiTurn(){
-    if(!jokerState||jokerState.phase!=="discard"||jokerState.turn===0)return;
-    const h=jokerState.hands[jokerState.turn];
-    const card=jokerState.drawPile.pop();
-    if(card)h.push(card);
-    let idx=h.findIndex(c=>!c.isJoker);
-    if(idx<0)idx=0;
-    if(h[idx])jokerState.discards[jokerState.turn].push(h.splice(idx,1)[0]);
-    saveJokerState();
-    jokerState.turn=(jokerState.turn+1)%jokerState.count;
-    jokerState.phase="take";
-    renderAll();
-    if(jokerState.drawPile.length===0){
-      setText("jokerActionHint","Kartu tengah habis. Pemain berikutnya tidak dapat mengambil kartu tengah.");
-      return;
-    }
-    if(jokerState.turn===0){
-      setText("jokerActionHint","Giliran Anda: ambil buangan P"+jokerState.count+" atau kartu tengah.");
-    }else setTimeout(aiTake,450);
-  }
-  function aiTake(){
-    if(!jokerState||jokerState.phase!=="take"||jokerState.turn===0)return;
-    if(jokerState.drawPile.length)jokerState.hands[jokerState.turn].push(jokerState.drawPile.pop());
-    else{
-      const prev=(jokerState.turn-1+jokerState.count)%jokerState.count;
-      const st=jokerState.discards[prev];
-      if(st&&st.length){jokerState.hands[jokerState.turn].push(st.pop());saveJokerState();}
-    }
-    finishTake();
-  }
-  const JOKER_SAVE_KEY="minami_joker_v3_state_v1";
-
-  function saveJokerState(){
-    if(!jokerState)return false;
-    try{
-      localStorage.setItem(JOKER_SAVE_KEY,JSON.stringify(jokerState));
-      try{sessionStorage.setItem(JOKER_SAVE_KEY,JSON.stringify(jokerState));}catch(e){}
-      return true;
-    }catch(e){return false}
-  }
-
-  function clearJokerState(){
-    try{localStorage.removeItem(JOKER_SAVE_KEY);}catch(e){}
-    try{sessionStorage.removeItem(JOKER_SAVE_KEY);}catch(e){}
-  }
-
-  function restoreJokerState(){
-    let raw=null;
-    try{raw=localStorage.getItem(JOKER_SAVE_KEY);}catch(e){}
-    if(!raw){try{raw=sessionStorage.getItem(JOKER_SAVE_KEY);}catch(e){}}
-    if(!raw)return false;
-    try{
-      const saved=JSON.parse(raw);
-      if(!saved || !Array.isArray(saved.hands) || !Array.isArray(saved.drawPile)) return false;
-      const count=Number(saved.count)||saved.hands.length;
-      if(count<4 || count>5 || saved.hands.length!==count) return false;
-      jokerState={
-        count,
-        hands:saved.hands,
-        drawPile:saved.drawPile,
-        marker:saved.marker||null,
-        discards:Array.isArray(saved.discards)?saved.discards:Array.from({length:count},()=>[]),
-        turn:Number(saved.turn)||0,
-        phase:saved.phase==="take"?"take":"discard",
-        selected:-1
-      };
-      const setup=document.getElementById("setupJoker"), game=document.getElementById("jokerGame");
-
-      // Restore JOKER harus membuat tampilan persis seperti saat tombol
-      // "Mulai Permainan" ditekan. Jangan menyisakan menu setup di belakang
-      // meja karena panel setup dapat menutup klik menu/modal lain.
-      document.querySelectorAll("#setup, #setupMinami2, #setupJoker").forEach(el=>{
-        el.style.display="none";
-        el.setAttribute("aria-hidden","true");
-      });
-      document.querySelectorAll(".setup-menu-wrap").forEach(el=>{
-        el.style.display="none";
-        el.setAttribute("aria-hidden","true");
-      });
-
-      if(game){
-        game.classList.add("active");
-        game.setAttribute("aria-hidden","false");
-        document.body.classList.add("joker-mode-active");
-        game.querySelectorAll(".joker-seat").forEach((e,i)=>e.style.display=i<count?"block":"none");
-        game.querySelectorAll(".joker-discard-stack").forEach((e,i)=>e.style.display=i<count?"block":"none");
-      }
-      setText("jokerGameSub","2 Deck • "+count+" Pemain");
-      renderAll();
-      window.scrollTo(0,0);
-      return true;
-    }catch(e){
-      clearJokerState();
-      return false;
-    }
-  }
-
-  function renderAll(){
-    renderHands();renderDiscard();renderCenter();showStatus();
-    const controls=document.getElementById("jokerControls");
-    if(controls)controls.style.display=jokerState&&jokerState.turn===0?"flex":"none";
-    if(jokerState)saveJokerState();
-  }
-  function startRound(count){
-    const deck=shuffle(makeDeck());
-    const hands=Array.from({length:count},()=>[]);
-    // Semua pemain mendapat 13 kartu, lalu pemain pertama mendapat 1 kartu tambahan saat pembagian.
-    for(let n=0;n<13;n++)for(let p=0;p<count;p++)hands[p].push(deck.pop());
-    hands[0].push(deck.pop());
-    // Satu kartu terbuka menentukan Joker; kartu ini dikeluarkan dari permainan.
-    const marker=deck.pop();
-    const jokerColor=marker.color==="red"?"black":"red";
-    deck.forEach(c=>{if(c.rank===marker.rank&&c.color===jokerColor)c.isJoker=true;});
-    jokerState={count,hands,drawPile:deck,marker,discards:Array.from({length:count},()=>[]),turn:0,phase:"discard",selected:-1};
-    saveJokerState();
-    setText("jokerActionHint","Giliran P1: Anda sudah mendapat 14 kartu. Buang 1 kartu untuk memulai.");
-    renderAll();
-  }
-  function init(){
-    const setup=document.getElementById("setupJoker"),game=document.getElementById("jokerGame"),start=document.getElementById("startJokerBtn");
-    const choices=[...document.querySelectorAll("[data-player-joker]")];
-    if(!setup||!game||!start)return;
-    let count=4;
-    choices.forEach(b=>b.addEventListener("click",()=>{count=Number(b.dataset.playerJoker)||4;choices.forEach(x=>x.classList.toggle("active",x===b));}));
-    start.addEventListener("click",()=>{
-      clearJokerState();
-      ["setup","setupMinami2","setupJoker"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
-      const wrap=setup.closest(".setup-menu-wrap");if(wrap)wrap.style.display="none";
-      game.classList.add("active");game.setAttribute("aria-hidden","false");document.body.classList.add("joker-mode-active");
-      setText("jokerGameSub","2 Deck • "+count+" Pemain");
-      game.querySelectorAll(".joker-seat").forEach((e,i)=>e.style.display=i<count?"block":"none");
-      game.querySelectorAll(".joker-discard-stack").forEach((e,i)=>e.style.display=i<count?"block":"none");
-      startRound(count);
-      window.scrollTo(0,0);
-    });
-    const style=document.createElement("style");
-    style.textContent=".joker-real-card{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:28px;height:40px;border-radius:5px;background:#fff;color:#111;border:1px solid #aaa;font-size:10px;line-height:1;cursor:pointer;box-sizing:border-box}.joker-real-card i{font-style:normal;font-size:12px}.joker-real-card.red{color:#c22}.joker-real-card.joker-card{background:#ffe36e;border-color:#d39d00;box-shadow:0 0 8px rgba(255,210,50,.7)}.joker-real-card.selected{transform:translateY(-7px);outline:2px solid #ffd45a}.joker-discard-stack.available-pick{cursor:pointer;filter:drop-shadow(0 0 5px rgba(255,215,80,.6))}.joker-discard-stack small{display:block;font-size:6px;color:#b9d5ca}.joker-seat.is-active{box-shadow:0 0 0 2px #ffd45a,0 8px 18px rgba(0,0,0,.25)}#jokerControls{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:4px}#jokerControls button{border:0;border-radius:7px;padding:5px 9px;font-size:8px;font-weight:900;cursor:pointer}.joker-action-hint{font-size:7px;color:#cfe8dc;text-align:center;width:100%;min-height:10px}.joker-hand-cards .joker-real-card{background:#fff!important;color:#111!important;border:1px solid #aaa!important;box-shadow:none!important;width:28px!important;height:40px!important;display:inline-flex!important;flex:0 0 28px!important}.joker-hand-cards .joker-real-card.red{color:#c22!important}.joker-hand-cards .joker-real-card.joker-card{background:#ffe36e!important;color:#111!important;border-color:#d39d00!important;box-shadow:0 0 8px rgba(255,210,50,.7)!important}.joker-hand-cards .joker-real-card.dragging{opacity:.45;transform:translateY(-4px) scale(1.04)}.joker-hand-cards{align-items:flex-end;overflow-x:auto!important;overflow-y:hidden!important;padding:8px 4px 3px;touch-action:pan-x;cursor:grab}.joker-hand-cards.dragging-hand{cursor:grabbing}.joker-hand-cards{display:flex!important;gap:4px!important;justify-content:center!important}.joker-hand-cards .joker-real-card{position:relative!important;z-index:1!important;touch-action:none!important;user-select:none!important;-webkit-user-drag:none!important;transition:transform .12s ease,box-shadow .12s ease}.joker-hand-cards .joker-real-card.pointer-pressed{z-index:20!important}.joker-hand-cards .joker-real-card.dragging{z-index:30!important;transition:none!important;cursor:grabbing!important}.joker-hand-cards .joker-real-card.selected{z-index:10!important}";
-    document.head.appendChild(style);
-    const controls=document.createElement("div");controls.id="jokerControls";controls.innerHTML='<button type="button" id="jokerTakeCenter">AMBIL TENGAH</button><button type="button" id="jokerTakeDiscard">AMBIL BUANGAN</button><button type="button" id="jokerDiscardBtn">BUANG KARTU</button><div class="joker-action-hint" id="jokerActionHint"></div>';
-    const hand=document.querySelector("#jokerGame .joker-hand-preview");if(hand)hand.appendChild(controls);
-    document.getElementById("jokerTakeCenter").onclick=takeCenter;
-    document.getElementById("jokerTakeDiscard").onclick=takePreviousDiscard;
-    document.getElementById("jokerDiscardBtn").onclick=discardSelected;
-
-    // JOKER harus berada di bawah seluruh menu/modal global saat menu dibuka.
-    // Tanpa ini, meja JOKER dapat menangkap pointer sebelum tombol menu.
-    const menuModal = document.getElementById("menuModal");
-    const menuBtn = document.getElementById("menuBtn");
-    const statsBtn = document.getElementById("menuStatsBtn");
-    const restartBtn = document.getElementById("menuRestartBtn");
-
-    const setJokerMenuLayer = (open) => {
-      document.body.classList.toggle("joker-menu-open", !!open);
-      if (menuModal) menuModal.style.pointerEvents = open ? "auto" : "";
-    };
-
-    if (menuBtn) {
-      menuBtn.addEventListener("click", () => {
-        setTimeout(() => setJokerMenuLayer(true), 0);
-      }, true);
-    }
-
-    if (statsBtn) {
-      statsBtn.addEventListener("click", (e) => {
-        // Pastikan klik Achievement/Statistik tidak ditelan oleh meja JOKER.
-        e.stopPropagation();
-        setJokerMenuLayer(false);
-        const modal = document.getElementById("featureModal");
-        if (modal) {
-          modal.style.pointerEvents = "auto";
-          modal.style.zIndex = "30000";
-          const box = modal.querySelector(".feature-modal-box");
-          if (box) box.style.pointerEvents = "auto";
-        }
-      }, true);
-    }
-
-    if (restartBtn) {
-      restartBtn.addEventListener("click", (e) => {
-        e.stopImmediatePropagation();
-        e.preventDefault();
-
-        // Restart JOKER = kembali ke menu awal, bukan memulai ronde baru.
-        clearJokerState();
-        jokerState = null;
-        setJokerMenuLayer(false);
-
-        if (menuModal) menuModal.classList.remove("show", "game-active");
-        document.body.classList.remove("menu-open", "joker-mode-active");
-
-        const jokerGame = document.getElementById("jokerGame");
-        if (jokerGame) {
-          jokerGame.classList.remove("active");
-          jokerGame.setAttribute("aria-hidden", "true");
-        }
-
-        // Kembali ke menu awal pemilihan mode permainan.
-        document.querySelectorAll("#setup, #setupMinami2, #setupJoker").forEach(el => {
-          el.style.display = "none";
-          el.setAttribute("aria-hidden", "true");
-        });
-        const mainSetup = document.getElementById("setup");
-        if (mainSetup) {
-          mainSetup.style.display = "";
-          mainSetup.setAttribute("aria-hidden", "false");
-        }
-
-        window.scrollTo(0, 0);
-      }, true);
-    }
-
-    // Pulihkan JOKER sendiri setelah refresh. Tidak memakai state MINAMI 1/2.
-    restoreJokerState();
-
-    window.addEventListener("pagehide",()=>{try{saveJokerState()}catch(e){}});
-    window.addEventListener("beforeunload",()=>{try{saveJokerState()}catch(e){}});
-  }
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
-})();
-</script>
+</body></html>
 <style id="mobile-hand-fixed-footer-final">
   @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
     html,
@@ -9489,9 +8987,6 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
 </style>
 
 
-<style id="active-rules-game-only">
-  #activeRulesBtn { display: none !important; }
-</style>
 <style id="menu-clean-interface">
   /* Saat menu hamburger terbuka, meja/kartu tidak terlihat di belakangnya. */
   #menuModal {
@@ -9506,10 +9001,11 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
     display: none !important;
   }
 
-  /* Ikon aturan hanya tampil saat benar-benar masuk ke permainan.
-     startGame()/resumeRestoredGame() menyalakannya dengan inline !important. */
+  /* Aturan tetap tersedia langsung saat sedang bermain. */
   #activeRulesBtn {
-    display: none !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Menu tetap menjadi satu-satunya antarmuka permainan yang terlihat saat terbuka. */
@@ -9744,120 +9240,25 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
 </style>
 
 <style id="joker-menu-card-style">
-  /* JOKER masih Coming Soon: hanya kartu menu, tanpa tombol mulai/pilihan pemain. */
-  .setup-mode-joker {
-    margin-top: 0;
-    padding-bottom: 34px;
-  }
-
-  .setup-mode-joker .setup-brand {
-    background: rgba(184, 142, 255, 0.08);
-    border-color: rgba(184, 142, 255, 0.18);
-  }
-
-  .setup-mode-joker .setup-logo {
-    color: #dfc9ff;
-  }
-
-  .joker-menu-cards {
-    height: 138px;
-    margin: 16px auto 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .joker-menu-stack {
-    position: relative;
-    width: 180px;
-    height: 125px;
-  }
-
-  .joker-menu-card {
-    position: absolute;
-    width: 82px;
-    height: 112px;
-    border-radius: 10px;
-    border: 2px solid rgba(255,255,255,.88);
-    box-shadow: 0 12px 24px rgba(0,0,0,.32);
-    background: #fff;
-  }
-
-  .joker-menu-card-back {
-    width: 92px;
-    height: 118px;
-    left: 44px;
-    top: 5px;
-    transform: rotate(-8deg);
-    background:
-      repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);
-    border-color: #ddd;
-    z-index: 1;
-  }
-
-  .joker-menu-card-open {
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    color: #161616;
-    font-weight: 900;
-    line-height: 1;
-  }
-
-  .joker-menu-card-open span {
-    font-size: 27px;
-    font-weight: 900;
-    letter-spacing: -2px;
-  }
-
-  .joker-menu-card-left {
-    left: 19px;
-    top: 7px;
-    transform: rotate(-14deg);
-  }
-
-  .joker-menu-card-middle {
-    left: 49px;
-    top: 0;
-    transform: rotate(0deg);
-    z-index: 4;
-  }
-
-  .joker-menu-card-right {
-    right: 19px;
-    top: 7px;
-    transform: rotate(14deg);
-  }
-
-  .joker-coming-soon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 150px;
-    padding: 9px 18px;
-    border-radius: 999px;
-    background: linear-gradient(145deg,#e0c6ff,#a978d6);
-    color: #251735;
-    border: 1px solid rgba(255,255,255,.45);
-    box-shadow: 0 8px 20px rgba(0,0,0,.2);
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: 1.5px;
-  }
-
-  @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
-    .setup-mode-joker {
-      width: calc(100% - 12px);
-      padding: 20px 12px 22px;
-    }
-    .joker-menu-cards {
-      height: 122px;
-    }
-    .joker-menu-stack {
-      transform: scale(.88);
-    }
+  /* JOKER: mode permainan fisik Joker, dengan pilihan 4/5 pemain. */
+  .setup-mode-joker { margin-top:0; padding-bottom:34px; }
+  .setup-mode-joker .setup-brand { background:rgba(184,142,255,.08); border-color:rgba(184,142,255,.18); }
+  .setup-mode-joker .setup-logo { color:#dfc9ff; }
+  .joker-menu-cards { height:138px; margin:16px auto 10px; display:flex; align-items:center; justify-content:center; }
+  .joker-menu-stack { position:relative; width:180px; height:125px; }
+  .joker-menu-card { position:absolute; width:82px; height:112px; border-radius:10px; border:2px solid rgba(255,255,255,.88); box-shadow:0 12px 24px rgba(0,0,0,.32); background:#fff; }
+  .joker-menu-card-back { width:92px; height:118px; left:44px; top:5px; transform:rotate(-8deg); background:repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px); border-color:#ddd; z-index:1; }
+  .joker-menu-card-open { z-index:3; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:12px; color:#161616; font-weight:900; line-height:1; }
+  .joker-menu-card-open span { font-size:28px; }
+  .joker-menu-card-open b { margin-top:3px; font-size:20px; font-weight:900; }
+  .joker-menu-card-left { left:19px; top:7px; transform:rotate(-14deg); }
+  .joker-menu-card-right { right:19px; top:7px; transform:rotate(14deg); }
+  .joker-menu-card-right b { color:#c72525; }
+  .joker-coming-soon { display:inline-flex; align-items:center; justify-content:center; min-width:150px; padding:9px 18px; border-radius:999px; background:linear-gradient(145deg,#e0c6ff,#a978d6); color:#251735; border:1px solid rgba(255,255,255,.45); box-shadow:0 8px 20px rgba(0,0,0,.2); font-size:12px; font-weight:900; letter-spacing:1.5px; }
+  @media (max-width:700px),(hover:none) and (pointer:coarse) and (orientation:landscape) {
+    .setup-mode-joker { width:calc(100% - 12px); padding:20px 12px 22px; }
+    .joker-menu-cards { height:122px; }
+    .joker-menu-stack { transform:scale(.88); }
   }
 </style>
 
@@ -9869,4 +9270,3 @@ body.joker-menu-open #menuModal *{pointer-events:auto !important}
 .achievement-card em{font-size:9px!important}
 @media(max-width:700px),(hover:none) and (pointer:coarse){.achievement-card{min-height:64px!important;height:64px!important}}
 </style>
-</body></html>
