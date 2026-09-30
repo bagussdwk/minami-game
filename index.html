@@ -8093,9 +8093,9 @@
           const playerEl = document.getElementById("player" + i);
           if (playerEl) playerEl.style.display = "";
         }
-        document.getElementById("setup").style.display = "";
-        document.getElementById("setupMinami2").style.display = "";
         document.getElementById("menuModal").classList.remove("game-active");
+        // Kembali ke setup mode yang terakhir dipilih, tanpa menampilkan dua setup sekaligus.
+        showSetupMode(minamiMode);
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
       const musicToggle = document.getElementById("musicToggle");
