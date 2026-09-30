@@ -9126,9 +9126,19 @@
         selected:-1
       };
       const setup=document.getElementById("setupJoker"), game=document.getElementById("jokerGame");
-      if(setup)setup.style.display="none";
-      const wrap=setup?.closest(".setup-menu-wrap");
-      if(wrap)wrap.style.display="none";
+
+      // Restore JOKER harus membuat tampilan persis seperti saat tombol
+      // "Mulai Permainan" ditekan. Jangan menyisakan menu setup di belakang
+      // meja karena panel setup dapat menutup klik menu/modal lain.
+      document.querySelectorAll("#setup, #setupMinami2, #setupJoker").forEach(el=>{
+        el.style.display="none";
+        el.setAttribute("aria-hidden","true");
+      });
+      document.querySelectorAll(".setup-menu-wrap").forEach(el=>{
+        el.style.display="none";
+        el.setAttribute("aria-hidden","true");
+      });
+
       if(game){
         game.classList.add("active");
         game.setAttribute("aria-hidden","false");
