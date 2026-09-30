@@ -4023,7 +4023,50 @@
 .joker-hand-preview{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);width:min(720px,66%);padding:4px 8px;border-radius:10px;background:rgba(3,25,18,.84);border:1px solid rgba(255,255,255,.08);z-index:7}.joker-hand-title{font-size:7px;color:#9fc6b7;text-align:center;margin-bottom:2px}.joker-hand-cards{display:flex;justify-content:center;gap:2px;overflow:hidden}.joker-hand-cards span{width:28px;height:40px;border-radius:4px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 4px,#3b4b78 4px,#3b4b78 8px);border:1px solid #fff;font-size:11px;display:flex;align-items:center;justify-content:center}
 @media(max-width:700px),(hover:none) and (pointer:coarse){.joker-game{width:calc(100% - 8px);margin-top:5px}.joker-table{height:calc(100vh - 70px);min-height:500px;border-width:5px;border-radius:22px}.joker-seat{width:76px}.joker-avatar{width:31px;height:31px}.joker-seat-p1{bottom:14px}.joker-seat-p2{right:1%;bottom:17%}.joker-seat-p3{right:1%;top:12%}.joker-seat-p4{left:1%;top:12%}.joker-seat-p5{left:1%;bottom:17%}.joker-discard-p1{bottom:92px}.joker-discard-p2{right:10%;bottom:28%}.joker-discard-p3{right:10%;top:28%}.joker-discard-p4{left:10%;top:28%}.joker-discard-p5{left:10%;bottom:28%}.joker-hand-preview{width:94%}.joker-hand-cards span{width:21px;height:30px;font-size:8px}}
 @media(max-width:700px) and (orientation:portrait){.joker-seat-p5,.joker-discard-p5{display:none}}
-</style></head>
+</style><style id="joker-modal-click-fix">
+  /* JOKER v3 tetap menjadi layar permainan, tetapi semua modal/menu global
+     harus selalu berada di atas meja JOKER agar tombol tetap bisa diklik. */
+  #menuModal,
+  #featureModal,
+  #quickChatModal,
+  #playerActionModal,
+  #scoreModal,
+  #resultModal,
+  #activeRulesModal,
+  #moveHistoryModal,
+  #rankGuideModal {
+    z-index: 20000 !important;
+  }
+
+  #featureModal.show,
+  #quickChatModal.show,
+  #playerActionModal.show,
+  #scoreModal.show,
+  #resultModal.show,
+  #activeRulesModal.show,
+  #moveHistoryModal.show,
+  #rankGuideModal.show {
+    pointer-events: auto !important;
+  }
+
+  #menuModal.show {
+    z-index: 21000 !important;
+  }
+
+  #menuModal .menu-modal-box,
+  #featureModal .feature-modal-box,
+  #quickChatModal .quick-chat-box,
+  #playerActionModal .player-action-box,
+  #scoreModal .score-modal-box,
+  #resultModal .modal-box,
+  #activeRulesModal .rules-modal-box,
+  #moveHistoryModal .modal-box,
+  #rankGuideModal .rank-guide-box {
+    position: relative;
+    z-index: 20001 !important;
+  }
+</style>
+</head>
   <body>
     <div class="topbar">
       <div class="logo">MINAMI</div>
