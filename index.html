@@ -5876,10 +5876,14 @@
         // Seluruh sisa kartu hanya ditampilkan sebagai kartu tertutup.
         if (game?.mode === 2) {
           const title = document.querySelector(".joker-corner .center-title");
-          if (title) title.textContent = "Kartu Mati";
+          if (title) title.textContent = "Kartu Mati (" + deadCards.length + ")";
           const stack = document.createElement("div");
-          stack.className = "dead-card-stack minami2-dead-stack" + (deadCards.length === 4 ? " four-cards" : "");
-          deadCards.forEach(() => stack.appendChild(createBackCard(true)));
+          stack.className = "dead-card-stack minami2-dead-stack";
+          // MINAMI 2: semua kartu mati dihitung, tetapi visualnya cukup
+          // menampilkan satu kartu tertutup sebagai representasi tumpukan.
+          if (deadCards.length > 0) {
+            stack.appendChild(createBackCard(true));
+          }
           container.appendChild(stack);
           return;
         }
