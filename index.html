@@ -8901,11 +8901,17 @@
     -webkit-backdrop-filter: blur(3px) !important;
   }
 
-  /* Kontrol yang sudah dipindahkan ke hamburger tidak tampil lagi di topbar. */
+  /* Kontrol yang dipindahkan ke hamburger tidak tampil lagi di topbar. */
   #musicToggle,
-  #newGameTopBtn,
-  #activeRulesBtn {
+  #newGameTopBtn {
     display: none !important;
+  }
+
+  /* Aturan tetap tersedia langsung saat sedang bermain. */
+  #activeRulesBtn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Menu tetap menjadi satu-satunya antarmuka permainan yang terlihat saat terbuka. */
