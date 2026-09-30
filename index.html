@@ -5867,6 +5867,15 @@
           const nearWin = !game.dead[i] && !game.over && remaining <= 3;
           el.classList.toggle("near-win", nearWin);
           alert.textContent = nearWin && remaining === 1 ? "ONE CARD!" : nearWin ? "TINGGAL " + remaining + " KARTU" : "";
+          // Notifikasi sisa kartu muncul langsung setelah kartu benar-benar
+          // dikeluarkan dari tangan, tanpa menunggu giliran berikutnya.
+          if (nearWin && game.lastNearWinCount?.[i] !== remaining) {
+            game.lastNearWinCount = game.lastNearWinCount || {};
+            game.lastNearWinCount[i] = remaining;
+            alert.classList.remove("near-win-pop");
+            void alert.offsetWidth;
+            alert.classList.add("near-win-pop");
+          }
           const reactionNow=game.reactions?.[i];
           if(reactionNow && reactionNow.until>Date.now()) showPlayerBubble(i,reactionNow.text,"reaction");
 
@@ -8816,6 +8825,16 @@
   .joker-corner:has(.minami2-dead-stack) #jokerCard {
     width: 100% !important;
     justify-content: center !important;
+  }
+</style>
+
+<style id="near-win-immediate-final">
+  .player.near-win .player-alert.near-win-pop {
+    animation: minamiNearWinPop .28s ease-out;
+  }
+  @keyframes minamiNearWinPop {
+    0% { transform: scale(.82); opacity: .25; }
+    100% { transform: scale(1); opacity: 1; }
   }
 </style>
 </body></html>
