@@ -3764,6 +3764,43 @@
       body.table-theme-midnight .table { background: radial-gradient(ellipse at center,#28547d 0%,#173653 52%,#0c2038 100%); }
       body.table-theme-burgundy .table { background: radial-gradient(ellipse at center,#8c3b4d 0%,#641f31 52%,#3e1220 100%); }
       body.table-theme-royal .table { background: radial-gradient(ellipse at center,#574b9a 0%,#332b70 52%,#1d1948 100%); }
+      /* Desktop/landscape desktop: menu dibuat lebih lebar dan dua kolom,
+         supaya tidak memanjang vertikal seperti tampilan mobile. */
+      @media (min-width: 701px) {
+        #menuModal .menu-modal-box {
+          width: min(720px, calc(100% - 40px));
+          max-height: 86vh;
+          padding: 18px;
+        }
+        #menuModal .menu-section {
+          margin-top: 9px;
+          padding: 10px;
+        }
+        #menuModal .menu-section:first-of-type {
+          margin-top: 0;
+        }
+        #menuModal .menu-section:not(#profileMenuSection) {
+          display: inline-block;
+          vertical-align: top;
+          width: calc(50% - 5px);
+        }
+        #menuModal #profileMenuSection {
+          width: 100%;
+        }
+        #menuModal .menu-action {
+          padding: 8px 10px;
+          margin-top: 5px;
+        }
+        #menuModal .table-theme-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 6px;
+        }
+        #menuModal .table-theme-btn {
+          min-height: 48px;
+          font-size: 9px;
+        }
+      }
+
       @media (max-width:700px) {
         .hamburger-btn { width: 31px; height: 29px; font-size: 17px; }
         .player { width: 82px !important; }
