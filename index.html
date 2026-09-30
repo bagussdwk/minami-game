@@ -4137,6 +4137,25 @@
       </button>
     </section>
 
+    <section class="setup setup-mode-joker" id="setupJoker">
+      <div class="setup-brand">🃏 2 DECK &nbsp;•&nbsp; JOKER</div>
+      <h1 class="setup-logo">JOKER</h1>
+
+      <div class="joker-menu-cards" aria-hidden="true">
+        <div class="joker-menu-stack">
+          <div class="joker-menu-card joker-menu-card-back"></div>
+          <div class="joker-menu-card joker-menu-card-open joker-menu-card-left">
+            <span>Q</span><b>♠</b>
+          </div>
+          <div class="joker-menu-card joker-menu-card-open joker-menu-card-right">
+            <span>3</span><b>♥</b>
+          </div>
+        </div>
+      </div>
+
+      <div class="joker-coming-soon">COMING SOON</div>
+    </section>
+
     <section class="game" id="game">
       <div class="game-status-ribbon" aria-live="polite">
         <button type="button" class="move-history-top-btn" id="moveHistoryBtn" title="Lihat semua riwayat kartu yang diturunkan">🕘 History</button>
@@ -4881,6 +4900,7 @@
 
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
+        document.getElementById("setupJoker").style.display = "none";
         minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
@@ -7948,6 +7968,7 @@
 
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
+        document.getElementById("setupJoker").style.display = "none";
         minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
@@ -8222,7 +8243,8 @@
         document.getElementById("menuModal").classList.remove("game-active");
         document.getElementById("setup").style.display = "";
         document.getElementById("setupMinami2").style.display = "";
-        // Menu awal selalu menampilkan dua card MINAMI secara bersamaan.
+        document.getElementById("setupJoker").style.display = "";
+        // Menu awal menampilkan card MINAMI 1, MINAMI 2, dan JOKER (Coming Soon).
         showSetupMode(minamiMode);
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
@@ -9173,6 +9195,126 @@
   .setup-mode-two .start-btn.setup-start {
     background: linear-gradient(145deg, #d8efff, #9bcde8);
     color: #13242d;
+  }
+</style>
+
+<style id="joker-menu-card-style">
+  /* JOKER masih Coming Soon: hanya kartu menu, tanpa tombol mulai/pilihan pemain. */
+  .setup-mode-joker {
+    margin-top: 0;
+    padding-bottom: 34px;
+  }
+
+  .setup-mode-joker .setup-brand {
+    background: rgba(184, 142, 255, 0.08);
+    border-color: rgba(184, 142, 255, 0.18);
+  }
+
+  .setup-mode-joker .setup-logo {
+    color: #dfc9ff;
+  }
+
+  .joker-menu-cards {
+    height: 138px;
+    margin: 16px auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .joker-menu-stack {
+    position: relative;
+    width: 180px;
+    height: 125px;
+  }
+
+  .joker-menu-card {
+    position: absolute;
+    width: 82px;
+    height: 112px;
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,.88);
+    box-shadow: 0 12px 24px rgba(0,0,0,.32);
+    background: #fff;
+  }
+
+  .joker-menu-card-back {
+    width: 92px;
+    height: 118px;
+    left: 44px;
+    top: 5px;
+    transform: rotate(-8deg);
+    background:
+      repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);
+    border-color: #ddd;
+    z-index: 1;
+  }
+
+  .joker-menu-card-open {
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 12px;
+    color: #161616;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .joker-menu-card-open span {
+    font-size: 28px;
+  }
+
+  .joker-menu-card-open b {
+    margin-top: 3px;
+    font-size: 20px;
+    font-weight: 900;
+  }
+
+  .joker-menu-card-left {
+    left: 19px;
+    top: 7px;
+    transform: rotate(-14deg);
+  }
+
+  .joker-menu-card-right {
+    right: 19px;
+    top: 7px;
+    transform: rotate(14deg);
+  }
+
+  .joker-menu-card-right b {
+    color: #c72525;
+  }
+
+  .joker-coming-soon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 150px;
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: linear-gradient(145deg,#e0c6ff,#a978d6);
+    color: #251735;
+    border: 1px solid rgba(255,255,255,.45);
+    box-shadow: 0 8px 20px rgba(0,0,0,.2);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+  }
+
+  @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
+    .setup-mode-joker {
+      width: calc(100% - 12px);
+      padding: 20px 12px 22px;
+    }
+    .joker-menu-cards {
+      height: 122px;
+    }
+    .joker-menu-stack {
+      transform: scale(.88);
+    }
   }
 </style>
 
