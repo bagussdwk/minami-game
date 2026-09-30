@@ -4086,6 +4086,23 @@
     pointer-events: auto !important;
   }
 </style>
+<style id="joker-definitive-modal-layer-fix">
+body.joker-mode-active .topbar{z-index:90000 !important;pointer-events:auto !important}
+body.joker-mode-active #menuBtn{position:relative !important;z-index:90010 !important;pointer-events:auto !important}
+body.joker-mode-active #menuModal.show{position:fixed !important;inset:0 !important;z-index:100000 !important;display:flex !important;pointer-events:auto !important}
+body.joker-mode-active #menuModal.show .menu-modal-box{position:relative !important;z-index:100001 !important;pointer-events:auto !important}
+body.joker-mode-active #menuModal.show .menu-action,
+body.joker-mode-active #menuModal.show button,
+body.joker-mode-active #menuModal.show input{position:relative;z-index:100002 !important;pointer-events:auto !important}
+body.joker-mode-active #featureModal.show{position:fixed !important;inset:0 !important;z-index:110000 !important;display:flex !important;pointer-events:auto !important}
+body.joker-mode-active #featureModal.show .feature-modal-box{position:relative !important;z-index:110001 !important;pointer-events:auto !important}
+body.joker-mode-active #featureModal.show button,
+body.joker-mode-active #featureModal.show .feature-tab{pointer-events:auto !important;position:relative !important;z-index:110002 !important}
+body.joker-menu-open #jokerGame,
+body.joker-menu-open #jokerGame *{pointer-events:none !important}
+body.joker-menu-open #menuModal,
+body.joker-menu-open #menuModal *{pointer-events:auto !important}
+</style>
 </head>
   <body>
     <div class="topbar">
