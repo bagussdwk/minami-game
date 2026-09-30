@@ -7909,7 +7909,8 @@
         window.minamiAISpeed = game.aiSpeed || 1;
         saveGameState();
 
-        document.getElementById("setupMenuWrap").style.display = "none";
+        document.getElementById("setup").style.display = "none";
+        document.getElementById("setupMinami2").style.display = "none";
         minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
