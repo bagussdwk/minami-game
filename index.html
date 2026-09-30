@@ -8781,6 +8781,17 @@
   .joker-corner #jokerCard .minami2-dead-stack .card {
     margin-left: 0 !important;
   }
+
+  /* Parent .joker-corner memakai shrink-to-fit karena position:absolute.
+     Beri lebar nyata khusus Minami 2 agar kartu benar-benar center terhadap panel. */
+  .joker-corner:has(.minami2-dead-stack) {
+    width: 100px !important;
+  }
+
+  .joker-corner:has(.minami2-dead-stack) #jokerCard {
+    width: 100% !important;
+    justify-content: center !important;
+  }
 </style>
 </body></html>
 <style id="mobile-hand-fixed-footer-final">
