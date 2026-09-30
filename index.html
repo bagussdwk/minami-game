@@ -1192,6 +1192,28 @@
         }
       }
 
+      @media (max-width: 700px) {
+        /* MINAMI 2: kartu mati tetap terlihat sebagai tumpukan,
+           bukan deretan kartu panjang. */
+        .joker-corner #jokerCard .minami2-dead-stack {
+          width: max-content !important;
+          max-width: 96px !important;
+          overflow: visible !important;
+        }
+
+        .joker-corner #jokerCard .minami2-dead-stack .card,
+        .joker-corner #jokerCard .minami2-dead-stack .card:first-child {
+          width: 28px !important;
+          height: 41px !important;
+          flex: 0 0 28px !important;
+          margin-left: -23px !important;
+        }
+
+        .joker-corner #jokerCard .minami2-dead-stack .card:first-child {
+          margin-left: 0 !important;
+        }
+      }
+
       .play-history {
         margin-top: 5px;
         min-height: 26px;
@@ -5856,7 +5878,7 @@
           const title = document.querySelector(".joker-corner .center-title");
           if (title) title.textContent = "Kartu Mati";
           const stack = document.createElement("div");
-          stack.className = "dead-card-stack" + (deadCards.length === 4 ? " four-cards" : "");
+          stack.className = "dead-card-stack minami2-dead-stack" + (deadCards.length === 4 ? " four-cards" : "");
           deadCards.forEach(() => stack.appendChild(createBackCard(true)));
           container.appendChild(stack);
           return;
