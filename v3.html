@@ -4829,51 +4829,15 @@
       }
 
       function saveGameState() {
-        if (!game) return;
+        if (!game) return false;
         try {
-          const payload = JSON.stringify({
-            game: {
-              ...game,
-              potRanks: Array.from(game.potRanks || []),
-            },
-            nextOrder: Array.isArray(window.minamiNextOrder)
-              ? window.minamiNextOrder
-              : null,
-            direction: window.minamiDirection ?? game.direction ?? 1,
-            mode: game.mode || minamiMode,
-            scoreHistory: Array.isArray(window.minamiScoreHistory)
-              ? window.minamiScoreHistory
-              : [],
-          });
-
-          // Simpan di dua tempat. sessionStorage menjadi cadangan jika
-          // localStorage gagal/terhapus saat browser melakukan refresh.
-          localStorage.setItem(MINAMI_SAVE_KEY, payload);
-          try {
-            sessionStorage.setItem(MINAMI_SAVE_KEY, payload);
-          } catch (e) {}
-        } catch (e) {
-          // Jika localStorage gagal, tetap coba sessionStorage.
-          try {
-            sessionStorage.setItem(
-              MINAMI_SAVE_KEY,
-              JSON.stringify({
-                game: {
-                  ...game,
-                  potRanks: Array.from(game.potRanks || []),
-                },
-                nextOrder: Array.isArray(window.minamiNextOrder)
-                  ? window.minamiNextOrder
-                  : null,
-                direction: window.minamiDirection ?? game.direction ?? 1,
-                scoreHistory: Array.isArray(window.minamiScoreHistory)
-                  ? window.minamiScoreHistory
-                  : [],
-              }),
-            );
-          } catch (e2) {}
-        }
+          const payload=JSON.stringify({game:{...game,potRanks:Array.from(game.potRanks||[])},nextOrder:Array.isArray(window.minamiNextOrder)?window.minamiNextOrder:null,direction:window.minamiDirection??game.direction??1,mode:game.mode||minamiMode,scoreHistory:Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[]});
+          localStorage.setItem(MINAMI_SAVE_KEY,payload);
+          try{sessionStorage.setItem(MINAMI_SAVE_KEY,payload)}catch(e){}
+          return true;
+        }catch(e){return false}
       }
+
 
       let minamiAITimer = null;
 
@@ -8808,6 +8772,10 @@
       
       // Saat pertama kali membuka halaman:
       // jika ada game tersimpan, lanjutkan game tersebut.
+            window.addEventListener("pagehide",()=>{try{saveGameState()}catch(e){}});
+      window.addEventListener("beforeunload",()=>{try{saveGameState()}catch(e){}});
+      document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){try{saveGameState()}catch(e){}}});
+
       restoreSavedGame();
     </script>
   
@@ -9163,7 +9131,7 @@
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
-</script></body></html>
+</script>
 <style id="mobile-hand-fixed-footer-final">
   @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
     html,
@@ -9674,3 +9642,4 @@
 .achievement-card em{font-size:9px!important}
 @media(max-width:700px),(hover:none) and (pointer:coarse){.achievement-card{min-height:64px!important;height:64px!important}}
 </style>
+</body></html>
