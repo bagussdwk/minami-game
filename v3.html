@@ -8858,7 +8858,206 @@
     100% { transform: scale(1); opacity: 1; }
   }
 </style>
-<script id="joker-v3-clean-init">(function(){function init(){const setup=document.getElementById("setupJoker"),wrap=setup?.closest(".setup-menu-wrap"),game=document.getElementById("jokerGame"),start=document.getElementById("startJokerBtn");const choices=[...document.querySelectorAll("[data-player-joker]")];if(!setup||!game||!start)return;let count=4;choices.forEach(b=>b.addEventListener("click",()=>{count=Number(b.dataset.playerJoker)||4;choices.forEach(x=>x.classList.toggle("active",x===b))}));start.addEventListener("click",()=>{document.getElementById("setup").style.display="none";document.getElementById("setupMinami2").style.display="none";setup.style.display="none";if(wrap)wrap.style.display="none";game.classList.add("active");game.setAttribute("aria-hidden","false");document.body.classList.add("joker-mode-active");document.getElementById("jokerGameSub").textContent="2 Deck • "+count+" Pemain";game.querySelectorAll(".joker-seat").forEach((e,i)=>e.style.display=i<count?"block":"none");game.querySelectorAll(".joker-discard-stack").forEach((e,i)=>e.style.display=i<count?"block":"none");document.getElementById("jokerPileCount").textContent=(104-count*13-1)+" kartu tengah";const h=document.getElementById("jokerHandPreview");h.innerHTML="";for(let i=0;i<14;i++){const s=document.createElement("span");s.textContent="🂠";h.appendChild(s)}window.scrollTo(0,0)})}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init()})();</script></body></html>
+<script id="joker-v3-clean-init">
+(function(){
+  "use strict";
+  const SUITS=[
+    {s:"♠",c:"black"},{s:"♥",c:"red"},{s:"♦",c:"red"},{s:"♣",c:"black"}
+  ];
+  const RANKS=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+  let jokerState=null;
+
+  function makeDeck(){
+    const d=[];
+    for(let deck=0;deck<2;deck++){
+      SUITS.forEach(s=>RANKS.forEach(r=>d.push({rank:r,suit:s.s,color:s.c,deck})));
+    }
+    return d;
+  }
+  function shuffle(a){
+    for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+    return a;
+  }
+  function cardText(card){
+    return card.rank+card.suit;
+  }
+  function cardHTML(card,small){
+    const red=card.color==="red"?" red":"";
+    const joker=card.isJoker?" joker-card":"";
+    return '<span class="joker-real-card'+red+joker+(small?' small':'')+'"><b>'+card.rank+'</b><i>'+card.suit+'</i></span>';
+  }
+  function setText(id,value){const e=document.getElementById(id);if(e)e.textContent=value;}
+  function renderHands(){
+    if(!jokerState)return;
+    const hand=document.getElementById("jokerHandPreview");
+    if(hand){
+      hand.innerHTML=jokerState.hands[0].map(c=>cardHTML(c,false)).join("");
+      hand.querySelectorAll(".joker-real-card").forEach((el,i)=>{
+        el.title=cardText(jokerState.hands[0][i])+(jokerState.hands[0][i].isJoker?" • JOKER":"");
+        el.addEventListener("click",()=>selectCard(i));
+      });
+    }
+    jokerState.hands.forEach((h,i)=>{
+      const seat=document.querySelector('.joker-seat[data-seat="'+i+'"]');
+      if(seat){
+        const small=seat.querySelector("small");
+        if(small)small.textContent=h.length+" kartu";
+        seat.classList.toggle("is-active",i===jokerState.turn);
+      }
+    });
+  }
+  function renderDiscard(){
+    if(!jokerState)return;
+    jokerState.discards.forEach((stack,i)=>{
+      const el=document.querySelector('.joker-discard-stack[data-seat="'+i+'"]');
+      if(!el)return;
+      const top=stack[stack.length-1];
+      el.innerHTML='<span>Buangan P'+(i+1)+'</span><b>'+(top?cardHTML(top,true):"🂠")+'</b><small>'+(stack.length?stack.length+" kartu":"kosong")+'</small>';
+      el.classList.toggle("available-pick",i===jokerState.turn-1 || (jokerState.turn===0&&i===jokerState.count-1));
+      if(i===jokerState.turn-1 || (jokerState.turn===0&&i===jokerState.count-1)){
+        el.onclick=()=>takePreviousDiscard();
+      }else el.onclick=()=>showDiscardHistory(i);
+    });
+  }
+  function renderCenter(){
+    if(!jokerState)return;
+    setText("jokerPileCount",jokerState.drawPile.length+" kartu tengah");
+    const marker=document.getElementById("jokerMarkerCard");
+    if(marker)marker.innerHTML=jokerState.marker?cardHTML(jokerState.marker,false):"?";
+  }
+  function showStatus(){
+    const status=document.querySelector(".joker-game-status");
+    if(!status)return;
+    const p=jokerState.turn+1;
+    status.textContent="Giliran P"+p+(jokerState.turn===0?" • pilih kartu lalu BUANG":" • ambil kartu");
+  }
+  function showDiscardHistory(i){
+    const stack=jokerState.discards[i]||[];
+    alert("Buangan P"+(i+1)+"\n"+(stack.length?stack.map(cardText).join("  →  "):"Belum ada buangan"));
+  }
+  function selectCard(index){
+    if(!jokerState||jokerState.turn!==0||jokerState.phase!=="discard")return;
+    if(jokerState.hands[0][index].isJoker){
+      setText("jokerActionHint","Joker tidak boleh dibuang.");
+      return;
+    }
+    jokerState.selected=index;
+    document.querySelectorAll(".joker-real-card").forEach((e,i)=>e.classList.toggle("selected",i===index));
+    setText("jokerActionHint","Kartu dipilih. Tekan BUANG KARTU.");
+  }
+  function discardSelected(){
+    if(!jokerState||jokerState.turn!==0||jokerState.phase!=="discard"||jokerState.selected<0)return;
+    const card=jokerState.hands[0][jokerState.selected];
+    if(card.isJoker){setText("jokerActionHint","Joker tidak boleh dibuang.");return;}
+    jokerState.hands[0].splice(jokerState.selected,1);
+    jokerState.discards[0].push(card);
+    jokerState.selected=-1;
+    jokerState.turn=1%jokerState.count;
+    jokerState.phase="take";
+    renderAll();
+    setText("jokerActionHint","P2 sekarang boleh mengambil buangan P1 atau 1 kartu dari tengah.");
+  }
+  function takePreviousDiscard(){
+    if(!jokerState||jokerState.phase!=="take")return;
+    const prev=(jokerState.turn-1+jokerState.count)%jokerState.count;
+    const stack=jokerState.discards[prev];
+    if(!stack||!stack.length)return;
+    const card=stack.pop();
+    jokerState.hands[jokerState.turn].push(card);
+    finishTake();
+  }
+  function takeCenter(){
+    if(!jokerState||jokerState.phase!=="take"||!jokerState.drawPile.length)return;
+    jokerState.hands[jokerState.turn].push(jokerState.drawPile.pop());
+    finishTake();
+  }
+  function finishTake(){
+    jokerState.phase="discard";
+    jokerState.selected=-1;
+    renderAll();
+    if(jokerState.turn===0){
+      setText("jokerActionHint","Giliran Anda: pilih 1 kartu untuk dibuang. Joker tidak boleh dibuang.");
+    }else{
+      // AI hanya menjalankan langkah sederhana: ambil dari tengah lalu buang kartu non-Joker.
+      setTimeout(aiTurn,450);
+    }
+  }
+  function aiTurn(){
+    if(!jokerState||jokerState.phase!=="discard"||jokerState.turn===0)return;
+    const h=jokerState.hands[jokerState.turn];
+    const card=jokerState.drawPile.pop();
+    if(card)h.push(card);
+    let idx=h.findIndex(c=>!c.isJoker);
+    if(idx<0)idx=0;
+    if(h[idx])jokerState.discards[jokerState.turn].push(h.splice(idx,1)[0]);
+    jokerState.turn=(jokerState.turn+1)%jokerState.count;
+    jokerState.phase="take";
+    renderAll();
+    if(jokerState.drawPile.length===0){
+      setText("jokerActionHint","Kartu tengah habis. Pemain berikutnya tidak dapat mengambil kartu tengah.");
+      return;
+    }
+    if(jokerState.turn===0){
+      setText("jokerActionHint","Giliran Anda: ambil buangan P"+jokerState.count+" atau kartu tengah.");
+    }else setTimeout(aiTake,450);
+  }
+  function aiTake(){
+    if(!jokerState||jokerState.phase!=="take"||jokerState.turn===0)return;
+    if(jokerState.drawPile.length)jokerState.hands[jokerState.turn].push(jokerState.drawPile.pop());
+    else{
+      const prev=(jokerState.turn-1+jokerState.count)%jokerState.count;
+      const st=jokerState.discards[prev];
+      if(st&&st.length)jokerState.hands[jokerState.turn].push(st.pop());
+    }
+    finishTake();
+  }
+  function renderAll(){
+    renderHands();renderDiscard();renderCenter();showStatus();
+    const controls=document.getElementById("jokerControls");
+    if(controls)controls.style.display=jokerState&&jokerState.turn===0?"flex":"none";
+  }
+  function startRound(count){
+    const deck=shuffle(makeDeck());
+    const hands=Array.from({length:count},()=>[]);
+    // Semua pemain mendapat 13 kartu, lalu pemain pertama mendapat 1 kartu tambahan saat pembagian.
+    for(let n=0;n<13;n++)for(let p=0;p<count;p++)hands[p].push(deck.pop());
+    hands[0].push(deck.pop());
+    // Satu kartu terbuka menentukan Joker; kartu ini dikeluarkan dari permainan.
+    const marker=deck.pop();
+    const jokerColor=marker.color==="red"?"black":"red";
+    deck.forEach(c=>{if(c.rank===marker.rank&&c.color===jokerColor)c.isJoker=true;});
+    jokerState={count,hands,drawPile:deck,marker,discards:Array.from({length:count},()=>[]),turn:0,phase:"discard",selected:-1};
+    setText("jokerActionHint","Giliran P1: Anda sudah mendapat 14 kartu. Buang 1 kartu untuk memulai.");
+    renderAll();
+  }
+  function init(){
+    const setup=document.getElementById("setupJoker"),game=document.getElementById("jokerGame"),start=document.getElementById("startJokerBtn");
+    const choices=[...document.querySelectorAll("[data-player-joker]")];
+    if(!setup||!game||!start)return;
+    let count=4;
+    choices.forEach(b=>b.addEventListener("click",()=>{count=Number(b.dataset.playerJoker)||4;choices.forEach(x=>x.classList.toggle("active",x===b));}));
+    start.addEventListener("click",()=>{
+      ["setup","setupMinami2","setupJoker"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
+      const wrap=setup.closest(".setup-menu-wrap");if(wrap)wrap.style.display="none";
+      game.classList.add("active");game.setAttribute("aria-hidden","false");document.body.classList.add("joker-mode-active");
+      setText("jokerGameSub","2 Deck • "+count+" Pemain");
+      game.querySelectorAll(".joker-seat").forEach((e,i)=>e.style.display=i<count?"block":"none");
+      game.querySelectorAll(".joker-discard-stack").forEach((e,i)=>e.style.display=i<count?"block":"none");
+      startRound(count);
+      window.scrollTo(0,0);
+    });
+    const style=document.createElement("style");
+    style.textContent=".joker-real-card{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:28px;height:40px;border-radius:5px;background:#fff;color:#111;border:1px solid #aaa;font-size:10px;line-height:1;cursor:pointer;box-sizing:border-box}.joker-real-card i{font-style:normal;font-size:12px}.joker-real-card.red{color:#c22}.joker-real-card.joker-card{background:#ffe36e;border-color:#d39d00;box-shadow:0 0 8px rgba(255,210,50,.7)}.joker-real-card.selected{transform:translateY(-7px);outline:2px solid #ffd45a}.joker-discard-stack.available-pick{cursor:pointer;filter:drop-shadow(0 0 5px rgba(255,215,80,.6))}.joker-discard-stack small{display:block;font-size:6px;color:#b9d5ca}.joker-seat.is-active{box-shadow:0 0 0 2px #ffd45a,0 8px 18px rgba(0,0,0,.25)}#jokerControls{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:4px}#jokerControls button{border:0;border-radius:7px;padding:5px 9px;font-size:8px;font-weight:900;cursor:pointer}.joker-action-hint{font-size:7px;color:#cfe8dc;text-align:center;width:100%;min-height:10px}";
+    document.head.appendChild(style);
+    const controls=document.createElement("div");controls.id="jokerControls";controls.innerHTML='<button type="button" id="jokerTakeCenter">AMBIL TENGAH</button><button type="button" id="jokerTakeDiscard">AMBIL BUANGAN</button><button type="button" id="jokerDiscardBtn">BUANG KARTU</button><div class="joker-action-hint" id="jokerActionHint"></div>';
+    const hand=document.querySelector("#jokerGame .joker-hand-preview");if(hand)hand.appendChild(controls);
+    document.getElementById("jokerTakeCenter").onclick=takeCenter;
+    document.getElementById("jokerTakeDiscard").onclick=takePreviousDiscard;
+    document.getElementById("jokerDiscardBtn").onclick=discardSelected;
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
+})();
+</script></body></html>
 <style id="mobile-hand-fixed-footer-final">
   @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
     html,
