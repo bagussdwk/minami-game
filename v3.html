@@ -9194,10 +9194,7 @@
     document.getElementById("jokerDiscardBtn").onclick=discardSelected;
 
     // Pulihkan JOKER sendiri setelah refresh. Tidak memakai state MINAMI 1/2.
-    if(!restoreJokerState()){
-      const savedMinami=localStorage.getItem("minami_game_state_v1");
-      // Jika tidak ada state JOKER, biarkan menu MINAMI tetap normal.
-    }
+    restoreJokerState();
 
     window.addEventListener("pagehide",()=>{try{saveJokerState()}catch(e){}});
     window.addEventListener("beforeunload",()=>{try{saveJokerState()}catch(e){}});
