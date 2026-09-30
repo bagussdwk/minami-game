@@ -4145,10 +4145,13 @@
         <div class="joker-menu-stack">
           <div class="joker-menu-card joker-menu-card-back"></div>
           <div class="joker-menu-card joker-menu-card-open joker-menu-card-left">
-            <span>Q</span><b>♠</b>
+            <span>Q♠</span>
+          </div>
+          <div class="joker-menu-card joker-menu-card-open joker-menu-card-middle">
+            <span>7♠</span>
           </div>
           <div class="joker-menu-card joker-menu-card-open joker-menu-card-right">
-            <span>3</span><b>♥</b>
+            <span>3♠</span>
           </div>
         </div>
       </div>
@@ -9263,13 +9266,9 @@
   }
 
   .joker-menu-card-open span {
-    font-size: 28px;
-  }
-
-  .joker-menu-card-open b {
-    margin-top: 3px;
-    font-size: 20px;
+    font-size: 27px;
     font-weight: 900;
+    letter-spacing: -2px;
   }
 
   .joker-menu-card-left {
@@ -9278,14 +9277,17 @@
     transform: rotate(-14deg);
   }
 
+  .joker-menu-card-middle {
+    left: 49px;
+    top: 0;
+    transform: rotate(0deg);
+    z-index: 4;
+  }
+
   .joker-menu-card-right {
     right: 19px;
     top: 7px;
     transform: rotate(14deg);
-  }
-
-  .joker-menu-card-right b {
-    color: #c72525;
   }
 
   .joker-coming-soon {
