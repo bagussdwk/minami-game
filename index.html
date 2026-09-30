@@ -3989,6 +3989,17 @@
         <div class="setup-card">9♠</div>
       </div>
 
+      <!-- =========================================================
+           MODE PERMAINAN
+           MINAMI 1 = 2 deck, Joker ditentukan dari 1 kartu mati.
+           MINAMI 2 = 2 deck + 8 Joker fisik (112 kartu total).
+           ========================================================= -->
+      <div class="setup-section-label">Mode Permainan</div>
+      <div class="player-buttons mode-buttons">
+        <button class="player-btn active" type="button" id="modeMinami1Btn">🎴 MINAMI 1<span class="player-btn-sub">Joker dari kartu mati</span></button>
+        <button class="player-btn" type="button" id="modeMinami2Btn">🃏 MINAMI 2<span class="player-btn-sub">112 kartu + 8 Joker</span></button>
+      </div>
+
       <div class="setup-section-label">Pilih jumlah pemain</div>
       <div class="player-buttons">
         <button class="player-btn active" data-player="4">
@@ -4007,6 +4018,12 @@
     </section>
 
     <section class="setup setup-mode-two" id="setupMinami2">
+      <!-- MINAMI 2 SETUP: 112 kartu = 104 kartu normal + 8 Joker fisik. -->
+      <div class="setup-section-label">Mode Permainan</div>
+      <div class="player-buttons mode-buttons">
+        <button class="player-btn" type="button" id="modeMinami2BackBtn">🎴 MINAMI 1<span class="player-btn-sub">Joker dari kartu mati</span></button>
+        <button class="player-btn active" type="button">🃏 MINAMI 2<span class="player-btn-sub">112 kartu + 8 Joker</span></button>
+      </div>
       <div class="setup-brand">♠ 2 DECK + JOKER &nbsp;•&nbsp; MINAMI 2</div>
       <h1 class="setup-logo">MINAMI 2</h1>
       <div class="setup-cards" aria-hidden="true">
@@ -4060,7 +4077,7 @@
 
       <div class="table">
         <div class="joker-corner">
-          <div class="center-title">Joker</div>
+          <div class="center-title">Kartu Mati</div>
           <div id="jokerCard"></div>
           <small id="jokerInfo"></small>
         </div>
@@ -4696,6 +4713,7 @@
               ? window.minamiNextOrder
               : null,
             direction: window.minamiDirection ?? game.direction ?? 1,
+            mode: game.mode || minamiMode,
             scoreHistory: Array.isArray(window.minamiScoreHistory)
               ? window.minamiScoreHistory
               : [],
@@ -4777,6 +4795,7 @@
 
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
+        minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
@@ -4790,7 +4809,7 @@
             i <= playerCount ? "block" : "none";
         }
 
-        renderDeadCards(game.deadCards, game.jokerIndex, true);
+        renderDeadCards(game.deadCards, game.jokerIndex, game.mode !== 2);
         document.getElementById("jokerInfo").textContent = "";
         document.getElementById("status").textContent = game.over
           ? "Game selesai"
@@ -4953,6 +4972,9 @@
           if (!saved || !saved.game) return false;
 
           game = saved.game;
+          // Simpan mode di state agar refresh tidak mengubah MINAMI 1/2.
+          game.mode = Number(game.mode) === 2 ? 2 : 1;
+          minamiMode = game.mode;
           playerCount = Number(game.playerCount) || 4;
           if(!Array.isArray(game.aiProfilesData) || game.aiProfilesData.length < playerCount){
             game.aiProfilesData = [null, ...loadPersistentAIRoster(Math.max(0, playerCount - 1))];
@@ -5038,6 +5060,11 @@
         }
         return a;
       }
+      // =============================================================
+      // DECK MINAMI 1 vs MINAMI 2
+      // MINAMI 1: 104 kartu (2 deck), Joker = rank dari 1 kartu mati.
+      // MINAMI 2: 112 kartu (104 kartu normal + 8 Joker fisik).
+      // =============================================================
       function deck() {
         let d = [];
         for (let set = 1; set <= 2; set++)
@@ -5050,11 +5077,26 @@
                 rank: r,
                 text: r + s.symbol,
                 set,
+                isJoker: false,
               });
+
+        // MINAMI 2 menambahkan 8 Joker fisik: 4 merah + 4 hitam.
+        // Joker ikut diacak bersama 104 kartu normal, sehingga bisa masuk
+        // tangan pemain ATAU masuk ke kartu mati.
+        if (minamiMode === 2) {
+          for (let i = 1; i <= 4; i++) {
+            d.push({ id: "J-R-" + i, suit: null, red: true, rank: null, text: "🃏", set: 3, isJoker: true, jokerColor: "red" });
+            d.push({ id: "J-B-" + i, suit: null, red: false, rank: null, text: "🃏", set: 3, isJoker: true, jokerColor: "black" });
+          }
+        }
         return d;
       }
       function isJoker(c) {
-        return !!game && c.rank === game.jokerRank;
+        if (!c) return false;
+        // MINAMI 2: Joker adalah kartu fisik, tidak bergantung pada rank.
+        if (c.isJoker === true) return true;
+        // MINAMI 1: semua kartu dengan rank Joker yang ditentukan menjadi Joker.
+        return !!game && game.mode !== 2 && c.rank === game.jokerRank;
       }
       function cardValue(c) {
         return isJoker(c) ? 25 : val(c.rank);
@@ -5741,7 +5783,22 @@
 
         container.innerHTML = "";
 
-        // HP: cukup tampilkan satu kartu sebagai penanda Joker.
+        // MINAMI 2: tidak ada kartu Joker yang dibuka dari kartu mati.
+        // Seluruh sisa kartu hanya ditampilkan sebagai kartu tertutup.
+        if (game?.mode === 2) {
+          const title = document.querySelector(".joker-corner .center-title");
+          if (title) title.textContent = "Kartu Mati";
+          const stack = document.createElement("div");
+          stack.className = "dead-card-stack" + (deadCards.length === 4 ? " four-cards" : "");
+          deadCards.forEach(() => stack.appendChild(createBackCard(true)));
+          container.appendChild(stack);
+          return;
+        }
+
+        const title = document.querySelector(".joker-corner .center-title");
+        if (title) title.textContent = "Joker";
+
+        // MINAMI 1: HP cukup tampilkan satu kartu sebagai penanda Joker.
         // Web/desktop: pertahankan tampilan kartu mati bertumpuk seperti sebelumnya.
         const isMobile =
           window.matchMedia && window.matchMedia("(max-width: 700px)").matches;
@@ -7707,14 +7764,20 @@
       }
       function applyPlayerProfilesToTable(){ applyPlayerProfile(); applyAIProfiles(); refreshPlayerTitles(); }
 
+      // =============================================================
+      // START GAME — SHARED ENGINE
+      // Semua aturan gameplay tetap satu engine.
+      // Perbedaan MINAMI 1/2 hanya pada komposisi deck dan sistem Joker.
+      // =============================================================
       function startGame() {
         let d = shuffle(deck()),
           deadCount = d.length - playerCount * 20,
           deadCards = d.splice(0, deadCount),
-          jokerIndex = Math.floor(Math.random() * deadCards.length),
-          joker = deadCards[jokerIndex],
+          jokerIndex = minamiMode === 1 ? Math.floor(Math.random() * deadCards.length) : -1,
+          joker = minamiMode === 1 ? deadCards[jokerIndex] : null,
           hands = [];
 
+        // Kedua mode selalu membagikan tepat 20 kartu per pemain.
         let per = d.length / playerCount;
 
         for (let i = 0; i < playerCount; i++) hands.push(d.splice(0, per));
@@ -7732,8 +7795,10 @@
         startMinamiMusic();
 
         game = {
+          mode: minamiMode,
           hands,
-          jokerRank: joker.rank,
+          // MINAMI 1 menyimpan rank Joker; MINAMI 2 tidak memakai rank Joker.
+          jokerRank: joker ? joker.rank : null,
           joker,
           playerCount,
           scores: window.minamiScores || Array(playerCount).fill(0),
@@ -7772,6 +7837,8 @@
 
         game.deadCards = deadCards;
         game.jokerIndex = jokerIndex;
+        // MINAMI 2 tidak pernah membuka/menentukan Joker dari kartu mati.
+        // Semua Joker fisik sudah tercampur di deck sejak awal.
         window.minamiMatchAIProfiles = game.aiProfilesData.map(p => p ? { ...p } : p);
 
         window.minamiScores = game.scores;
@@ -7780,6 +7847,7 @@
 
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
+        minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
@@ -7791,11 +7859,15 @@
         gameEl.classList.remove("players-4", "players-5");
         gameEl.classList.add("active", "players-" + playerCount);
 
-        // Saat pembagian kartu: semua kartu mati masih tertutup
+        // =====================================================
+        // KARTU MATI
+        // MINAMI 1: kartu mati tertutup selama deal, lalu 1 kartu dibuka.
+        // MINAMI 2: seluruh kartu mati tetap tertutup; tidak ada reveal Joker.
+        // =====================================================
         renderDeadCards(deadCards, jokerIndex, false);
 
         document.getElementById("jokerInfo").textContent =
-          "Menentukan Joker...";
+          minamiMode === 1 ? "Menentukan Joker..." : "Kartu mati tertutup";
 
         document.getElementById("status").textContent = "Game dimulai";
 
@@ -7820,7 +7892,9 @@
         render();
 
         showDealAnimation(playerCount, totalDealt, () => {
-          renderDeadCards(game.deadCards, game.jokerIndex, true);
+          // MINAMI 1 membuka kartu penentu Joker.
+          // MINAMI 2 tetap menutup seluruh kartu mati.
+          renderDeadCards(game.deadCards, game.jokerIndex, minamiMode === 1);
 
           document.getElementById("jokerInfo").textContent = "";
 
@@ -7857,21 +7931,50 @@
         });
       }
 
-      document.querySelectorAll(".player-btn").forEach(
+      // =============================================================
+      // SETUP MINAMI 1
+      // =============================================================
+      document.querySelectorAll("#setup .player-btn[data-player]").forEach(
         (b) =>
           (b.onclick = () => {
-            document
-              .querySelectorAll(".player-btn")
-              .forEach((x) => x.classList.remove("active"));
+            document.querySelectorAll("#setup .player-btn[data-player]").forEach((x) => x.classList.remove("active"));
             b.classList.add("active");
             playerCount = Number(b.dataset.player);
             document.getElementById("rulePreview").innerHTML =
               playerCount === 4
-                ? "4 pemain → 24 kartu mati → 80 kartu → 20 kartu/pemain"
-                : "5 pemain → 4 kartu mati → 100 kartu → 20 kartu/pemain";
+                ? "MINAMI 1 • 4 pemain → 24 kartu mati → 80 kartu → 20 kartu/pemain"
+                : "MINAMI 1 • 5 pemain → 4 kartu mati → 100 kartu → 20 kartu/pemain";
           }),
       );
-      document.getElementById("startBtn").onclick = startGame;
+
+      // =============================================================
+      // SETUP MINAMI 2
+      // 112 kartu total → semua pemain mendapat 20 kartu.
+      // Sisa kartu otomatis menjadi kartu mati dan tetap tertutup.
+      // =============================================================
+      document.querySelectorAll("#setupMinami2 .player-btn[data-player-minami2]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            document.querySelectorAll("#setupMinami2 .player-btn[data-player-minami2]").forEach((x) => x.classList.remove("active"));
+            b.classList.add("active");
+            playerCount = Number(b.dataset.playerMinami2);
+          }),
+      );
+
+      let minamiMode = 1;
+      function showSetupMode(mode) {
+        minamiMode = mode === 2 ? 2 : 1;
+        document.getElementById("setup").style.display = minamiMode === 1 ? "" : "none";
+        document.getElementById("setupMinami2").style.display = minamiMode === 2 ? "" : "none";
+        document.getElementById("modeMinami1Btn")?.classList.toggle("active", minamiMode === 1);
+        document.getElementById("modeMinami2Btn")?.classList.toggle("active", minamiMode === 2);
+        document.getElementById("status").textContent = minamiMode === 1 ? "MINAMI 1" : "MINAMI 2";
+      }
+      document.getElementById("modeMinami1Btn").onclick = () => showSetupMode(1);
+      document.getElementById("modeMinami2Btn").onclick = () => showSetupMode(2);
+      document.getElementById("modeMinami2BackBtn").onclick = () => showSetupMode(1);
+      document.getElementById("startBtn").onclick = () => { minamiMode = 1; startGame(); };
+      document.getElementById("startMinami2Btn").onclick = () => { minamiMode = 2; startGame(); };
       document.getElementById("sortSuitBtn").onclick = () => {
         sortCards(game.hands[0], "suit");
         render();
@@ -8894,6 +8997,13 @@
 @media(max-width:700px),(hover:none) and (pointer:coarse){.quick-chat-fab{right:8px;bottom:105px;width:36px;height:36px;font-size:16px}.feature-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <style id="minami2-menu-style">
+  /* =============================================================
+     MINAMI 1 / MINAMI 2 SETUP
+     Hanya satu panel setup yang ditampilkan pada satu waktu.
+     ============================================================= */
+  #setupMinami2 { display: none; }
+  .mode-buttons { max-width: 560px !important; }
+  .mode-buttons .player-btn { text-align: center !important; }
   .setup-mode-two { margin-top: 0; }
   .setup-mode-two .setup-brand {
     background: rgba(126, 201, 255, 0.07);
