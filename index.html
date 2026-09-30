@@ -3978,77 +3978,86 @@
       </div>
     </div>
 
-    <section class="setup" id="setup">
-      <div class="setup-brand">♠ 2 DECK &nbsp;•&nbsp; MINAMI</div>
-      <h1 class="setup-logo">MINAMI</h1>
-      <div class="setup-cards" aria-hidden="true">
-        <div class="setup-card">7♣</div>
-        <div class="setup-card red">Q♥</div>
-        <div class="setup-card">2♠</div>
-        <div class="setup-card red">4♦</div>
-        <div class="setup-card">9♠</div>
+    <section class="setup-menu-wrap" id="setupMenuWrap">
+      <div class="setup-menu-head">
+        <div class="setup-brand">♠ 2 DECK &nbsp;•&nbsp; MINAMI</div>
+        <h1 class="setup-logo">MINAMI</h1>
+        <div class="setup-tagline">Pilih mode permainan yang ingin kamu mainkan.</div>
       </div>
 
-      <!-- =========================================================
-           MODE PERMAINAN
-           MINAMI 1 = 2 deck, Joker ditentukan dari 1 kartu mati.
-           MINAMI 2 = 2 deck + 8 Joker fisik (112 kartu total).
-           ========================================================= -->
-      <div class="setup-section-label">Mode Permainan</div>
-      <div class="player-buttons mode-buttons">
-        <button class="player-btn active" type="button" id="modeMinami1Btn">🎴 MINAMI 1<span class="player-btn-sub">Joker dari kartu mati</span></button>
-        <button class="player-btn" type="button" id="modeMinami2Btn">🃏 MINAMI 2<span class="player-btn-sub">112 kartu + 8 Joker</span></button>
-      </div>
+      <div class="setup-mode-cards">
+        <section class="setup setup-mode-card" id="setup">
+          <div class="setup-brand">♠ 2 DECK &nbsp;•&nbsp; MINAMI 1</div>
+          <h2 class="setup-mode-title">MINAMI 1</h2>
+          <div class="setup-cards" aria-hidden="true">
+            <div class="setup-card">7♣</div>
+            <div class="setup-card red">Q♥</div>
+            <div class="setup-card">2♠</div>
+            <div class="setup-card red">4♦</div>
+            <div class="setup-card">9♠</div>
+          </div>
 
-      <div class="setup-section-label">Pilih jumlah pemain</div>
-      <div class="player-buttons">
-        <button class="player-btn active" data-player="4">
-          <span class="player-btn-main">4 Pemain</span>
-          <span class="player-btn-sub">24 kartu mati • 20 kartu/orang</span>
-        </button>
-        <button class="player-btn" data-player="5">
-          <span class="player-btn-main">5 Pemain</span>
-          <span class="player-btn-sub">4 kartu mati • 20 kartu/orang</span>
-        </button>
-      </div>
+          <div class="setup-section-label">Pilih jumlah pemain</div>
+          <div class="player-buttons">
+            <button class="player-btn active" data-player="4">
+              <span class="player-btn-main">4 Pemain</span>
+              <span class="player-btn-sub">24 kartu mati • 20 kartu/orang</span>
+            </button>
+            <button class="player-btn" data-player="5">
+              <span class="player-btn-main">5 Pemain</span>
+              <span class="player-btn-sub">4 kartu mati • 20 kartu/orang</span>
+            </button>
+          </div>
 
-      <button class="start-btn setup-start" id="startBtn">
-        🎴 MULAI PERMAINAN
-      </button>
-    </section>
+          <div id="rulePreview">
+            MINAMI 1 • 4 pemain → 24 kartu mati → 80 kartu → 20 kartu/pemain
+          </div>
 
-    <section class="setup setup-mode-two" id="setupMinami2">
-      <!-- MINAMI 2 SETUP: 112 kartu = 104 kartu normal + 8 Joker fisik. -->
-      <div class="setup-section-label">Mode Permainan</div>
-      <div class="player-buttons mode-buttons">
-        <button class="player-btn" type="button" id="modeMinami2BackBtn">🎴 MINAMI 1<span class="player-btn-sub">Joker dari kartu mati</span></button>
-        <button class="player-btn active" type="button">🃏 MINAMI 2<span class="player-btn-sub">112 kartu + 8 Joker</span></button>
-      </div>
-      <div class="setup-brand">♠ 2 DECK + JOKER &nbsp;•&nbsp; MINAMI 2</div>
-      <h1 class="setup-logo">MINAMI 2</h1>
-      <div class="setup-cards" aria-hidden="true">
-        <div class="setup-card">7♣</div>
-        <div class="setup-card red">Q♥</div>
-        <div class="setup-card joker-mark">🃏</div>
-        <div class="setup-card red">4♦</div>
-        <div class="setup-card">9♠</div>
-      </div>
+          <div class="setup-rules">
+            <div class="setup-rule-chip"><b>Joker</b><span>Ditentukan dari kartu mati.</span></div>
+            <div class="setup-rule-chip"><b>Putaran 1</b><span>Wajib membuat Dasar legal.</span></div>
+            <div class="setup-rule-chip"><b>Kartu</b><span>2 deck tanpa Joker fisik.</span></div>
+          </div>
 
-      <div class="setup-section-label">Pilih jumlah pemain</div>
-      <div class="player-buttons minami2-player-buttons">
-        <button class="player-btn active" type="button" data-player-minami2="4">
-          <span class="player-btn-main">4 Pemain</span>
-          <span class="player-btn-sub">Mode 4 pemain</span>
-        </button>
-        <button class="player-btn" type="button" data-player-minami2="5">
-          <span class="player-btn-main">5 Pemain</span>
-          <span class="player-btn-sub">Mode 5 pemain</span>
-        </button>
-      </div>
+          <button class="start-btn setup-start" id="startBtn">
+            🎴 MULAI MINAMI 1
+          </button>
+        </section>
 
-      <button class="start-btn setup-start" id="startMinami2Btn" type="button">
-        🃏 MULAI PERMAINAN
-      </button>
+        <section class="setup setup-mode-two setup-mode-card" id="setupMinami2">
+          <div class="setup-brand">♠ 2 DECK + JOKER &nbsp;•&nbsp; MINAMI 2</div>
+          <h2 class="setup-mode-title">MINAMI 2</h2>
+          <div class="setup-cards" aria-hidden="true">
+            <div class="setup-card">7♣</div>
+            <div class="setup-card red">Q♥</div>
+            <div class="setup-card joker-mark">🃏</div>
+            <div class="setup-card red">4♦</div>
+            <div class="setup-card">9♠</div>
+          </div>
+
+          <div class="setup-section-label">Pilih jumlah pemain</div>
+          <div class="player-buttons minami2-player-buttons">
+            <button class="player-btn active" type="button" data-player-minami2="4">
+              <span class="player-btn-main">4 Pemain</span>
+              <span class="player-btn-sub">24 kartu mati • 20 kartu/orang</span>
+            </button>
+            <button class="player-btn" type="button" data-player-minami2="5">
+              <span class="player-btn-main">5 Pemain</span>
+              <span class="player-btn-sub">4 kartu mati • 20 kartu/orang</span>
+            </button>
+          </div>
+
+          <div class="setup-rules">
+            <div class="setup-rule-chip"><b>Joker</b><span>8 Joker fisik ikut di dalam deck.</span></div>
+            <div class="setup-rule-chip"><b>Putaran 1</b><span>Wajib membuat Dasar legal.</span></div>
+            <div class="setup-rule-chip"><b>Kartu</b><span>112 kartu total termasuk Joker.</span></div>
+          </div>
+
+          <button class="start-btn setup-start" id="startMinami2Btn" type="button">
+            🃏 MULAI MINAMI 2
+          </button>
+        </section>
+      </div>
     </section>
 
     <section class="game" id="game">
@@ -7964,15 +7973,8 @@
       let minamiMode = 1;
       function showSetupMode(mode) {
         minamiMode = mode === 2 ? 2 : 1;
-        document.getElementById("setup").style.display = minamiMode === 1 ? "" : "none";
-        document.getElementById("setupMinami2").style.display = minamiMode === 2 ? "" : "none";
-        document.getElementById("modeMinami1Btn")?.classList.toggle("active", minamiMode === 1);
-        document.getElementById("modeMinami2Btn")?.classList.toggle("active", minamiMode === 2);
         document.getElementById("status").textContent = minamiMode === 1 ? "MINAMI 1" : "MINAMI 2";
       }
-      document.getElementById("modeMinami1Btn").onclick = () => showSetupMode(1);
-      document.getElementById("modeMinami2Btn").onclick = () => showSetupMode(2);
-      document.getElementById("modeMinami2BackBtn").onclick = () => showSetupMode(1);
       document.getElementById("startBtn").onclick = () => { minamiMode = 1; startGame(); };
       document.getElementById("startMinami2Btn").onclick = () => { minamiMode = 2; startGame(); };
       document.getElementById("sortSuitBtn").onclick = () => {
@@ -8094,7 +8096,7 @@
           if (playerEl) playerEl.style.display = "";
         }
         document.getElementById("menuModal").classList.remove("game-active");
-        // Kembali ke setup mode yang terakhir dipilih, tanpa menampilkan dua setup sekaligus.
+        // Menu awal selalu menampilkan dua card MINAMI secara bersamaan.
         showSetupMode(minamiMode);
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
