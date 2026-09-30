@@ -4066,6 +4066,26 @@
     z-index: 20001 !important;
   }
 </style>
+<style id="joker-pointer-layer-fix">
+  /* Saat hamburger dibuka, seluruh meja JOKER tidak boleh menerima pointer. */
+  body.joker-menu-open .joker-game,
+  body.joker-menu-open .joker-game * {
+    pointer-events: none !important;
+  }
+  body.joker-menu-open #menuModal,
+  body.joker-menu-open #menuModal * {
+    pointer-events: auto !important;
+  }
+  #menuBtn { position: relative !important; z-index: 40000 !important; pointer-events: auto !important; }
+  #menuModal { z-index: 40001 !important; }
+  #featureModal { z-index: 40002 !important; pointer-events: auto !important; }
+  #featureModal .feature-modal-box,
+  #featureModal button,
+  #featureModal .feature-tab,
+  #featureModal .score-modal-close {
+    pointer-events: auto !important;
+  }
+</style>
 </head>
   <body>
     <div class="topbar">
@@ -9245,6 +9265,73 @@
     document.getElementById("jokerTakeCenter").onclick=takeCenter;
     document.getElementById("jokerTakeDiscard").onclick=takePreviousDiscard;
     document.getElementById("jokerDiscardBtn").onclick=discardSelected;
+
+    // JOKER harus berada di bawah seluruh menu/modal global saat menu dibuka.
+    // Tanpa ini, meja JOKER dapat menangkap pointer sebelum tombol menu.
+    const menuModal = document.getElementById("menuModal");
+    const menuBtn = document.getElementById("menuBtn");
+    const statsBtn = document.getElementById("menuStatsBtn");
+    const restartBtn = document.getElementById("menuRestartBtn");
+
+    const setJokerMenuLayer = (open) => {
+      document.body.classList.toggle("joker-menu-open", !!open);
+      if (menuModal) menuModal.style.pointerEvents = open ? "auto" : "";
+    };
+
+    if (menuBtn) {
+      menuBtn.addEventListener("click", () => {
+        setTimeout(() => setJokerMenuLayer(true), 0);
+      }, true);
+    }
+
+    if (statsBtn) {
+      statsBtn.addEventListener("click", (e) => {
+        // Pastikan klik Achievement/Statistik tidak ditelan oleh meja JOKER.
+        e.stopPropagation();
+        setJokerMenuLayer(false);
+        const modal = document.getElementById("featureModal");
+        if (modal) {
+          modal.style.pointerEvents = "auto";
+          modal.style.zIndex = "30000";
+          const box = modal.querySelector(".feature-modal-box");
+          if (box) box.style.pointerEvents = "auto";
+        }
+      }, true);
+    }
+
+    if (restartBtn) {
+      restartBtn.addEventListener("click", (e) => {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+
+        // Restart JOKER = kembali ke menu awal, bukan memulai ronde baru.
+        clearJokerState();
+        jokerState = null;
+        setJokerMenuLayer(false);
+
+        if (menuModal) menuModal.classList.remove("show", "game-active");
+        document.body.classList.remove("menu-open", "joker-mode-active");
+
+        const jokerGame = document.getElementById("jokerGame");
+        if (jokerGame) {
+          jokerGame.classList.remove("active");
+          jokerGame.setAttribute("aria-hidden", "true");
+        }
+
+        // Kembali ke menu awal pemilihan mode permainan.
+        document.querySelectorAll("#setup, #setupMinami2, #setupJoker").forEach(el => {
+          el.style.display = "none";
+          el.setAttribute("aria-hidden", "true");
+        });
+        const mainSetup = document.getElementById("setup");
+        if (mainSetup) {
+          mainSetup.style.display = "";
+          mainSetup.setAttribute("aria-hidden", "false");
+        }
+
+        window.scrollTo(0, 0);
+      }, true);
+    }
 
     // Pulihkan JOKER sendiri setelah refresh. Tidak memakai state MINAMI 1/2.
     restoreJokerState();
