@@ -4137,28 +4137,6 @@
       </button>
     </section>
 
-    <section class="setup setup-mode-joker" id="setupJoker">
-      <div class="setup-brand">🃏 2 DECK &nbsp;•&nbsp; JOKER</div>
-      <h1 class="setup-logo">JOKER</h1>
-
-      <div class="joker-menu-cards" aria-hidden="true">
-        <div class="joker-menu-stack">
-          <div class="joker-menu-card joker-menu-card-back"></div>
-          <div class="joker-menu-card joker-menu-card-open joker-menu-card-left">
-            <span>Q♠</span>
-          </div>
-          <div class="joker-menu-card joker-menu-card-open joker-menu-card-middle">
-            <span>7♠</span>
-          </div>
-          <div class="joker-menu-card joker-menu-card-open joker-menu-card-right">
-            <span>3♠</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="joker-coming-soon">COMING SOON</div>
-    </section>
-
     <section class="game" id="game">
       <div class="game-status-ribbon" aria-live="polite">
         <button type="button" class="move-history-top-btn" id="moveHistoryBtn" title="Lihat semua riwayat kartu yang diturunkan">🕘 History</button>
@@ -4378,7 +4356,7 @@
           <div class="menu-section-title">Permainan</div>
           <div class="menu-music-row"><div class="menu-music-label">🎵 Musik</div><div class="music-inline-options"><button type="button" class="music-choice" id="musicOnBtn">ON <span class="music-check">✓</span></button><button type="button" class="music-choice" id="musicOffBtn">OFF <span class="music-check">✓</span></button></div></div>
           <button class="menu-action menu-game-only" id="menuRestartBtn">⟳ Restart Pertandingan <span>›</span></button>
-          
+          <button class="menu-action menu-rules-legacy" id="menuRulesBtn" style="display:none">📜 Aturan Permainan <span>›</span></button>
           <button class="menu-action" id="menuStatsBtn">📊 Statistik & Achievement <span>›</span></button>
         </div>
         <div class="menu-section menu-game-only">
@@ -4810,7 +4788,7 @@
       }
 
       function saveGameState() {
-        if (!game) return false;
+        if (!game) return;
         try {
           const payload = JSON.stringify({
             game: {
@@ -4826,29 +4804,35 @@
               ? window.minamiScoreHistory
               : [],
           });
+
+          // Simpan di dua tempat. sessionStorage menjadi cadangan jika
+          // localStorage gagal/terhapus saat browser melakukan refresh.
           localStorage.setItem(MINAMI_SAVE_KEY, payload);
-          try { sessionStorage.setItem(MINAMI_SAVE_KEY, payload); } catch (e) {}
-          return true;
-        } catch (e) {
           try {
-            const fallback = JSON.stringify({
-              game: {
-                ...game,
-                potRanks: Array.from(game.potRanks || []),
-              },
-              nextOrder: Array.isArray(window.minamiNextOrder) ? window.minamiNextOrder : null,
-              direction: window.minamiDirection ?? game.direction ?? 1,
-              mode: game.mode || minamiMode,
-              scoreHistory: Array.isArray(window.minamiScoreHistory) ? window.minamiScoreHistory : [],
-            });
-            sessionStorage.setItem(MINAMI_SAVE_KEY, fallback);
-            return true;
-          } catch (e2) {
-            return false;
-          }
+            sessionStorage.setItem(MINAMI_SAVE_KEY, payload);
+          } catch (e) {}
+        } catch (e) {
+          // Jika localStorage gagal, tetap coba sessionStorage.
+          try {
+            sessionStorage.setItem(
+              MINAMI_SAVE_KEY,
+              JSON.stringify({
+                game: {
+                  ...game,
+                  potRanks: Array.from(game.potRanks || []),
+                },
+                nextOrder: Array.isArray(window.minamiNextOrder)
+                  ? window.minamiNextOrder
+                  : null,
+                direction: window.minamiDirection ?? game.direction ?? 1,
+                scoreHistory: Array.isArray(window.minamiScoreHistory)
+                  ? window.minamiScoreHistory
+                  : [],
+              }),
+            );
+          } catch (e2) {}
         }
       }
-
 
       let minamiAITimer = null;
 
@@ -4868,15 +4852,9 @@
       }
 
       window.addEventListener("pagehide", () => {
-        try { saveGameState(); } catch (e) {}
-      });
-      window.addEventListener("beforeunload", () => {
-        try { saveGameState(); } catch (e) {}
-      });
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "hidden") {
-          try { saveGameState(); } catch (e) {}
-        }
+        try {
+          saveGameState();
+        } catch (e) {}
       });
 
       function clearSavedGame() {
@@ -4903,7 +4881,6 @@
 
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
-        document.getElementById("setupJoker").style.display = "none";
         minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
@@ -5867,15 +5844,6 @@
           const nearWin = !game.dead[i] && !game.over && remaining <= 3;
           el.classList.toggle("near-win", nearWin);
           alert.textContent = nearWin && remaining === 1 ? "ONE CARD!" : nearWin ? "TINGGAL " + remaining + " KARTU" : "";
-          // Notifikasi sisa kartu muncul langsung setelah kartu benar-benar
-          // dikeluarkan dari tangan, tanpa menunggu giliran berikutnya.
-          if (nearWin && game.lastNearWinCount?.[i] !== remaining) {
-            game.lastNearWinCount = game.lastNearWinCount || {};
-            game.lastNearWinCount[i] = remaining;
-            alert.classList.remove("near-win-pop");
-            void alert.offsetWidth;
-            alert.classList.add("near-win-pop");
-          }
           const reactionNow=game.reactions?.[i];
           if(reactionNow && reactionNow.until>Date.now()) showPlayerBubble(i,reactionNow.text,"reaction");
 
@@ -7978,10 +7946,8 @@
         window.minamiAISpeed = game.aiSpeed || 1;
         saveGameState();
 
-        document.getElementById("activeRulesBtn").style.setProperty("display", "inline-flex", "important");
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
-        document.getElementById("setupJoker").style.display = "none";
         minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
@@ -8256,8 +8222,7 @@
         document.getElementById("menuModal").classList.remove("game-active");
         document.getElementById("setup").style.display = "";
         document.getElementById("setupMinami2").style.display = "";
-        document.getElementById("setupJoker").style.display = "";
-        // Menu awal menampilkan card MINAMI 1, MINAMI 2, dan JOKER (Coming Soon).
+        // Menu awal selalu menampilkan dua card MINAMI secara bersamaan.
         showSetupMode(minamiMode);
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
@@ -8800,7 +8765,6 @@
 .achievement-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:rgba(243,207,112,.10);border:1px solid rgba(243,207,112,.15);font-size:23px;text-align:center}
 .achievement-info{min-width:0}.achievement-card b{display:block;color:#f3cf70;font-size:10px;line-height:1.05;letter-spacing:.55px;text-transform:uppercase}.achievement-card span{display:block;margin-top:5px;color:#aacdc0;font-size:8px;font-weight:700;line-height:1.3}.achievement-card em{text-align:center;color:#7ff0b0;font-size:10px;font-style:normal;font-weight:900}
 @media(max-width:700px),(hover:none) and (pointer:coarse){.achievement-grid{grid-template-columns:1fr}.achievement-card{min-height:92px}}
-</style>
 <style id="minami2-dead-card-center-final">
   /* Minami 2: satu kartu mati menjadi representasi tumpukan dan selalu berada di tengah area. */
   .joker-corner #jokerCard .minami2-dead-stack {
@@ -8827,16 +8791,6 @@
   .joker-corner:has(.minami2-dead-stack) #jokerCard {
     width: 100% !important;
     justify-content: center !important;
-  }
-</style>
-
-<style id="near-win-immediate-final">
-  .player.near-win .player-alert.near-win-pop {
-    animation: minamiNearWinPop .28s ease-out;
-  }
-  @keyframes minamiNearWinPop {
-    0% { transform: scale(.82); opacity: .25; }
-    100% { transform: scale(1); opacity: 1; }
   }
 </style>
 </body></html>
@@ -8970,9 +8924,6 @@
 </style>
 
 
-<style id="active-rules-game-only">
-  #activeRulesBtn { display: none !important; }
-</style>
 <style id="menu-clean-interface">
   /* Saat menu hamburger terbuka, meja/kartu tidak terlihat di belakangnya. */
   #menuModal {
@@ -8987,10 +8938,11 @@
     display: none !important;
   }
 
-  /* Ikon aturan hanya tampil saat benar-benar masuk ke permainan.
-     startGame()/resumeRestoredGame() menyalakannya dengan inline !important. */
+  /* Aturan tetap tersedia langsung saat sedang bermain. */
   #activeRulesBtn {
-    display: none !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Menu tetap menjadi satu-satunya antarmuka permainan yang terlihat saat terbuka. */
@@ -9221,124 +9173,6 @@
   .setup-mode-two .start-btn.setup-start {
     background: linear-gradient(145deg, #d8efff, #9bcde8);
     color: #13242d;
-  }
-</style>
-
-<style id="joker-menu-card-style">
-  /* JOKER masih Coming Soon: hanya kartu menu, tanpa tombol mulai/pilihan pemain. */
-  .setup-mode-joker {
-    margin-top: 0;
-    padding-bottom: 34px;
-  }
-
-  .setup-mode-joker .setup-brand {
-    background: rgba(184, 142, 255, 0.08);
-    border-color: rgba(184, 142, 255, 0.18);
-  }
-
-  .setup-mode-joker .setup-logo {
-    color: #dfc9ff;
-  }
-
-  .joker-menu-cards {
-    height: 138px;
-    margin: 16px auto 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .joker-menu-stack {
-    position: relative;
-    width: 180px;
-    height: 125px;
-  }
-
-  .joker-menu-card {
-    position: absolute;
-    width: 82px;
-    height: 112px;
-    border-radius: 10px;
-    border: 2px solid rgba(255,255,255,.88);
-    box-shadow: 0 12px 24px rgba(0,0,0,.32);
-    background: #fff;
-  }
-
-  .joker-menu-card-back {
-    width: 92px;
-    height: 118px;
-    left: 44px;
-    top: 5px;
-    transform: rotate(-8deg);
-    background:
-      repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);
-    border-color: #ddd;
-    z-index: 1;
-  }
-
-  .joker-menu-card-open {
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    color: #161616;
-    font-weight: 900;
-    line-height: 1;
-  }
-
-  .joker-menu-card-open span {
-    font-size: 27px;
-    font-weight: 900;
-    letter-spacing: -2px;
-  }
-
-  .joker-menu-card-left {
-    left: 19px;
-    top: 7px;
-    transform: rotate(-14deg);
-  }
-
-  .joker-menu-card-middle {
-    left: 49px;
-    top: 0;
-    transform: rotate(0deg);
-    z-index: 4;
-  }
-
-  .joker-menu-card-right {
-    right: 19px;
-    top: 7px;
-    transform: rotate(14deg);
-  }
-
-  .joker-coming-soon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 150px;
-    padding: 9px 18px;
-    border-radius: 999px;
-    background: linear-gradient(145deg,#e0c6ff,#a978d6);
-    color: #251735;
-    border: 1px solid rgba(255,255,255,.45);
-    box-shadow: 0 8px 20px rgba(0,0,0,.2);
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: 1.5px;
-  }
-
-  @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
-    .setup-mode-joker {
-      width: calc(100% - 12px);
-      padding: 20px 12px 22px;
-    }
-    .joker-menu-cards {
-      height: 122px;
-    }
-    .joker-menu-stack {
-      transform: scale(.88);
-    }
   }
 </style>
 
