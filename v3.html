@@ -9025,6 +9025,7 @@
     if(card.isJoker){setText("jokerActionHint","Joker tidak boleh dibuang.");return;}
     jokerState.hands[0].splice(jokerState.selected,1);
     jokerState.discards[0].push(card);
+    saveJokerState();
     jokerState.selected=-1;
     jokerState.turn=1%jokerState.count;
     jokerState.phase="take";
@@ -9038,11 +9039,13 @@
     if(!stack||!stack.length)return;
     const card=stack.pop();
     jokerState.hands[jokerState.turn].push(card);
+    saveJokerState();
     finishTake();
   }
   function takeCenter(){
     if(!jokerState||jokerState.phase!=="take"||!jokerState.drawPile.length)return;
     jokerState.hands[jokerState.turn].push(jokerState.drawPile.pop());
+    saveJokerState();
     finishTake();
   }
   function finishTake(){
@@ -9064,6 +9067,7 @@
     let idx=h.findIndex(c=>!c.isJoker);
     if(idx<0)idx=0;
     if(h[idx])jokerState.discards[jokerState.turn].push(h.splice(idx,1)[0]);
+    saveJokerState();
     jokerState.turn=(jokerState.turn+1)%jokerState.count;
     jokerState.phase="take";
     renderAll();
@@ -9081,14 +9085,72 @@
     else{
       const prev=(jokerState.turn-1+jokerState.count)%jokerState.count;
       const st=jokerState.discards[prev];
-      if(st&&st.length)jokerState.hands[jokerState.turn].push(st.pop());
+      if(st&&st.length){jokerState.hands[jokerState.turn].push(st.pop());saveJokerState();}
     }
     finishTake();
   }
+  const JOKER_SAVE_KEY="minami_joker_v3_state_v1";
+
+  function saveJokerState(){
+    if(!jokerState)return false;
+    try{
+      localStorage.setItem(JOKER_SAVE_KEY,JSON.stringify(jokerState));
+      try{sessionStorage.setItem(JOKER_SAVE_KEY,JSON.stringify(jokerState));}catch(e){}
+      return true;
+    }catch(e){return false}
+  }
+
+  function clearJokerState(){
+    try{localStorage.removeItem(JOKER_SAVE_KEY);}catch(e){}
+    try{sessionStorage.removeItem(JOKER_SAVE_KEY);}catch(e){}
+  }
+
+  function restoreJokerState(){
+    let raw=null;
+    try{raw=localStorage.getItem(JOKER_SAVE_KEY);}catch(e){}
+    if(!raw){try{raw=sessionStorage.getItem(JOKER_SAVE_KEY);}catch(e){}}
+    if(!raw)return false;
+    try{
+      const saved=JSON.parse(raw);
+      if(!saved || !Array.isArray(saved.hands) || !Array.isArray(saved.drawPile)) return false;
+      const count=Number(saved.count)||saved.hands.length;
+      if(count<4 || count>5 || saved.hands.length!==count) return false;
+      jokerState={
+        count,
+        hands:saved.hands,
+        drawPile:saved.drawPile,
+        marker:saved.marker||null,
+        discards:Array.isArray(saved.discards)?saved.discards:Array.from({length:count},()=>[]),
+        turn:Number(saved.turn)||0,
+        phase:saved.phase==="take"?"take":"discard",
+        selected:-1
+      };
+      const setup=document.getElementById("setupJoker"), game=document.getElementById("jokerGame");
+      if(setup)setup.style.display="none";
+      const wrap=setup?.closest(".setup-menu-wrap");
+      if(wrap)wrap.style.display="none";
+      if(game){
+        game.classList.add("active");
+        game.setAttribute("aria-hidden","false");
+        document.body.classList.add("joker-mode-active");
+        game.querySelectorAll(".joker-seat").forEach((e,i)=>e.style.display=i<count?"block":"none");
+        game.querySelectorAll(".joker-discard-stack").forEach((e,i)=>e.style.display=i<count?"block":"none");
+      }
+      setText("jokerGameSub","2 Deck • "+count+" Pemain");
+      renderAll();
+      window.scrollTo(0,0);
+      return true;
+    }catch(e){
+      clearJokerState();
+      return false;
+    }
+  }
+
   function renderAll(){
     renderHands();renderDiscard();renderCenter();showStatus();
     const controls=document.getElementById("jokerControls");
     if(controls)controls.style.display=jokerState&&jokerState.turn===0?"flex":"none";
+    if(jokerState)saveJokerState();
   }
   function startRound(count){
     const deck=shuffle(makeDeck());
@@ -9101,6 +9163,7 @@
     const jokerColor=marker.color==="red"?"black":"red";
     deck.forEach(c=>{if(c.rank===marker.rank&&c.color===jokerColor)c.isJoker=true;});
     jokerState={count,hands,drawPile:deck,marker,discards:Array.from({length:count},()=>[]),turn:0,phase:"discard",selected:-1};
+    saveJokerState();
     setText("jokerActionHint","Giliran P1: Anda sudah mendapat 14 kartu. Buang 1 kartu untuk memulai.");
     renderAll();
   }
@@ -9111,6 +9174,7 @@
     let count=4;
     choices.forEach(b=>b.addEventListener("click",()=>{count=Number(b.dataset.playerJoker)||4;choices.forEach(x=>x.classList.toggle("active",x===b));}));
     start.addEventListener("click",()=>{
+      clearJokerState();
       ["setup","setupMinami2","setupJoker"].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display="none";});
       const wrap=setup.closest(".setup-menu-wrap");if(wrap)wrap.style.display="none";
       game.classList.add("active");game.setAttribute("aria-hidden","false");document.body.classList.add("joker-mode-active");
@@ -9128,6 +9192,15 @@
     document.getElementById("jokerTakeCenter").onclick=takeCenter;
     document.getElementById("jokerTakeDiscard").onclick=takePreviousDiscard;
     document.getElementById("jokerDiscardBtn").onclick=discardSelected;
+
+    // Pulihkan JOKER sendiri setelah refresh. Tidak memakai state MINAMI 1/2.
+    if(!restoreJokerState()){
+      const savedMinami=localStorage.getItem("minami_game_state_v1");
+      // Jika tidak ada state JOKER, biarkan menu MINAMI tetap normal.
+    }
+
+    window.addEventListener("pagehide",()=>{try{saveJokerState()}catch(e){}});
+    window.addEventListener("beforeunload",()=>{try{saveJokerState()}catch(e){}});
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
 })();
