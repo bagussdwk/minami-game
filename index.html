@@ -8986,11 +8986,10 @@
     display: none !important;
   }
 
-  /* Aturan tetap tersedia langsung saat sedang bermain. */
+  /* Ikon aturan hanya tampil saat benar-benar masuk ke permainan.
+     startGame()/resumeRestoredGame() menyalakannya dengan inline !important. */
   #activeRulesBtn {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
+    display: none !important;
   }
 
   /* Menu tetap menjadi satu-satunya antarmuka permainan yang terlihat saat terbuka. */
