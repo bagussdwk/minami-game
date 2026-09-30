@@ -7978,6 +7978,7 @@
         window.minamiAISpeed = game.aiSpeed || 1;
         saveGameState();
 
+        document.getElementById("activeRulesBtn").style.setProperty("display", "inline-flex", "important");
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
         document.getElementById("setupJoker").style.display = "none";
@@ -8968,6 +8969,9 @@
 </style>
 
 
+<style id="active-rules-game-only">
+  #activeRulesBtn { display: none !important; }
+</style>
 <style id="menu-clean-interface">
   /* Saat menu hamburger terbuka, meja/kartu tidak terlihat di belakangnya. */
   #menuModal {
