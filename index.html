@@ -470,6 +470,87 @@
         font-size: 24px;
         line-height: 1;
       }
+      .setup-menu-wrap {
+        width: min(1420px, calc(100% - 28px));
+        margin: 34px auto 42px;
+      }
+      .setup-menu-head {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .setup-menu-head .setup-brand {
+        margin-bottom: 8px;
+      }
+      .setup-menu-head .setup-logo {
+        margin: 0;
+      }
+      .setup-menu-head .setup-tagline {
+        margin-top: 9px;
+      }
+      .setup-mode-cards {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        align-items: stretch;
+      }
+      .setup-mode-card {
+        width: 100%;
+        margin: 0;
+        padding: 28px 28px 26px;
+      }
+      .setup-mode-card .setup-brand {
+        margin-bottom: 8px;
+      }
+      .setup-mode-title {
+        margin: 0;
+        color: #f5d37a;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 3px;
+      }
+      .setup-mode-card .setup-cards {
+        margin-top: 18px;
+      }
+      .setup-mode-card .setup-rules {
+        max-width: none;
+      }
+      .setup-mode-card .setup-start {
+        width: 100%;
+      }
+      @media (max-width: 900px) {
+        .setup-mode-cards {
+          grid-template-columns: 1fr;
+        }
+        .setup-mode-card {
+          padding: 24px 18px 22px;
+        }
+      }
+      @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
+        .setup-menu-wrap {
+          width: calc(100% - 12px);
+          margin: 18px auto 24px;
+        }
+        .setup-menu-head {
+          margin-bottom: 12px;
+        }
+        .setup-menu-head .setup-logo {
+          font-size: 40px;
+          letter-spacing: 6px;
+        }
+        .setup-menu-head .setup-tagline {
+          font-size: 11px;
+        }
+        .setup-mode-card {
+          width: 100%;
+          margin: 0;
+          padding: 20px 12px 18px;
+        }
+        .setup-mode-title {
+          font-size: 23px;
+          letter-spacing: 2px;
+        }
+      }
+
       .setup {
         position: relative;
         width: min(820px, calc(100% - 32px));
@@ -4802,8 +4883,7 @@
       function resumeRestoredGame() {
         if (!game) return;
 
-        document.getElementById("setup").style.display = "none";
-        document.getElementById("setupMinami2").style.display = "none";
+        document.getElementById("setupMenuWrap").style.display = "none";
         minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
@@ -7854,8 +7934,7 @@
         window.minamiAISpeed = game.aiSpeed || 1;
         saveGameState();
 
-        document.getElementById("setup").style.display = "none";
-        document.getElementById("setupMinami2").style.display = "none";
+        document.getElementById("setupMenuWrap").style.display = "none";
         minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
@@ -8096,6 +8175,7 @@
           if (playerEl) playerEl.style.display = "";
         }
         document.getElementById("menuModal").classList.remove("game-active");
+        document.getElementById("setupMenuWrap").style.display = "";
         // Menu awal selalu menampilkan dua card MINAMI secara bersamaan.
         showSetupMode(minamiMode);
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
