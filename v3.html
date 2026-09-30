@@ -4012,7 +4012,53 @@
 <style id="minami-ui-safe-result-help">
 .help-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.help-modal-head h2{margin:0}.help-close-x{width:34px;height:34px;min-width:34px;padding:0;border-radius:50%;background:rgba(255,255,255,.09);color:#fff;font-size:22px;line-height:1}body.result-table-mode .table.game-victory{animation:minamiVictoryTable 1.8s ease-in-out infinite}body.result-table-mode .player.victory-player{animation:minamiVictoryPlayer 1.45s ease-in-out infinite;z-index:100}.result-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}.result-actions .start-btn{margin:0;flex:1 1 180px}.result-table-btn{display:none;position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:1200;min-width:190px;background:linear-gradient(145deg,#f1cb70,#d9a441);color:#18251d;box-shadow:0 10px 25px rgba(0,0,0,.3)}body.result-table-mode .result-table-btn{display:inline-flex;align-items:center;justify-content:center}body.result-table-mode .your-hand{display:block!important}body.result-table-mode #resultModal{display:none!important}@media(max-width:700px){.result-actions{gap:7px}.result-actions .start-btn{font-size:12px;padding:11px 10px}.result-table-btn{bottom:8px;min-width:170px;font-size:12px}}
 </style>
-  </head>
+  
+<style id="v3-menu-click-fix">
+/* FINAL FIX: lapisan menu harus benar-benar berada di atas meja/game */
+#menuModal.show{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:999999 !important;
+  pointer-events:auto !important;
+}
+#menuModal.show .menu-modal-box{
+  position:relative !important;
+  z-index:1000000 !important;
+  pointer-events:auto !important;
+}
+#menuModal.show .menu-modal-box *,
+#menuModal.show button,
+#menuModal.show input,
+#menuModal.show [role="button"]{
+  pointer-events:auto !important;
+}
+#featureModal.show{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:1000001 !important;
+  pointer-events:auto !important;
+}
+#featureModal.show .feature-modal-box{
+  position:relative !important;
+  z-index:1000002 !important;
+  pointer-events:auto !important;
+}
+#featureModal.show *{pointer-events:auto !important}
+body.menu-open .game.active,
+body.menu-open .game.active *{
+  pointer-events:none !important;
+}
+body.menu-open #menuModal,
+body.menu-open #menuModal *{
+  pointer-events:auto !important;
+}
+#menuBtn{
+  position:relative !important;
+  z-index:1000003 !important;
+  pointer-events:auto !important;
+}
+</style>
+</head>
   <body>
     <div class="topbar">
       <div class="logo">MINAMI</div>
@@ -8856,6 +8902,57 @@
     justify-content: center !important;
   }
 </style>
+
+<script id="v3-menu-click-bridge">
+(function(){
+  if(window.__v3MenuClickFixInstalled) return;
+  window.__v3MenuClickFixInstalled = true;
+
+  function el(id){ return document.getElementById(id); }
+
+  document.addEventListener("click", function(e){
+    const target = e.target && e.target.closest ? e.target.closest("#menuBtn,#menuClose,#menuStatsBtn,#menuRestartBtn,#featureModalClose") : null;
+    if(!target) return;
+
+    if(target.id === "menuBtn"){
+      const modal = el("menuModal");
+      if(!modal) return;
+      modal.classList.toggle("game-active", !!window.game && !window.game.over);
+      modal.classList.add("show");
+      document.body.classList.add("menu-open");
+      return;
+    }
+
+    if(target.id === "menuClose"){
+      const modal = el("menuModal");
+      if(modal) modal.classList.remove("show");
+      document.body.classList.remove("menu-open");
+      return;
+    }
+
+    if(target.id === "menuStatsBtn"){
+      e.preventDefault();
+      e.stopPropagation();
+      const menu = el("menuModal");
+      const feature = el("featureModal");
+      if(menu) menu.classList.remove("show");
+      document.body.classList.remove("menu-open");
+      if(typeof window.renderFeaturePanels === "function") window.renderFeaturePanels();
+      if(feature){
+        feature.classList.add("show");
+        feature.style.display="flex";
+      }
+      return;
+    }
+
+    if(target.id === "featureModalClose"){
+      const feature = el("featureModal");
+      if(feature) feature.classList.remove("show");
+      return;
+    }
+  }, true);
+})();
+</script>
 </body></html>
 <style id="mobile-hand-fixed-footer-final">
   @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
