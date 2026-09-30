@@ -8893,8 +8893,43 @@
     if(hand){
       hand.innerHTML=jokerState.hands[0].map(c=>cardHTML(c,false)).join("");
       hand.querySelectorAll(".joker-real-card").forEach((el,i)=>{
+        el.draggable=true;
+        el.dataset.handIndex=String(i);
         el.title=cardText(jokerState.hands[0][i])+(jokerState.hands[0][i].isJoker?" • JOKER":"");
-        el.addEventListener("click",()=>selectCard(i));
+        el.addEventListener("click",()=>selectCard(Number(el.dataset.handIndex)));
+        el.addEventListener("dragstart",e=>{el.classList.add("dragging");e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",el.dataset.handIndex);hand.classList.add("dragging-hand");});
+        el.addEventListener("dragend",()=>{el.classList.remove("dragging");hand.classList.remove("dragging-hand");});
+        el.addEventListener("dragover",e=>{
+          e.preventDefault();
+          const from=Number(e.dataTransfer.getData("text/plain")),to=Number(el.dataset.handIndex);
+          if(Number.isInteger(from)&&from!==to){
+            const moved=jokerState.hands[0].splice(from,1)[0];
+            jokerState.hands[0].splice(to,0,moved);
+            jokerState.selected=-1;
+            renderHands();
+          }
+        });
+        el.addEventListener("touchstart",e=>{
+          if(e.touches.length!==1)return;
+          el._touchStartX=e.touches[0].clientX; el._touchStartY=e.touches[0].clientY; el._touchMoved=false;
+        },{passive:true});
+        el.addEventListener("touchmove",e=>{
+          if(!el._touchStartX||e.touches.length!==1)return;
+          const dx=e.touches[0].clientX-el._touchStartX,dy=e.touches[0].clientY-el._touchStartY;
+          if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)){
+            e.preventDefault();
+            const children=[...hand.querySelectorAll(".joker-real-card")],x=e.touches[0].clientX;
+            let target=children.findIndex(ch=>x<ch.getBoundingClientRect().left+ch.getBoundingClientRect().width/2);
+            if(target<0)target=children.length-1;
+            const from=Number(el.dataset.handIndex);
+            if(target!==from){
+              const moved=jokerState.hands[0].splice(from,1)[0];
+              jokerState.hands[0].splice(target,0,moved);
+              jokerState.selected=-1;
+              renderHands();
+            }
+          }
+        },{passive:false});
       });
     }
     jokerState.hands.forEach((h,i)=>{
@@ -9047,7 +9082,7 @@
       window.scrollTo(0,0);
     });
     const style=document.createElement("style");
-    style.textContent=".joker-real-card{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:28px;height:40px;border-radius:5px;background:#fff;color:#111;border:1px solid #aaa;font-size:10px;line-height:1;cursor:pointer;box-sizing:border-box}.joker-real-card i{font-style:normal;font-size:12px}.joker-real-card.red{color:#c22}.joker-real-card.joker-card{background:#ffe36e;border-color:#d39d00;box-shadow:0 0 8px rgba(255,210,50,.7)}.joker-real-card.selected{transform:translateY(-7px);outline:2px solid #ffd45a}.joker-discard-stack.available-pick{cursor:pointer;filter:drop-shadow(0 0 5px rgba(255,215,80,.6))}.joker-discard-stack small{display:block;font-size:6px;color:#b9d5ca}.joker-seat.is-active{box-shadow:0 0 0 2px #ffd45a,0 8px 18px rgba(0,0,0,.25)}#jokerControls{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:4px}#jokerControls button{border:0;border-radius:7px;padding:5px 9px;font-size:8px;font-weight:900;cursor:pointer}.joker-action-hint{font-size:7px;color:#cfe8dc;text-align:center;width:100%;min-height:10px}";
+    style.textContent=".joker-real-card{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:28px;height:40px;border-radius:5px;background:#fff;color:#111;border:1px solid #aaa;font-size:10px;line-height:1;cursor:pointer;box-sizing:border-box}.joker-real-card i{font-style:normal;font-size:12px}.joker-real-card.red{color:#c22}.joker-real-card.joker-card{background:#ffe36e;border-color:#d39d00;box-shadow:0 0 8px rgba(255,210,50,.7)}.joker-real-card.selected{transform:translateY(-7px);outline:2px solid #ffd45a}.joker-discard-stack.available-pick{cursor:pointer;filter:drop-shadow(0 0 5px rgba(255,215,80,.6))}.joker-discard-stack small{display:block;font-size:6px;color:#b9d5ca}.joker-seat.is-active{box-shadow:0 0 0 2px #ffd45a,0 8px 18px rgba(0,0,0,.25)}#jokerControls{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:4px}#jokerControls button{border:0;border-radius:7px;padding:5px 9px;font-size:8px;font-weight:900;cursor:pointer}.joker-action-hint{font-size:7px;color:#cfe8dc;text-align:center;width:100%;min-height:10px}.joker-hand-cards .joker-real-card{background:#fff!important;color:#111!important;border:1px solid #aaa!important;box-shadow:none!important;width:28px!important;height:40px!important;display:inline-flex!important;flex:0 0 28px!important}.joker-hand-cards .joker-real-card.red{color:#c22!important}.joker-hand-cards .joker-real-card.joker-card{background:#ffe36e!important;color:#111!important;border-color:#d39d00!important;box-shadow:0 0 8px rgba(255,210,50,.7)!important}.joker-hand-cards .joker-real-card.dragging{opacity:.45;transform:translateY(-4px) scale(1.04)}.joker-hand-cards{align-items:flex-end;overflow-x:auto!important;overflow-y:hidden!important;padding:8px 4px 3px;touch-action:pan-x;cursor:grab}.joker-hand-cards.dragging-hand{cursor:grabbing}";
     document.head.appendChild(style);
     const controls=document.createElement("div");controls.id="jokerControls";controls.innerHTML='<button type="button" id="jokerTakeCenter">AMBIL TENGAH</button><button type="button" id="jokerTakeDiscard">AMBIL BUANGAN</button><button type="button" id="jokerDiscardBtn">BUANG KARTU</button><div class="joker-action-hint" id="jokerActionHint"></div>';
     const hand=document.querySelector("#jokerGame .joker-hand-preview");if(hand)hand.appendChild(controls);
