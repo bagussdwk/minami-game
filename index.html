@@ -5292,7 +5292,10 @@
       // batas kombinasi 8000 saat kartu di tangan banyak.
       function initialBaseCandidates(h) {
         const out = [];
-        const jokerCards = h.filter((c) => isJoker(c));
+        // MINAMI 2: dasar awal putaran 1 wajib murni tanpa Joker fisik.
+        // MINAMI 1 tetap memakai konsep lama: Joker boleh membantu dasar awal.
+        const jokerCards =
+          game?.mode === 2 ? [] : h.filter((c) => isJoker(c));
         const bySuitRank = new Map();
 
         h.forEach((c) => {
@@ -6444,6 +6447,14 @@
         if (!cs.length) {
           alert("Pilih kartu dulu.");
           return;
+        }
+
+        // MINAMI 2 berbeda di dasar pertama:
+        // putaran 1 wajib murni kartu asli tanpa Joker fisik.
+        // Setelah dasar pertama selesai, Joker kembali boleh dipakai seperti MINAMI 1.
+        if (game.round === 1 && game.mode === 2 && cs.some((c) => isJoker(c))) {
+          alert("MINAMI 2: dasar awal putaran pertama wajib murni tanpa Joker.");
+          return false;
         }
 
         const potBlock = baseBlockedByPot(cs);
