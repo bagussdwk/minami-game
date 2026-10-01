@@ -5146,10 +5146,6 @@
             ? saved.nextOrder.slice()
             : null;
 
-          // Saat REFRESH, pulihkan juga statistik Rank 1 dari riwayat game
-          // yang tersimpan. Ini penting untuk hasil Rank 1 yang terjadi
-          // sebelum sistem lifetime Rank 1 diperbaiki.
-          syncRank1FromScoreHistory();
           try {
             updateAchievements();
             renderFeatureStats();
@@ -6299,7 +6295,7 @@
 
         if (!Array.isArray(window.minamiScoreHistory))
           window.minamiScoreHistory = [];
-        const resultId=game.lastResult?.id||makeMatchResultId();
+        const resultId=makeMatchResultId();
         window.minamiScoreHistory.push({
           id: resultId,
           game: game.gameNumber || window.minamiScoreHistory.length + 1,
@@ -8714,8 +8710,6 @@
       }
       function renderFeatureStats(){
         const b=document.getElementById("featureStatsPanel");if(!b)return;
-        const history=Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[];
-        syncRank1FromScoreHistory();
         const s=featureStats();
         const games=s.games||0,gameWins=s.gameWins||0;
         const gameWinRate=games?Math.round(gameWins/games*100):0;
