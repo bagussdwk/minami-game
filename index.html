@@ -5143,6 +5143,18 @@
             ? saved.nextOrder.slice()
             : null;
 
+          // Saat REFRESH, pulihkan juga statistik Rank 1 dari riwayat game
+          // yang tersimpan. Ini penting untuk hasil Rank 1 yang terjadi
+          // sebelum sistem lifetime Rank 1 diperbaiki.
+          syncRank1FromScoreHistory();
+          try {
+            updateAchievements();
+            renderFeatureStats();
+            renderAchievements();
+            applyPlayerProfile();
+            refreshPlayerTitles();
+          } catch (e) {}
+
           // Save lama dari sebelum perbaikan POT+Joker dikoreksi sekali saat refresh.
           // Setelah diberi marker V2, refresh berikutnya tidak mengubah poin lagi.
           if (game.over) {
