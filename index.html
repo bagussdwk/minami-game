@@ -5092,7 +5092,10 @@
                 rank1:Number(p.rank1)||0,
                 games:Number(p.games)||0,
                 gameWins:Number(p.gameWins)||0,
-                title:minamiRankTitleFromStats(p.rank1,p.games,p.gameWins)
+                // Gelar AI adalah profil yang dipilih untuk GAME ini.
+                // Jangan dihitung ulang saat refresh; gelar harus tetap sama
+                // sampai Game 25 selesai dan roster baru dibuat.
+                title:p.title||"PEMULA"
               };
             });
           }
