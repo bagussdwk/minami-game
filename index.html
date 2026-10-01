@@ -8593,12 +8593,10 @@
         const maxDelta=Math.max(...delta.map(v=>Number(v)));
         if(Number(delta[0])!==maxDelta)return;
 
-        // Satu endGame() = satu hasil/match. Guard ini hanya mencegah
-        // pemanggilan ganda pada hasil yang sama; jangan memakai counter
-        // global yang mengunci Rank 1 untuk seluruh pertandingan sampai 25.
-        if(game?._rank1CountedForResult)return;
-        if(game)game._rank1CountedForResult=true;
-
+        // endGame() hanya memanggil fungsi ini sekali untuk setiap
+        // hasil/match. Jangan gunakan guard global di object game karena
+        // object game dapat dipakai lagi untuk match berikutnya dan guard
+        // lama membuat Rank 1 berhenti bertambah secara realtime.
         const s=featureStats();
         s.rank1=(Number(s.rank1)||0)+1;
         saveFeatureStats(s);
@@ -8711,7 +8709,7 @@
         const s=featureStats();
         const games=s.games||0,gameWins=s.gameWins||0;
         const gameWinRate=games?Math.round(gameWins/games*100):0;
-        const rank1=s.rank1||0,rank1Rate=s.games?Math.round(rank1/s.games*100):0;
+        const rank1=s.rank1||0,rank1Rate=s.matches?Math.round(rank1/s.matches*100):0;
         const rank=getMinamiRankInfo();
         const stats=[
           ["matches","Match selesai"],
