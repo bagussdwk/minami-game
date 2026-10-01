@@ -8529,6 +8529,9 @@
         const s=featureStats();
         s.rank1=(Number(s.rank1)||0)+1;
         saveFeatureStats(s);
+        // Rank 1 adalah statistik lifetime dan harus langsung tercermin
+        // di profil pemain, walaupun Game 25 poin belum selesai.
+        refreshPlayerTitles();
         renderFeatureStats();
         renderAchievements();
       }
