@@ -6299,19 +6299,22 @@
 
         if (!Array.isArray(window.minamiScoreHistory))
           window.minamiScoreHistory = [];
+        const resultId=game.lastResult?.id||makeMatchResultId();
         window.minamiScoreHistory.push({
+          id: resultId,
           game: game.gameNumber || window.minamiScoreHistory.length + 1,
           delta: scoreDelta.slice(),
           total: game.scores.slice(),
         });
 
         game.lastResult = {
+          id: resultId,
           winner,
           reason,
           delta: scoreDelta.slice(),
         };
         game._residualScoringV2 = true;
-        recordLifetimeRank1(scoreDelta, reason);
+        recordLifetimeRank1(scoreDelta, reason, winner, resultId);
 
         // Progress AI juga disimpan per pemain. Nama/foto/gelar tetap sama
         // sepanjang GAME sampai target 25 tercapai; gelar mengikuti Rank 1 AI.
@@ -8528,7 +8531,7 @@
         document.getElementById("resultModal").classList.remove("show");
       };
 
-      const MINAMI_FEATURE_KEY="minamiFeatureStatsV2", MINAMI_ACH_KEY="minamiAchievementsV1";
+      const MINAMI_FEATURE_KEY="minamiFeatureStatsV2", MINAMI_ACH_KEY="minamiAchievementsV1", MINAMI_RANK1_LEDGER_KEY="minamiRank1LedgerV1";
       function featureStats(){
         const d={matches:0,matchWins:0,games:0,gameWins:0,rank1:0,tenho:0,pots:0,cards:0,jokers:0,bestCombo:0,dead:0,cardsPerMatch:0,mvp:0,bestStreak:0};
         try{
@@ -8566,46 +8569,50 @@
         saveFeatureStats(s);
         updateAchievements();
       }
-      function syncRank1FromScoreHistory(){
-        const history=Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[];
-        if(!history.length)return false;
-        let counted=0;
-        history.forEach(row=>{
-          const delta=Array.isArray(row?.delta)?row.delta:[];
-          if(delta.length!==playerCount || delta.every(v=>Number(v)===-2))return;
-          const max=Math.max(...delta.map(v=>Number(v)));
-          if(Number(delta[0])===max)counted++;
-        });
-        const s=featureStats();
-        const current=Number(s.rank1)||0;
-        if(counted>current){
-          s.rank1=counted;
-          saveFeatureStats(s);
-          // Sinkronkan semua tampilan Rank 1 saat riwayat memperbaiki
-          // statistik, bukan hanya panel statistik.
-          refreshPlayerTitles();
-          applyPlayerProfile();
-          return true;
-        }
-        return false;
+      function loadRank1Ledger(){
+        try{
+          const x=JSON.parse(localStorage.getItem(MINAMI_RANK1_LEDGER_KEY)||"[]");
+          return Array.isArray(x)?x:[];
+        }catch(e){return[]}
       }
 
-      function recordLifetimeRank1(delta, reason){
+      function saveRank1Ledger(ids){
+        try{
+          localStorage.setItem(MINAMI_RANK1_LEDGER_KEY,JSON.stringify(ids.slice(-5000)));
+        }catch(e){}
+      }
+
+      function makeMatchResultId(){
+        try{
+          if(window.crypto?.randomUUID)return window.crypto.randomUUID();
+        }catch(e){}
+        return "r-"+Date.now()+"-"+Math.random().toString(36).slice(2);
+      }
+
+      function recordLifetimeRank1(delta, reason, winner, resultId){
         if(!Array.isArray(delta)||delta.length!==playerCount)return;
         if(reason==="ALL_DEAD"||delta.every(v=>Number(v)===-2))return;
-        const maxDelta=Math.max(...delta.map(v=>Number(v)));
-        if(Number(delta[0])!==maxDelta)return;
 
-        // endGame() hanya memanggil fungsi ini sekali untuk setiap
-        // hasil/match. Jangan gunakan guard global di object game karena
-        // object game dapat dipakai lagi untuk match berikutnya dan guard
-        // lama membuat Rank 1 berhenti bertambah secara realtime.
+        // Rank 1 ditentukan dari pemenang hasil match, bukan membandingkan
+        // angka delta. Ini menghindari tie/bonus scoring membuat pencatatan
+        // Rank 1 salah atau terlewat.
+        if(Number(winner)!==0)return;
+
+        // Setiap hasil punya ID sendiri. Jika fungsi terpanggil lagi karena
+        // restore/refresh, hasil yang sama tidak boleh dihitung dua kali.
+        const id=String(resultId||"");
+        const ledger=loadRank1Ledger();
+        if(id && ledger.includes(id))return;
+        if(id){
+          ledger.push(id);
+          saveRank1Ledger(ledger);
+        }
+
         const s=featureStats();
         s.rank1=(Number(s.rank1)||0)+1;
         saveFeatureStats(s);
 
-        // Rank 1 adalah statistik LIFETIME. Semua UI harus langsung
-        // membaca nilai terbaru sekarang juga, tanpa menunggu Game 25.
+        // Rank 1 adalah statistik LIFETIME: langsung simpan dan render.
         refreshPlayerTitles();
         applyPlayerProfile();
         renderFeatureStats();
