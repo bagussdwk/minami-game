@@ -8514,6 +8514,10 @@
         if(counted>current){
           s.rank1=counted;
           saveFeatureStats(s);
+          // Sinkronkan semua tampilan Rank 1 saat riwayat memperbaiki
+          // statistik, bukan hanya panel statistik.
+          refreshPlayerTitles();
+          applyPlayerProfile();
           return true;
         }
         return false;
@@ -8524,14 +8528,21 @@
         if(reason==="ALL_DEAD"||delta.every(v=>Number(v)===-2))return;
         const maxDelta=Math.max(...delta.map(v=>Number(v)));
         if(Number(delta[0])!==maxDelta)return;
-        if(game?._rank1Counted)return;
-        if(game)game._rank1Counted=true;
+
+        // Satu endGame() = satu hasil/match. Guard ini hanya mencegah
+        // pemanggilan ganda pada hasil yang sama; jangan memakai counter
+        // global yang mengunci Rank 1 untuk seluruh pertandingan sampai 25.
+        if(game?._rank1CountedForResult)return;
+        if(game)game._rank1CountedForResult=true;
+
         const s=featureStats();
         s.rank1=(Number(s.rank1)||0)+1;
         saveFeatureStats(s);
-        // Rank 1 adalah statistik lifetime dan harus langsung tercermin
-        // di profil pemain, walaupun Game 25 poin belum selesai.
+
+        // Rank 1 adalah statistik LIFETIME. Semua UI harus langsung
+        // membaca nilai terbaru sekarang juga, tanpa menunggu Game 25.
         refreshPlayerTitles();
+        applyPlayerProfile();
         renderFeatureStats();
         renderAchievements();
       }
