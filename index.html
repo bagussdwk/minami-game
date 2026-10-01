@@ -6853,39 +6853,91 @@
         return initialBaseCandidates(h).length > 0;
       }
       function canFullyArrange(h) {
-        let memo = new Map();
+        // TENHO harus bisa mengenali seluruh tangan yang memang dapat
+        // disusun habis menjadi DASAR/POT, bukan hanya kombinasi 3 kartu.
+        // Versi lama hanya mencoba grup 3 kartu sehingga tangan yang
+        // sebenarnya bisa habis dengan dasar 4/5 kartu bisa lolos.
+        const memo = new Map();
+
         function rec(arr) {
           if (!arr.length) return true;
-          let key = arr
-            .map((c) => c.id)
-            .sort()
-            .join("|");
+
+          const key = arr.map(c => c.id).sort().join("|");
           if (memo.has(key)) return memo.get(key);
-          let a = arr[0];
-          for (let i = 1; i < arr.length; i++)
-            for (let j = i + 1; j < arr.length; j++) {
-              let m = makeBaseCards([a, arr[i], arr[j]]);
-              if (m && rec(arr.filter((_, k) => k !== 0 && k !== i && k !== j)))
-                return memo.set(key, true).get(key);
-            }
-          let p = potCards([
-            a,
-            ...arr
-              .slice(1)
-              .filter((c) => c.rank === a.rank || isJoker(c))
-              .slice(0, 2),
-          ]);
-          if (p && arr.length >= 3) {
-            let used = [a];
-            for (let i = 1; i < arr.length && used.length < 3; i++)
-              if (arr[i].rank === a.rank || isJoker(arr[i])) used.push(arr[i]);
-            if (used.length >= 3 && rec(arr.filter((c) => !used.includes(c))))
-              return memo.set(key, true).get(key);
+
+          // Mulai dari kartu non-Joker supaya jumlah kandidat tidak meledak.
+          let firstIndex = arr.findIndex(c => !isJoker(c));
+          if (firstIndex < 0) {
+            memo.set(key, false);
+            return false;
           }
+
+          const a = arr[firstIndex];
+          const rest = arr.filter((_, i) => i !== firstIndex);
+          const candidates = [];
+          const seen = new Set();
+
+          const testGroup = (group) => {
+            if (group.length < 3) return;
+            const ids = group.map(c => c.id).sort().join("|");
+            if (seen.has(ids)) return;
+            seen.add(ids);
+
+            // DASAR: kartu berurutan satu bunga, Joker boleh menjadi pengganti.
+            const base = makeBaseCards(group);
+            if (base) candidates.push(group);
+
+            // POT: angka sama, bunga bebas, Joker boleh menggantikan.
+            const pot = potCards(group);
+            if (pot) candidates.push(group);
+          };
+
+          const buildCombos = (pool, maxSize) => {
+            const choose = (source, need, picked, offset) => {
+              if (need === 0) {
+                testGroup([a, ...picked]);
+                return;
+              }
+              for (let i = offset; i <= source.length - need; i++) {
+                picked.push(source[i]);
+                choose(source, need - 1, picked, i + 1);
+                picked.pop();
+              }
+            };
+
+            for (let size = 3; size <= Math.min(maxSize, pool.length + 1); size++) {
+              choose(pool, size - 1, [], 0);
+            }
+          };
+
+          // Kandidat DASAR hanya berasal dari bunga yang sama + Joker.
+          const basePool = rest.filter(c => isJoker(c) || c.suit === a.suit);
+          // Dasar panjang cukup dicari sampai 5 kartu. Dasar 6+ bisa
+          // dipecah menjadi grup 3 + 3/4/5 tanpa mengubah legalitas urutan.
+          buildCombos(basePool, 5);
+
+          // Kandidat POT maksimal 6 kartu pada dua deck + Joker.
+          // Dibuat terpisah agar POT 4+ juga bisa dikenali sebagai TENHO.
+          const potPool = rest.filter(c => isJoker(c) || c.rank === a.rank);
+          buildCombos(potPool, 6);
+
+          // Coba kandidat yang paling banyak menghabiskan kartu terlebih dahulu.
+          candidates.sort((x, y) => y.length - x.length);
+
+          for (const group of candidates) {
+            const used = new Set(group.map(c => c.id));
+            const remaining = arr.filter(c => !used.has(c.id));
+            if (rec(remaining)) {
+              memo.set(key, true);
+              return true;
+            }
+          }
+
           memo.set(key, false);
           return false;
         }
-        return rec(h);
+
+        return rec(Array.isArray(h) ? h : []);
       }
       function autoTenho() {
         let winners = [];
