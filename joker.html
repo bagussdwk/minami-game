@@ -1821,15 +1821,47 @@
           saveGame();
           if (g.turn) waitAI(550);
         }
+        // Cari semua kombinasi dasar/pot yang sudah jadi, tanpa mengharuskan
+        // seluruh kartu di tangan ikut tersusun. Ini dipakai untuk penilaian
+        // saat tumpukan habis: misalnya J-Q-K tetap +30, sementara kartu
+        // lain yang tidak masuk susunan menjadi kartu mati/minus.
+        function analyzePartial(cs) {
+          let ms = melds(cs),
+            best = { ids: [], values: {}, v: 0 };
+
+          function disjoint(ids, used) {
+            return ids.every((id) => !used.has(id));
+          }
+
+          function rec(start, used, vals, v) {
+            if (v > best.v) {
+              best = { ids: [...used], values: { ...vals }, v };
+            }
+            for (let i = start; i < ms.length; i++) {
+              let m = ms[i];
+              if (!disjoint(m.ids, used)) continue;
+              let nextUsed = new Set(used);
+              m.ids.forEach((id) => nextUsed.add(id));
+              let nextVals = { ...vals, ...m.values };
+              rec(i + 1, nextUsed, nextVals, v + m.v);
+            }
+          }
+
+          rec(0, new Set(), {}, 0);
+          return best;
+        }
+
         function cardTotals(p) {
-          let a = analyze(p.hand),
-            live = new Set(a?.ids || []),
+          let a = analyzePartial(p.hand),
+            live = new Set(a.ids || []),
             liveValue = p.hand.reduce(
-              (z, c) => z + (live.has(c.id) ? a.values[c.id] || rv(c.rank) : 0),
+              (z, c) =>
+                z + (live.has(c.id) ? a.values[c.id] || rv(c.rank) : 0),
               0,
             ),
             deadValue = p.hand.reduce(
-              (z, c) => z + (live.has(c.id) ? 0 : c.joker ? 25 : rv(c.rank)),
+              (z, c) =>
+                z + (live.has(c.id) ? 0 : c.joker ? 25 : rv(c.rank)),
               0,
             );
           return { liveValue, deadValue, total: liveValue - deadValue };
