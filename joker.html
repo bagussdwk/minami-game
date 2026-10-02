@@ -1762,6 +1762,14 @@
             ta = cardTotals(tp);
           wp.score += bonus + wa.liveValue;
           tp.score += -bonus + ta.liveValue - ta.deadValue;
+          // Semua pemain lain tetap dihitung: kartu hidup menambah,
+          // kartu mati mengurangi. Pemenang dan pemain yang tertangkap
+          // memakai aturan skor khusus di atas.
+          g.p.forEach((p, i) => {
+            if (i === w || i === t) return;
+            const totals = cardTotals(p);
+            p.score += totals.liveValue - totals.deadValue;
+          });
           g.over = false;
           render();
           saveGame();
@@ -1770,6 +1778,17 @@
           let playersHtml = g.p.map((p, i) =>
             resultPlayer(p, i === w ? [c] : [])
           ).join("");
+          let otherRows = g.p.map((p, i) => {
+            if (i === w) return "";
+            const totals = cardTotals(p);
+            const delta = i === t
+              ? -bonus + totals.liveValue - totals.deadValue
+              : totals.liveValue - totals.deadValue;
+            return '<div class="row"><b>' + p.name + '</b><span>+' +
+              totals.liveValue + ' - ' + totals.deadValue +
+              (i === t ? ' • bonus -' + bonus : '') +
+              '</span><b>' + (delta >= 0 ? "+" : "") + delta + '</b></div>';
+          }).join("");
           modal(
             "🏆 WIN MATCH",
             '<div class="note"><b>' +
@@ -1802,7 +1821,8 @@
               wp.name +
               "</b> memenangkan match dengan menutup. Arah dibalik dan match berikutnya dimulai dari pemain yang tertangkap: <b>" +
               tp.name +
-              "</b>.</div>",
+              "</b>.</div>" +
+            otherRows,
             "Lanjut Match",
             () => {
               closeModal();
