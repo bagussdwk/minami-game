@@ -571,6 +571,54 @@
         border-bottom: 1px solid #ffffff12;
         font-size: 10px;
       }
+      .result-player {
+        margin: 10px 0;
+        padding: 9px;
+        border-radius: 10px;
+        background: #ffffff08;
+        border: 1px solid #ffffff12;
+      }
+      .result-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 7px;
+        font-size: 10px;
+      }
+      .result-head b {
+        color: #f3cf70;
+      }
+      .result-head span {
+        color: #aacdc0;
+        font-size: 9px;
+      }
+      .result-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .result-card {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 36px;
+        padding: 0 5px;
+        border-radius: 5px;
+        background: #fff;
+        color: #111;
+        border: 1px solid #ddd;
+        font-size: 10px;
+        font-weight: 900;
+      }
+      .result-card.red {
+        color: #c72525;
+      }
+      .result-card.joker {
+        border: 2px solid #f3cf70;
+        box-shadow: 0 0 8px #f3cf7066;
+      }
       .note {
         margin-top: 10px;
         padding: 10px;
@@ -1689,6 +1737,23 @@
             );
           return { liveValue, deadValue, total: liveValue - deadValue };
         }
+        function resultCards(cards) {
+          return '<div class="result-cards">' +
+            cards.map(c =>
+              '<span class="result-card ' +
+              (c.color === "r" ? "red " : "") +
+              (c.joker ? "joker" : "") +
+              '">' + label(c) + '</span>'
+            ).join("") +
+            "</div>";
+        }
+        function resultPlayer(p, extraCards) {
+          let cards = p.hand.slice();
+          if (extraCards && extraCards.length) cards = cards.concat(extraCards);
+          return '<div class="result-player"><div class="result-head"><b>' +
+            p.name + '</b><span>Skor akumulasi: ' + p.score + '</span></div>' +
+            resultCards(cards) + '</div>';
+        }
         function finish(w, t, c) {
           let wp = g.p[w],
             tp = g.p[t],
@@ -1700,8 +1765,21 @@
           g.over = false;
           render();
           saveGame();
+          let winnerCards = wp.hand.slice();
+          winnerCards.push(c);
+          let playersHtml = g.p.map((p, i) =>
+            resultPlayer(p, i === w ? [c] : [])
+          ).join("");
           modal(
             "🏆 WIN MATCH",
+            '<div class="note"><b>' +
+              wp.name +
+              "</b> menutup dengan <b>" +
+              label(c) +
+              "</b>. Bonus: +" +
+              bonus +
+              ". Semua kartu pemain ditampilkan di bawah.</div>" +
+            playersHtml +
             '<div class="row"><b>' +
               wp.name +
               "</b><span>+" +
@@ -1760,10 +1838,13 @@
                 "</b></div>",
             )
             .join("");
+          let playersHtml = g.p.map(p => resultPlayer(p)).join("");
           modal(
             "TUMPUKAN HABIS",
-            rows +
-              '<div class="note">Tidak ada yang menutup. Semua kartu tetap dihitung: kartu hidup menambah poin, kartu mati mengurangi poin. Pemain dengan <b>poin terendah</b> menjadi pemain pertama pada match berikutnya: <b>' +
+            '<div class="note">Tidak ada yang menutup. Semua kartu yang tersisa di tangan setiap pemain ditampilkan. Kartu hidup menambah poin, kartu mati mengurangi poin.</div>' +
+              playersHtml +
+              rows +
+              '<div class="note">Pemain dengan <b>poin terendah</b> menjadi pemain pertama pada match berikutnya: <b>' +
               g.p[starter].name +
               "</b>.</div>",
             "Lanjut Match",
