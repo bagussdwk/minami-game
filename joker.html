@@ -342,10 +342,18 @@
         font-size: 9px;
         color: #f3cf70;
       }
+      /* indikator giliran hanya pada foto profil */
       .turn {
+        outline: none;
+      }
+
+      .turn .avatar {
+        border-color: #f3cf70;
         outline: 2px solid #f3cf70;
         outline-offset: 3px;
-        border-radius: 10px;
+        box-shadow:
+          0 0 0 5px #f3cf7022,
+          0 0 16px #f3cf7077;
       }
       .discard {
         width: 175px;
