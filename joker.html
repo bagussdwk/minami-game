@@ -661,6 +661,7 @@
           min-height: 100px;
           padding: 5px;
           width: 100px;
+          box-sizing: border-box;
         }
         .discard h4 {
           font-size: 9px;
@@ -671,8 +672,13 @@
           padding-right: 18px;
         }
         .smallcards {
-          max-height: 30px;
-          overflow: hidden;
+          max-height: none;
+          overflow: visible;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 3px;
         }
         .smallcard {
           font-size: 8px;
