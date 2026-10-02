@@ -431,23 +431,29 @@
       /* Saat arah putaran dibalik setelah pemain menutup, setiap kotak buangan
          ikut berpindah ke sisi pemain berikutnya pada arah baru. */
       .discards.reverse .d1 {
-        left: 50%; right: auto; bottom: 88px; top: auto;
-        transform: translateX(-50%);
+        left: 6px;
+          bottom: 100px;
       }
       .discards.reverse .d5 {
-        left: 10px; right: auto; bottom: 15px; top: auto;
-        transform: none;
+          left: 1px;
+          top: 82px;
+          right: auto;
+          transform: none;
       }
       .discards.reverse .d4 {
-        left: 10px; right: auto; top: 15px; bottom: auto;
+        right: 6px;
+          top: 82px;
         transform: none;
       }
       .discards.reverse .d3 {
-        right: 10px; left: auto; top: 15px; bottom: auto;
+                  right: 6px;
+          bottom: 100px;
         transform: none;
       }
       .discards.reverse .d2 {
-        right: 10px; left: auto; bottom: 15px; top: auto;
+                  left: 50%;
+          bottom: 88px;
+          transform: translateX(-50%);
         transform: none;
       }
       .discards.reverse .d1:hover {
