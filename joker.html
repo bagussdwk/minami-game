@@ -1780,11 +1780,12 @@
             },
           );
         }
-        function modal(t, b, ok, fn) {
+        function modal(t, b, ok, fn, singleButton = false) {
           $("mt").textContent = t;
           $("mb").innerHTML = b;
           $("mp").textContent = ok;
           $("mp").onclick = fn;
+          $("mp").style.display = singleButton ? "none" : "";
           $("mx").onclick = closeModal;
           $("modal").classList.add("show");
         }
@@ -1816,6 +1817,7 @@
             '<div class="note"><b>104 kartu</b>. 4/5 pemain. 13 kartu/orang, pemain pertama 14. Satu kartu sisa jadi penentu; semua kartu dengan warna berlawanan dari penentu dan rank sama menjadi Joker (4 kartu). Giliran: ambil satu dari buangan pemain sebelumnya atau satu dari tengah, lalu buang satu. Semua buangan terlihat. Pot harus rank sama dengan bunga berbeda, maksimal 4 kartu (♠♥♦♣); pot A dengan bunga berbeda juga dihitung sebagai dasar. A-2-3 tidak sah sebagai dasar; jika memakai A sebagai kartu awal, minimal A-2-3-4. Untuk menutup, wajib ada minimal 1 dasar murni tanpa Joker. Joker tidak boleh dibuang sebelum kartu tengah habis; pada buangan terakhir Joker boleh dibuang. Tutup: minimal satu dasar/urutan 3+, penutup hanya A atau Joker. A = +150/-150, Joker = +250/-250. Nilai 2-9 sesuai angka, A=15, J/Q/K=10, Joker hidup mengikuti kartu pengganti, Joker mati=25. Target 1.500.</div>',
             "Tutup",
             closeModal,
+            true,
           );
         $("setup").style.display = "block";
         $("game").style.display = "none";
@@ -1842,6 +1844,7 @@
             '<div class="note"><b>104 kartu</b>. 4/5 pemain. 13 kartu/orang, pemain pertama 14. Satu kartu sisa jadi penentu; semua kartu dengan warna berlawanan dari penentu dan rank sama menjadi Joker (4 kartu). Giliran: ambil satu dari buangan pemain sebelumnya atau satu dari tengah, lalu buang satu. Semua buangan terlihat. Pot harus rank sama dengan bunga berbeda, maksimal 4 kartu (♠♥♦♣); pot A dengan bunga berbeda juga dihitung sebagai dasar. A-2-3 tidak sah sebagai dasar; jika memakai A sebagai kartu awal, minimal A-2-3-4. Untuk menutup, wajib ada minimal 1 dasar murni tanpa Joker. Joker tidak boleh dibuang sebelum kartu tengah habis; pada buangan terakhir Joker boleh dibuang. Tutup: minimal satu dasar/urutan 3+, penutup hanya A atau Joker. A = +150/-150, Joker = +250/-250. Nilai 2-9 sesuai angka, A=15, J/Q/K=10, Joker hidup mengikuti kartu pengganti, Joker mati=25. Target 1.500.</div>',
             "Tutup",
             closeModal,
+            true,
           );
       })();
     </script>
