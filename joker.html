@@ -428,6 +428,31 @@
         bottom: 88px;
         transform: translateX(-50%);
       }
+      /* Saat arah putaran dibalik setelah pemain menutup, setiap kotak buangan
+         ikut berpindah ke sisi pemain berikutnya pada arah baru. */
+      .discards.reverse .d1 {
+        left: 50%; right: auto; bottom: 88px; top: auto;
+        transform: translateX(-50%);
+      }
+      .discards.reverse .d5 {
+        left: 10px; right: auto; bottom: 15px; top: auto;
+        transform: none;
+      }
+      .discards.reverse .d4 {
+        left: 10px; right: auto; top: 15px; bottom: auto;
+        transform: none;
+      }
+      .discards.reverse .d3 {
+        right: 10px; left: auto; top: 15px; bottom: auto;
+        transform: none;
+      }
+      .discards.reverse .d2 {
+        right: 10px; left: auto; bottom: 15px; top: auto;
+        transform: none;
+      }
+      .discards.reverse .d1:hover {
+        transform: translateX(-50%) translateY(-1px);
+      }
       .smallcards {
         display: flex;
         gap: 2px;
@@ -1404,6 +1429,7 @@
             $("players").appendChild(e);
           });
           $("discards").innerHTML = "";
+          $("discards").className = "discards" + (g.dir === -1 ? " reverse" : "");
           p.forEach((x, i) => {
             let e = document.createElement("div");
             e.className = "discard d" + (i + 1);
