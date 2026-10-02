@@ -1195,14 +1195,14 @@
       @media (max-width: 700px) {
         /* MINAMI 2: kartu mati tetap terlihat sebagai tumpukan,
            bukan deretan kartu panjang. */
-        .joker-corner #jokerCard .minami2-dead-stack, .joker-corner #jokerCard .joker-mode-dead-stack {
+        .joker-corner #jokerCard .minami2-dead-stack {
           width: max-content !important;
           max-width: 96px !important;
           overflow: visible !important;
         }
 
-        .joker-corner #jokerCard .minami2-dead-stack .card, .joker-corner #jokerCard .joker-mode-dead-stack .card,
-        .joker-corner #jokerCard .minami2-dead-stack .card:first-child, .joker-corner #jokerCard .joker-mode-dead-stack .card:first-child {
+        .joker-corner #jokerCard .minami2-dead-stack .card,
+        .joker-corner #jokerCard .minami2-dead-stack .card:first-child {
           width: 28px !important;
           height: 41px !important;
           flex: 0 0 28px !important;
@@ -4012,53 +4012,7 @@
 <style id="minami-ui-safe-result-help">
 .help-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.help-modal-head h2{margin:0}.help-close-x{width:34px;height:34px;min-width:34px;padding:0;border-radius:50%;background:rgba(255,255,255,.09);color:#fff;font-size:22px;line-height:1}body.result-table-mode .table.game-victory{animation:minamiVictoryTable 1.8s ease-in-out infinite}body.result-table-mode .player.victory-player{animation:minamiVictoryPlayer 1.45s ease-in-out infinite;z-index:100}.result-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}.result-actions .start-btn{margin:0;flex:1 1 180px}.result-table-btn{display:none;position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:1200;min-width:190px;background:linear-gradient(145deg,#f1cb70,#d9a441);color:#18251d;box-shadow:0 10px 25px rgba(0,0,0,.3)}body.result-table-mode .result-table-btn{display:inline-flex;align-items:center;justify-content:center}body.result-table-mode .your-hand{display:block!important}body.result-table-mode #resultModal{display:none!important}@media(max-width:700px){.result-actions{gap:7px}.result-actions .start-btn{font-size:12px;padding:11px 10px}.result-table-btn{bottom:8px;min-width:170px;font-size:12px}}
 </style>
-  
-<style id="v3-menu-click-fix">
-/* FINAL FIX: lapisan menu harus benar-benar berada di atas meja/game */
-#menuModal.show{
-  position:fixed !important;
-  inset:0 !important;
-  z-index:999999 !important;
-  pointer-events:auto !important;
-}
-#menuModal.show .menu-modal-box{
-  position:relative !important;
-  z-index:1000000 !important;
-  pointer-events:auto !important;
-}
-#menuModal.show .menu-modal-box *,
-#menuModal.show button,
-#menuModal.show input,
-#menuModal.show [role="button"]{
-  pointer-events:auto !important;
-}
-#featureModal.show{
-  position:fixed !important;
-  inset:0 !important;
-  z-index:1000001 !important;
-  pointer-events:auto !important;
-}
-#featureModal.show .feature-modal-box{
-  position:relative !important;
-  z-index:1000002 !important;
-  pointer-events:auto !important;
-}
-#featureModal.show *{pointer-events:auto !important}
-body.menu-open .game.active,
-body.menu-open .game.active *{
-  pointer-events:none !important;
-}
-body.menu-open #menuModal,
-body.menu-open #menuModal *{
-  pointer-events:auto !important;
-}
-#menuBtn{
-  position:relative !important;
-  z-index:1000003 !important;
-  pointer-events:auto !important;
-}
-</style>
-</head>
+  </head>
   <body>
     <div class="topbar">
       <div class="logo">MINAMI</div>
@@ -4184,7 +4138,7 @@ body.menu-open #menuModal *{
     </section>
 
     <section class="setup setup-mode-joker" id="setupJoker">
-      <div class="setup-brand">🃏 2 DECK + JOKER &nbsp;•&nbsp; MODE JOKER</div>
+      <div class="setup-brand">🃏 2 DECK &nbsp;•&nbsp; JOKER</div>
       <h1 class="setup-logo">JOKER</h1>
 
       <div class="joker-menu-cards" aria-hidden="true">
@@ -4193,37 +4147,13 @@ body.menu-open #menuModal *{
           <div class="joker-menu-card joker-menu-card-open joker-menu-card-left">
             <span>Q</span><b>♠</b>
           </div>
-          <div class="joker-menu-card joker-menu-card-open joker-menu-card-middle">
-            <span>🃏</span>
-          </div>
           <div class="joker-menu-card joker-menu-card-open joker-menu-card-right">
             <span>3</span><b>♥</b>
           </div>
         </div>
       </div>
 
-      <div class="setup-section-label">Pilih jumlah pemain</div>
-      <div class="player-buttons joker-player-buttons">
-        <button class="player-btn active" type="button" data-player-joker="4">
-          <span class="player-btn-main">4 Pemain</span>
-          <span class="player-btn-sub">32 kartu mati • 20 kartu/orang</span>
-        </button>
-        <button class="player-btn" type="button" data-player-joker="5">
-          <span class="player-btn-main">5 Pemain</span>
-          <span class="player-btn-sub">12 kartu mati • 20 kartu/orang</span>
-        </button>
-      </div>
-
-      <div class="setup-rules" style="margin:12px auto 16px;max-width:650px;">
-        <div class="setup-rule">🃏 Joker dapat menggantikan kartu apa pun dalam Dasar.</div>
-        <div class="setup-rule">🃏 Dasar 3 kartu boleh memakai Joker di posisi mana pun.</div>
-        <div class="setup-rule">🃏 Dasar 4+ kartu tidak boleh menempatkan Joker di ujung.</div>
-        <div class="setup-rule">🃏 Jika tidak punya Dasar legal di putaran pertama, mati tangan.</div>
-      </div>
-
-      <button class="start-btn setup-start" id="startJokerBtn" type="button">
-        🃏 MULAI JOKER
-      </button>
+      <div class="joker-coming-soon">COMING SOON</div>
     </section>
 
     <section class="game" id="game">
@@ -4971,7 +4901,7 @@ body.menu-open #menuModal *{
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
         document.getElementById("setupJoker").style.display = "none";
-        minamiMode = Number(game.mode) === 3 ? 3 : (Number(game.mode) === 2 ? 2 : 1);
+        minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
@@ -4985,7 +4915,7 @@ body.menu-open #menuModal *{
             i <= playerCount ? "block" : "none";
         }
 
-        renderDeadCards(game.deadCards, game.jokerIndex, game.mode === 1);
+        renderDeadCards(game.deadCards, game.jokerIndex, game.mode !== 2);
         document.getElementById("jokerInfo").textContent = "";
         document.getElementById("status").textContent = game.over
           ? "Game selesai"
@@ -5149,7 +5079,7 @@ body.menu-open #menuModal *{
 
           game = saved.game;
           // Simpan mode di state agar refresh tidak mengubah MINAMI 1/2.
-          game.mode = Number(game.mode) === 3 ? 3 : (Number(game.mode) === 2 ? 2 : 1);
+          game.mode = Number(game.mode) === 2 ? 2 : 1;
           minamiMode = game.mode;
           playerCount = Number(game.playerCount) || 4;
           if(!Array.isArray(game.aiProfilesData) || game.aiProfilesData.length < playerCount){
@@ -5162,7 +5092,10 @@ body.menu-open #menuModal *{
                 rank1:Number(p.rank1)||0,
                 games:Number(p.games)||0,
                 gameWins:Number(p.gameWins)||0,
-                title:minamiRankTitleFromStats(p.rank1,p.games,p.gameWins)
+                // Gelar AI adalah profil yang dipilih untuk GAME ini.
+                // Jangan dihitung ulang saat refresh; gelar harus tetap sama
+                // sampai Game 25 selesai dan roster baru dibuat.
+                title:p.title||"PEMULA"
               };
             });
           }
@@ -5213,6 +5146,14 @@ body.menu-open #menuModal *{
             ? saved.nextOrder.slice()
             : null;
 
+          try {
+            updateAchievements();
+            renderFeatureStats();
+            renderAchievements();
+            applyPlayerProfile();
+            refreshPlayerTitles();
+          } catch (e) {}
+
           // Save lama dari sebelum perbaikan POT+Joker dikoreksi sekali saat refresh.
           // Setelah diberi marker V2, refresh berikutnya tidak mengubah poin lagi.
           if (game.over) {
@@ -5259,7 +5200,7 @@ body.menu-open #menuModal *{
         // MINAMI 2 menambahkan 8 Joker fisik: 4 merah + 4 hitam.
         // Joker ikut diacak bersama 104 kartu normal, sehingga bisa masuk
         // tangan pemain ATAU masuk ke kartu mati.
-        if (minamiMode === 2 || minamiMode === 3) {
+        if (minamiMode === 2) {
           for (let i = 1; i <= 4; i++) {
             d.push({ id: "J-R-" + i, suit: null, red: true, rank: null, text: "🃏", set: 3, isJoker: true, jokerColor: "red" });
             d.push({ id: "J-B-" + i, suit: null, red: false, rank: null, text: "🃏", set: 3, isJoker: true, jokerColor: "black" });
@@ -5272,7 +5213,7 @@ body.menu-open #menuModal *{
         // MINAMI 2: Joker adalah kartu fisik, tidak bergantung pada rank.
         if (c.isJoker === true) return true;
         // MINAMI 1: semua kartu dengan rank Joker yang ditentukan menjadi Joker.
-        return !!game && game.mode === 1 && c.rank === game.jokerRank;
+        return !!game && game.mode !== 2 && c.rank === game.jokerRank;
       }
       function cardValue(c) {
         return isJoker(c) ? 25 : val(c.rank);
@@ -5962,13 +5903,13 @@ body.menu-open #menuModal *{
 
         container.innerHTML = "";
 
-        // MINAMI 2/JOKER: tidak ada kartu Joker yang dibuka dari kartu mati.
+        // MINAMI 2: tidak ada kartu Joker yang dibuka dari kartu mati.
         // Seluruh sisa kartu hanya ditampilkan sebagai kartu tertutup.
-        if (game?.mode === 2 || game?.mode === 3) {
+        if (game?.mode === 2) {
           const title = document.querySelector(".joker-corner .center-title");
           if (title) title.textContent = "Kartu Mati (" + deadCards.length + ")";
           const stack = document.createElement("div");
-          stack.className = "dead-card-stack minami2-dead-stack joker-mode-dead-stack";
+          stack.className = "dead-card-stack minami2-dead-stack";
           // MINAMI 2: semua kartu mati dihitung, tetapi visualnya cukup
           // menampilkan satu kartu tertutup sebagai representasi tumpukan.
           if (deadCards.length > 0) {
@@ -6354,19 +6295,22 @@ body.menu-open #menuModal *{
 
         if (!Array.isArray(window.minamiScoreHistory))
           window.minamiScoreHistory = [];
+        const resultId=makeMatchResultId();
         window.minamiScoreHistory.push({
+          id: resultId,
           game: game.gameNumber || window.minamiScoreHistory.length + 1,
           delta: scoreDelta.slice(),
           total: game.scores.slice(),
         });
 
         game.lastResult = {
+          id: resultId,
           winner,
           reason,
           delta: scoreDelta.slice(),
         };
         game._residualScoringV2 = true;
-        recordLifetimeRank1(scoreDelta, reason);
+        recordLifetimeRank1(scoreDelta, reason, winner, resultId);
 
         // Progress AI juga disimpan per pemain. Nama/foto/gelar tetap sama
         // sepanjang GAME sampai target 25 tercapai; gelar mengikuti Rank 1 AI.
@@ -6911,39 +6855,91 @@ body.menu-open #menuModal *{
         return initialBaseCandidates(h).length > 0;
       }
       function canFullyArrange(h) {
-        let memo = new Map();
+        // TENHO harus bisa mengenali seluruh tangan yang memang dapat
+        // disusun habis menjadi DASAR/POT, bukan hanya kombinasi 3 kartu.
+        // Versi lama hanya mencoba grup 3 kartu sehingga tangan yang
+        // sebenarnya bisa habis dengan dasar 4/5 kartu bisa lolos.
+        const memo = new Map();
+
         function rec(arr) {
           if (!arr.length) return true;
-          let key = arr
-            .map((c) => c.id)
-            .sort()
-            .join("|");
+
+          const key = arr.map(c => c.id).sort().join("|");
           if (memo.has(key)) return memo.get(key);
-          let a = arr[0];
-          for (let i = 1; i < arr.length; i++)
-            for (let j = i + 1; j < arr.length; j++) {
-              let m = makeBaseCards([a, arr[i], arr[j]]);
-              if (m && rec(arr.filter((_, k) => k !== 0 && k !== i && k !== j)))
-                return memo.set(key, true).get(key);
-            }
-          let p = potCards([
-            a,
-            ...arr
-              .slice(1)
-              .filter((c) => c.rank === a.rank || isJoker(c))
-              .slice(0, 2),
-          ]);
-          if (p && arr.length >= 3) {
-            let used = [a];
-            for (let i = 1; i < arr.length && used.length < 3; i++)
-              if (arr[i].rank === a.rank || isJoker(arr[i])) used.push(arr[i]);
-            if (used.length >= 3 && rec(arr.filter((c) => !used.includes(c))))
-              return memo.set(key, true).get(key);
+
+          // Mulai dari kartu non-Joker supaya jumlah kandidat tidak meledak.
+          let firstIndex = arr.findIndex(c => !isJoker(c));
+          if (firstIndex < 0) {
+            memo.set(key, false);
+            return false;
           }
+
+          const a = arr[firstIndex];
+          const rest = arr.filter((_, i) => i !== firstIndex);
+          const candidates = [];
+          const seen = new Set();
+
+          const testGroup = (group) => {
+            if (group.length < 3) return;
+            const ids = group.map(c => c.id).sort().join("|");
+            if (seen.has(ids)) return;
+            seen.add(ids);
+
+            // DASAR: kartu berurutan satu bunga, Joker boleh menjadi pengganti.
+            const base = makeBaseCards(group);
+            if (base) candidates.push(group);
+
+            // POT: angka sama, bunga bebas, Joker boleh menggantikan.
+            const pot = potCards(group);
+            if (pot) candidates.push(group);
+          };
+
+          const buildCombos = (pool, maxSize) => {
+            const choose = (source, need, picked, offset) => {
+              if (need === 0) {
+                testGroup([a, ...picked]);
+                return;
+              }
+              for (let i = offset; i <= source.length - need; i++) {
+                picked.push(source[i]);
+                choose(source, need - 1, picked, i + 1);
+                picked.pop();
+              }
+            };
+
+            for (let size = 3; size <= Math.min(maxSize, pool.length + 1); size++) {
+              choose(pool, size - 1, [], 0);
+            }
+          };
+
+          // Kandidat DASAR hanya berasal dari bunga yang sama + Joker.
+          const basePool = rest.filter(c => isJoker(c) || c.suit === a.suit);
+          // Dasar panjang cukup dicari sampai 5 kartu. Dasar 6+ bisa
+          // dipecah menjadi grup 3 + 3/4/5 tanpa mengubah legalitas urutan.
+          buildCombos(basePool, 5);
+
+          // Kandidat POT maksimal 6 kartu pada dua deck + Joker.
+          // Dibuat terpisah agar POT 4+ juga bisa dikenali sebagai TENHO.
+          const potPool = rest.filter(c => isJoker(c) || c.rank === a.rank);
+          buildCombos(potPool, 6);
+
+          // Coba kandidat yang paling banyak menghabiskan kartu terlebih dahulu.
+          candidates.sort((x, y) => y.length - x.length);
+
+          for (const group of candidates) {
+            const used = new Set(group.map(c => c.id));
+            const remaining = arr.filter(c => !used.has(c.id));
+            if (rec(remaining)) {
+              memo.set(key, true);
+              return true;
+            }
+          }
+
           memo.set(key, false);
           return false;
         }
-        return rec(h);
+
+        return rec(Array.isArray(h) ? h : []);
       }
       function autoTenho() {
         let winners = [];
@@ -7847,20 +7843,23 @@ body.menu-open #menuModal *{
       }
 
       const MINAMI_AI_PROFILE_POOL = [
-        { name:"Raka", photo:"https://i.pravatar.cc/160?img=12" },
-        { name:"Dimas", photo:"https://i.pravatar.cc/160?img=13" },
-        { name:"Fajar", photo:"https://i.pravatar.cc/160?img=14" },
-        { name:"Rizky", photo:"https://i.pravatar.cc/160?img=15" },
-        { name:"Andi", photo:"https://i.pravatar.cc/160?img=16" },
-        { name:"Bima", photo:"https://i.pravatar.cc/160?img=17" },
-        { name:"Yoga", photo:"https://i.pravatar.cc/160?img=18" },
-        { name:"Arif", photo:"https://i.pravatar.cc/160?img=19" },
-        { name:"Nando", photo:"https://i.pravatar.cc/160?img=20" },
-        { name:"Rian", photo:"https://i.pravatar.cc/160?img=21" },
-        { name:"Aldi", photo:"https://i.pravatar.cc/160?img=22" },
-        { name:"Kevin", photo:"https://i.pravatar.cc/160?img=23" }
+        // Nama dan foto dipasangkan berdasarkan gender foto secara eksplisit.
+        // Roster baru dibuat hanya saat GAME baru; roster aktif tetap stabil
+        // selama game berjalan dan tidak berubah saat refresh.
+        { name:"James", gender:"male", photo:"https://randomuser.me/api/portraits/men/12.jpg" },
+        { name:"Ethan", gender:"male", photo:"https://randomuser.me/api/portraits/men/32.jpg" },
+        { name:"Oliver", gender:"male", photo:"https://randomuser.me/api/portraits/men/45.jpg" },
+        { name:"Daniel", gender:"male", photo:"https://randomuser.me/api/portraits/men/52.jpg" },
+        { name:"Lucas", gender:"male", photo:"https://randomuser.me/api/portraits/men/68.jpg" },
+        { name:"Henry", gender:"male", photo:"https://randomuser.me/api/portraits/men/75.jpg" },
+        { name:"Emma", gender:"female", photo:"https://randomuser.me/api/portraits/women/12.jpg" },
+        { name:"Olivia", gender:"female", photo:"https://randomuser.me/api/portraits/women/32.jpg" },
+        { name:"Sophia", gender:"female", photo:"https://randomuser.me/api/portraits/women/45.jpg" },
+        { name:"Amelia", gender:"female", photo:"https://randomuser.me/api/portraits/women/52.jpg" },
+        { name:"Chloe", gender:"female", photo:"https://randomuser.me/api/portraits/women/68.jpg" },
+        { name:"Charlotte", gender:"female", photo:"https://randomuser.me/api/portraits/women/75.jpg" }
       ];
-      const MINAMI_AI_ROSTER_KEY = "minamiAIRosterV1";
+      const MINAMI_AI_ROSTER_KEY = "minamiAIRosterV2";
 
       function minamiRankTitleFromStats(rank1, games=0, gameWins=0){
         const rank=Number(rank1)||0;
@@ -7887,6 +7886,7 @@ body.menu-open #menuModal *{
           const p = pool[idx % pool.length];
           return {
             name:p.name,
+            gender:p.gender,
             photo:p.photo,
             rank1:0,
             games:0,
@@ -7903,6 +7903,7 @@ body.menu-open #menuModal *{
           if(Array.isArray(saved)&&saved.length===count&&saved.every(p=>p&&p.name&&p.photo)){
             return saved.map(p=>({
               name:p.name,
+              gender:p.gender||"",
               photo:p.photo,
               rank1:Number(p.rank1)||0,
               games:Number(p.games)||0,
@@ -8039,7 +8040,7 @@ body.menu-open #menuModal *{
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
         document.getElementById("setupJoker").style.display = "none";
-        minamiMode = Number(game.mode) === 3 ? 3 : (Number(game.mode) === 2 ? 2 : 1);
+        minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
         document.getElementById("newGameTopBtn").style.display = "inline-flex";
@@ -8153,24 +8154,13 @@ body.menu-open #menuModal *{
           }),
       );
 
-      document.querySelectorAll("#setupJoker .player-btn[data-player-joker]").forEach(
-        (b) =>
-          (b.onclick = () => {
-            document.querySelectorAll("#setupJoker .player-btn[data-player-joker]").forEach((x) => x.classList.remove("active"));
-            b.classList.add("active");
-            playerCount = Number(b.dataset.playerJoker);
-          }),
-      );
-
       let minamiMode = 1;
       function showSetupMode(mode) {
-        minamiMode = mode === 3 ? 3 : (mode === 2 ? 2 : 1);
-        document.getElementById("status").textContent =
-          minamiMode === 3 ? "JOKER" : (minamiMode === 2 ? "MINAMI 2" : "MINAMI 1");
+        minamiMode = mode === 2 ? 2 : 1;
+        document.getElementById("status").textContent = minamiMode === 1 ? "MINAMI 1" : "MINAMI 2";
       }
       document.getElementById("startBtn").onclick = () => { minamiMode = 1; startGame(); };
       document.getElementById("startMinami2Btn").onclick = () => { minamiMode = 2; startGame(); };
-      document.getElementById("startJokerBtn").onclick = () => { minamiMode = 3; startGame(); };
       document.getElementById("sortSuitBtn").onclick = () => {
         sortCards(game.hands[0], "suit");
         render();
@@ -8184,17 +8174,15 @@ body.menu-open #menuModal *{
       document.getElementById("addBtn").onclick = addMeld;
       document.getElementById("potBtn").onclick = makePot;
       function updateActiveRulesForMode() {
-        const mode = Number(game?.mode) === 3 ? 3 : (Number(game?.mode) === 2 ? 2 : 1);
+        const mode = Number(game?.mode) === 2 ? 2 : 1;
         const subtitle = document.querySelector("#activeRulesModal .rules-subtitle");
         const cards = document.querySelectorAll("#activeRulesModal .rule-card");
         const note = document.querySelector("#activeRulesModal .rules-note");
         if (subtitle) {
           subtitle.textContent =
-            mode === 3
-              ? "Panduan aturan JOKER yang sedang digunakan"
-              : (mode === 2
-                ? "Panduan aturan MINAMI 2 yang sedang digunakan"
-                : "Panduan aturan MINAMI 1 yang sedang digunakan");
+            mode === 2
+              ? "Panduan aturan MINAMI 2 yang sedang digunakan"
+              : "Panduan aturan MINAMI 1 yang sedang digunakan";
         }
 
         // Kartu aturan pertama adalah satu-satunya bagian yang berbeda.
@@ -8202,21 +8190,17 @@ body.menu-open #menuModal *{
           const p = cards[0].querySelector("p");
           if (p) {
             p.textContent =
-              mode === 3
-                ? "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Joker dapat menggantikan kartu apa pun. Dasar 3 kartu boleh memakai Joker di posisi mana pun; Dasar 4+ kartu tidak boleh menempatkan Joker di ujung. Jika tidak punya Dasar legal pada putaran pertama, pemain mati."
-                : (mode === 2
-                  ? "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Pada putaran pertama, Dasar awal wajib murni tanpa Joker. Setelah semua pemain menyelesaikan Dasar awal atau mati, Joker boleh digunakan seperti aturan Joker biasa."
-                  : "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Boleh menggunakan kartu yang menjadi Joker. Jika tidak punya Dasar legal, pemain mati.");
+              mode === 2
+                ? "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Pada putaran pertama, Dasar awal wajib murni tanpa Joker. Setelah semua pemain menyelesaikan Dasar awal atau mati, Joker boleh digunakan seperti aturan Joker biasa."
+                : "Setiap pemain wajib menurunkan 1 Dasar: minimal 3 kartu, berurutan, dan satu bunga. Boleh menggunakan kartu yang menjadi Joker. Jika tidak punya Dasar legal, pemain mati.";
           }
         }
 
         if (note) {
           note.innerHTML =
-            mode === 3
-              ? "💡 <b>Intinya:</b> Joker adalah kartu fisik yang fleksibel. Putaran pertama sudah boleh memakai Joker untuk membentuk Dasar. Setelah itu Joker juga dapat menjadi nyawa giliran saat tidak ada langkah legal."
-              : (mode === 2
-                ? "💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar awal murni tanpa Joker. Setelah itu permainan terbuka untuk Dasar, tambahan, dan POT. Joker kemudian dapat digunakan seperti aturan biasa."
-                : "💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar yang sah. Setelah itu permainan terbuka untuk Dasar, tambahan, dan POT. Joker fleksibel, tetapi jangan digunakan tanpa alasan karena nilainya tinggi jika tersisa.");
+            mode === 2
+              ? "💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar awal murni tanpa Joker. Setelah itu permainan terbuka untuk Dasar, tambahan, dan POT. Joker kemudian dapat digunakan seperti aturan biasa."
+              : "💡 <b>Intinya:</b> Putaran 1 fokus membuat Dasar yang sah. Setelah itu permainan terbuka untuk Dasar, tambahan, dan POT. Joker fleksibel, tetapi jangan digunakan tanpa alasan karena nilainya tinggi jika tersisa.";
         }
       }
 
@@ -8548,7 +8532,7 @@ body.menu-open #menuModal *{
         document.getElementById("resultModal").classList.remove("show");
       };
 
-      const MINAMI_FEATURE_KEY="minamiFeatureStatsV2", MINAMI_ACH_KEY="minamiAchievementsV1";
+      const MINAMI_FEATURE_KEY="minamiFeatureStatsV2", MINAMI_ACH_KEY="minamiAchievementsV1", MINAMI_RANK1_LEDGER_KEY="minamiRank1LedgerV1";
       function featureStats(){
         const d={matches:0,matchWins:0,games:0,gameWins:0,rank1:0,tenho:0,pots:0,cards:0,jokers:0,bestCombo:0,dead:0,cardsPerMatch:0,mvp:0,bestStreak:0};
         try{
@@ -8586,36 +8570,52 @@ body.menu-open #menuModal *{
         saveFeatureStats(s);
         updateAchievements();
       }
-      function syncRank1FromScoreHistory(){
-        const history=Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[];
-        if(!history.length)return false;
-        let counted=0;
-        history.forEach(row=>{
-          const delta=Array.isArray(row?.delta)?row.delta:[];
-          if(delta.length!==playerCount || delta.every(v=>Number(v)===-2))return;
-          const max=Math.max(...delta.map(v=>Number(v)));
-          if(Number(delta[0])===max)counted++;
-        });
-        const s=featureStats();
-        const current=Number(s.rank1)||0;
-        if(counted>current){
-          s.rank1=counted;
-          saveFeatureStats(s);
-          return true;
-        }
-        return false;
+      function loadRank1Ledger(){
+        try{
+          const x=JSON.parse(localStorage.getItem(MINAMI_RANK1_LEDGER_KEY)||"[]");
+          return Array.isArray(x)?x:[];
+        }catch(e){return[]}
       }
 
-      function recordLifetimeRank1(delta, reason){
+      function saveRank1Ledger(ids){
+        try{
+          localStorage.setItem(MINAMI_RANK1_LEDGER_KEY,JSON.stringify(ids.slice(-5000)));
+        }catch(e){}
+      }
+
+      function makeMatchResultId(){
+        try{
+          if(window.crypto?.randomUUID)return window.crypto.randomUUID();
+        }catch(e){}
+        return "r-"+Date.now()+"-"+Math.random().toString(36).slice(2);
+      }
+
+      function recordLifetimeRank1(delta, reason, winner, resultId){
         if(!Array.isArray(delta)||delta.length!==playerCount)return;
         if(reason==="ALL_DEAD"||delta.every(v=>Number(v)===-2))return;
-        const maxDelta=Math.max(...delta.map(v=>Number(v)));
-        if(Number(delta[0])!==maxDelta)return;
-        if(game?._rank1Counted)return;
-        if(game)game._rank1Counted=true;
+
+        // Rank 1 ditentukan dari pemenang hasil match, bukan membandingkan
+        // angka delta. Ini menghindari tie/bonus scoring membuat pencatatan
+        // Rank 1 salah atau terlewat.
+        if(Number(winner)!==0)return;
+
+        // Setiap hasil punya ID sendiri. Jika fungsi terpanggil lagi karena
+        // restore/refresh, hasil yang sama tidak boleh dihitung dua kali.
+        const id=String(resultId||"");
+        const ledger=loadRank1Ledger();
+        if(id && ledger.includes(id))return;
+        if(id){
+          ledger.push(id);
+          saveRank1Ledger(ledger);
+        }
+
         const s=featureStats();
         s.rank1=(Number(s.rank1)||0)+1;
         saveFeatureStats(s);
+
+        // Rank 1 adalah statistik LIFETIME: langsung simpan dan render.
+        refreshPlayerTitles();
+        applyPlayerProfile();
         renderFeatureStats();
         renderAchievements();
       }
@@ -8715,8 +8715,6 @@ body.menu-open #menuModal *{
       }
       function renderFeatureStats(){
         const b=document.getElementById("featureStatsPanel");if(!b)return;
-        const history=Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[];
-        syncRank1FromScoreHistory();
         const s=featureStats();
         const games=s.games||0,gameWins=s.gameWins||0;
         const gameWinRate=games?Math.round(gameWins/games*100):0;
@@ -8874,6 +8872,7 @@ body.menu-open #menuModal *{
 .achievement-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:rgba(243,207,112,.10);border:1px solid rgba(243,207,112,.15);font-size:23px;text-align:center}
 .achievement-info{min-width:0}.achievement-card b{display:block;color:#f3cf70;font-size:10px;line-height:1.05;letter-spacing:.55px;text-transform:uppercase}.achievement-card span{display:block;margin-top:5px;color:#aacdc0;font-size:8px;font-weight:700;line-height:1.3}.achievement-card em{text-align:center;color:#7ff0b0;font-size:10px;font-style:normal;font-weight:900}
 @media(max-width:700px),(hover:none) and (pointer:coarse){.achievement-grid{grid-template-columns:1fr}.achievement-card{min-height:92px}}
+</style>
 <style id="minami2-dead-card-center-final">
   /* Minami 2: satu kartu mati menjadi representasi tumpukan dan selalu berada di tengah area. */
   .joker-corner #jokerCard .minami2-dead-stack {
@@ -8902,57 +8901,6 @@ body.menu-open #menuModal *{
     justify-content: center !important;
   }
 </style>
-
-<script id="v3-menu-click-bridge">
-(function(){
-  if(window.__v3MenuClickFixInstalled) return;
-  window.__v3MenuClickFixInstalled = true;
-
-  function el(id){ return document.getElementById(id); }
-
-  document.addEventListener("click", function(e){
-    const target = e.target && e.target.closest ? e.target.closest("#menuBtn,#menuClose,#menuStatsBtn,#menuRestartBtn,#featureModalClose") : null;
-    if(!target) return;
-
-    if(target.id === "menuBtn"){
-      const modal = el("menuModal");
-      if(!modal) return;
-      modal.classList.toggle("game-active", !!window.game && !window.game.over);
-      modal.classList.add("show");
-      document.body.classList.add("menu-open");
-      return;
-    }
-
-    if(target.id === "menuClose"){
-      const modal = el("menuModal");
-      if(modal) modal.classList.remove("show");
-      document.body.classList.remove("menu-open");
-      return;
-    }
-
-    if(target.id === "menuStatsBtn"){
-      e.preventDefault();
-      e.stopPropagation();
-      const menu = el("menuModal");
-      const feature = el("featureModal");
-      if(menu) menu.classList.remove("show");
-      document.body.classList.remove("menu-open");
-      if(typeof window.renderFeaturePanels === "function") window.renderFeaturePanels();
-      if(feature){
-        feature.classList.add("show");
-        feature.style.display="flex";
-      }
-      return;
-    }
-
-    if(target.id === "featureModalClose"){
-      const feature = el("featureModal");
-      if(feature) feature.classList.remove("show");
-      return;
-    }
-  }, true);
-})();
-</script>
 </body></html>
 <style id="mobile-hand-fixed-footer-final">
   @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
@@ -9337,7 +9285,7 @@ body.menu-open #menuModal *{
 </style>
 
 <style id="joker-menu-card-style">
-  /* JOKER: mode permainan fisik Joker, dengan pilihan 4/5 pemain. */
+  /* JOKER masih Coming Soon: hanya kartu menu, tanpa tombol mulai/pilihan pemain. */
   .setup-mode-joker { margin-top:0; padding-bottom:34px; }
   .setup-mode-joker .setup-brand { background:rgba(184,142,255,.08); border-color:rgba(184,142,255,.18); }
   .setup-mode-joker .setup-logo { color:#dfc9ff; }
