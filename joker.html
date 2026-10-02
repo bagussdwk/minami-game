@@ -428,30 +428,53 @@
         bottom: 88px;
         transform: translateX(-50%);
       }
-      /* Saat arah putaran dibalik setelah pemain menutup, setiap kotak buangan
-         ikut berpindah ke sisi pemain berikutnya pada arah baru. */
+      /* Arah dibalik:
+         P1 -> P5 -> P4 -> P3 -> P2 -> P1.
+         Kotak buangan mengikuti pemain berikutnya, tetapi tetap diberi
+         jarak dari avatar agar tidak bertumpuk. */
       .discards.reverse .d1 {
         left: 10px;
-        bottom: 15px;
+        right: auto;
+        bottom: 100px;
+        top: auto;
+        transform: none;
       }
       .discards.reverse .d5 {
-                left: 10px;
-        top: 15px;
+        left: 10px;
+        right: auto;
+        top: 100px;
+        bottom: auto;
+        transform: none;
       }
       .discards.reverse .d4 {
         right: 10px;
-        top: 15px;
+        left: auto;
+        top: 100px;
+        bottom: auto;
+        transform: none;
       }
       .discards.reverse .d3 {
         right: 10px;
-        bottom: 15px;
+        left: auto;
+        bottom: 100px;
+        top: auto;
+        transform: none;
       }
       .discards.reverse .d2 {
         left: 50%;
+        right: auto;
         bottom: 88px;
+        top: auto;
         transform: translateX(-50%);
       }
-      .discards.reverse .d1:hover {
+
+      .discards.reverse .d1:hover,
+      .discards.reverse .d3:hover,
+      .discards.reverse .d4:hover,
+      .discards.reverse .d5:hover {
+        transform: translateY(-1px);
+      }
+      .discards.reverse .d2:hover {
         transform: translateX(-50%) translateY(-1px);
       }
       .smallcards {
@@ -708,29 +731,52 @@
         .p2 {
           right: 0;
         }
-              .discards.reverse .d1 {
+              /* Reverse di mobile: tetap mengikuti posisi pasangan pemain,
+           dengan jarak yang sama agar tidak menabrak avatar. */
+        .discards.reverse .d1 {
           left: 6px;
-          bottom: 100px;
-      }
-      .discards.reverse .d5 {
-          left: 1px;
-          top: 82px;
           right: auto;
-          transform: none;
-      }
-      .discards.reverse .d4 {
-          right: 6px;
-          top: 82px;
-      }
-      .discards.reverse .d3 {
-          right: 6px;
           bottom: 100px;
-      }
-      .discards.reverse .d2 {
+          top: auto;
+          transform: none;
+        }
+        .discards.reverse .d5 {
+          left: 1px;
+          right: auto;
+          top: 82px;
+          bottom: auto;
+          transform: none;
+        }
+        .discards.reverse .d4 {
+          right: 6px;
+          left: auto;
+          top: 82px;
+          bottom: auto;
+          transform: none;
+        }
+        .discards.reverse .d3 {
+          right: 6px;
+          left: auto;
+          bottom: 100px;
+          top: auto;
+          transform: none;
+        }
+        .discards.reverse .d2 {
           left: 50%;
+          right: auto;
           bottom: 88px;
+          top: auto;
           transform: translateX(-50%);
-      }
+        }
+        .discards.reverse .d1:hover,
+        .discards.reverse .d3:hover,
+        .discards.reverse .d4:hover,
+        .discards.reverse .d5:hover {
+          transform: translateY(-1px);
+        }
+        .discards.reverse .d2:hover {
+          transform: translateX(-50%) translateY(-1px);
+        }
         .d1 {
                     left: 6px;
           bottom: 100px;
