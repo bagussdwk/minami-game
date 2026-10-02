@@ -1853,7 +1853,13 @@
             () => {
               closeModal();
               if (g.p.some((x) => x.score >= 1500)) return gameOver();
-              newMatch(t, -g.dir, true);
+              // Pemain tertangkap hanya menentukan arah putaran.
+              // Starter match berikutnya tetap pemain dengan akumulasi poin terendah.
+              let order = g.p
+                .map((p, i) => ({ i, score: p.score }))
+                .sort((a, b) => a.score - b.score || a.i - b.i);
+              let starter = order[0].i;
+              newMatch(starter, -g.dir, true);
             },
           );
         }
