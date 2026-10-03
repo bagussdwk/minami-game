@@ -8030,7 +8030,8 @@
         game = {
           mode: minamiMode,
           hands,
-          // MINAMI 1 menyimpan rank Joker; MINAMI 2 tidak memakai rank Joker.          jokerRank: joker ? joker.rank : null,
+          // MINAMI 1 menyimpan rank Joker; MINAMI 2 tidak memakai rank Joker.          
+jokerRank: joker ? joker.rank : null,
           joker,
           playerCount,
           scores: window.minamiScores || Array(playerCount).fill(0),
