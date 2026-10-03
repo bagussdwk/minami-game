@@ -368,16 +368,16 @@ function ensureAchievementTables(PDO $db):void{
   $items=[
     ['first-win','First Win','Menang 1 match','🏆','global',10],
     ['first-champion','First Champion','Menang 1 Game sampai target poin','👑','global',20],
-    ['tenho','TENHO!','Mendapatkan TENHO di Minami','🃏','minami1',30],
-    ['pot-master','POT Hunter','Membuat 5 POT','♟️','minami1',40],
-    ['joker-master','Joker Master','Memainkan Joker 5 kali','🃏','minami1',50],
-    ['combo-master','Combo Master','Menurunkan 5 kartu atau lebih sekaligus','🔥','minami1',60],
-    ['mvp','MVP','Menjadi MVP 1 kali','⭐','minami1',70],
-    ['rank-climber','Rank Climber','Mengumpulkan 10 Rank 1','📈','minami1',80],
-    ['marathon','Marathon','Menyelesaikan 10 Game sampai target','🎴','minami1',90],
-    ['triple-champion','Triple Champion','Menang 3 Game sampai target','🏆','minami1',100],
-    ['veteran','Veteran','Menyelesaikan 25 match','🎖️','minami1',110],
-    ['streak-3','Winning Streak','Menang 3 match berturut-turut','⚡','minami1',120],
+    ['tenho','TENHO!','Mendapatkan TENHO di Minami','🃏','minami',30],
+    ['pot-master','POT Hunter','Membuat 5 POT','♟️','minami',40],
+    ['joker-master','Joker Master','Memainkan Joker 5 kali','🃏','minami',50],
+    ['combo-master','Combo Master','Menurunkan 5 kartu atau lebih sekaligus','🔥','minami',60],
+    ['mvp','MVP','Menjadi MVP 1 kali','⭐','minami',70],
+    ['rank-climber','Rank Climber','Mengumpulkan 10 Rank 1','📈','minami',80],
+    ['marathon','Marathon','Menyelesaikan 10 Game sampai target','🎴','minami',90],
+    ['triple-champion','Triple Champion','Menang 3 Game sampai target','🏆','minami',100],
+    ['veteran','Veteran','Menyelesaikan 25 match','🎖️','minami',110],
+    ['streak-3','Winning Streak','Menang 3 match berturut-turut','⚡','minami',120],
     ['first-joker','First Joker','Menggunakan Joker pertama dalam kombinasi','🃏','joker',130],
     ['set-master','Set Master','Membuat set pertama','🎯','joker',140],
     ['joker-collector','Joker Collector','Menggunakan 10 Joker','🔥','joker',150],
@@ -391,6 +391,8 @@ function ensureAchievementTables(PDO $db):void{
   ];
   $q=$db->prepare('INSERT IGNORE INTO achievements(code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?)');
   foreach($items as $x)$q->execute($x);
+  // Achievement mekanik Minami berlaku untuk Minami 1 dan Minami 2.
+  $db->exec("UPDATE achievements SET mode='minami' WHERE code IN ('tenho','pot-master','joker-master','combo-master','mvp','rank-climber','marathon','triple-champion','veteran','streak-3')");
 }
 function achievementList(PDO $db):never{
   ensureAchievementTables($db);
