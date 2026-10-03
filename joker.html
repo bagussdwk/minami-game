@@ -2597,6 +2597,16 @@ function advance() {
           }
           const streak=rank1?jokerCurrentStreak()+1:0;
           if(rank1)saveJokerCurrentStreak(streak); else saveJokerCurrentStreak(0);
+          const jokerUnlocks=[];
+          if(g.jokerStats.jokers>=1)jokerUnlocks.push("firstJoker");
+          if(rank1)jokerUnlocks.push("firstWin");
+          if(userGameWin)jokerUnlocks.push("firstChampion");
+          if(g.jokerStats.sets>=1)jokerUnlocks.push("setMaster");
+          if(g.jokerStats.jokers>=10)jokerUnlocks.push("collector");
+          if(g.jokerStats.jokers>=25)jokerUnlocks.push("hoarder");
+          if(streak>=3)jokerUnlocks.push("hotStreak");
+          if(streak>=5)jokerUnlocks.push("unstoppable");
+          if(jokerUnlocks.length)syncJokerAchievements(jokerUnlocks);
           syncJokerResult(resultId,{
             games_finished:gameFinished?1:0,
             game_wins:userGameWin?1:0,
