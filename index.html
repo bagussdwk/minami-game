@@ -9163,19 +9163,19 @@ async function saveFeaturedAchievements(codes){
     showPlayFeedback("Login diperlukan untuk menyimpan achievement.",false);
     return false;
   }
+
+  // FEATURED SELALU SERVER-ONLY.
+  // Achievement yang hanya terbuka di localStorage tidak boleh dipajang.
+  const serverUnlocked=new Set(minamiAccountAchievements.filter(x=>x&&x.unlocked).map(x=>x.code));
+  const invalid=next.filter(code=>!serverUnlocked.has(code));
+  if(invalid.length){
+    showPlayFeedback("Achievement belum aktif di server. Selesaikan/sinkronkan achievement saat login.",false);
+    await loadAccountAchievements();
+    renderAchievements();
+    return false;
+  }
+
   try{
-    // Pastikan achievement yang dipilih juga sudah tercatat di server.
-    // Statistik lokal dapat mengetahui achievement terbuka sebelum sinkronisasi akun selesai.
-    if(next.length){
-      const sr=await fetch(new URL("api/index.php?action=achievement",document.baseURI).href,{
-        method:"POST",
-        headers:{"Content-Type":"text/plain;charset=UTF-8","Accept":"application/json"},
-        body:JSON.stringify({token,achievement_ids:next})
-      });
-      const sraw=await sr.text();
-      let sd=null; try{sd=JSON.parse(sraw)}catch(e){}
-      if(!sr.ok||!sd?.ok||Number(sd.saved||0)<next.length) throw new Error(sd?.error||"Achievement belum tersinkron ke akun.");
-    }
     const r=await fetch(new URL("api/index.php?action=achievement",document.baseURI).href,{
       method:"POST",
       headers:{"Content-Type":"text/plain;charset=UTF-8","Accept":"application/json"},
@@ -9184,7 +9184,7 @@ async function saveFeaturedAchievements(codes){
     const raw=await r.text();
     let d=null; try{d=JSON.parse(raw)}catch(e){}
     if(!r.ok||!d?.ok||Number(d.saved||0)!==next.length) throw new Error(d?.error||"Achievement pilihan belum tersimpan.");
-    minamiFeaturedAchievementCodes=Array.isArray(d.featured_codes)?d.featured_codes:next;
+    minamiFeaturedAchievementCodes=Array.isArray(d.featured_codes)?d.featured_codes:[];
     renderAchievements();
     const lp=document.getElementById("featureLeaderboardPanel");
     if(lp){lp.dataset.loaded=""; if(lp.style.display!=="none") renderLeaderboard();}
@@ -9196,10 +9196,36 @@ async function saveFeaturedAchievements(codes){
     return false;
   }
 }
-async function syncAccountAchievements(ids){const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);if(!token||!Array.isArray(ids)||!ids.length)return false;try{const r=await fetch(new URL("api/index.php?action=achievement",document.baseURI).href,{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({token,achievement_ids:[...new Set(ids)]})});const d=await r.json();if(r.ok&&d?.ok){for(const id of ids)minamiServerAchievementCodes.add(id);return true}}catch(e){}return false}
-function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAMI_ACH_KEY)||"[]")}catch(e){return[]}}
-      function updateAchievements(){
-        const s=featureStats(),u=new Set(unlockedAchievements());
+async async function syncAccountAchievements(ids){
+  const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
+  if(!token||!Array.isArray(ids)||!ids.length)return false;
+  try{
+    const unique=[...new Set(ids)];
+    const r=await fetch(new URL("api/index.php?action=achievement",document.baseURI).href,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=UTF-8","Accept":"application/json"},
+      body:JSON.stringify({token,achievement_ids:unique})
+    });
+    const d=await r.json();
+    if(r.ok&&d?.ok){
+      // Jangan percaya daftar ID lokal sebagai bukti unlock.
+      // Ambil ulang daftar achievement yang benar-benar tersimpan di server.
+      return await loadAccountAchievements();
+    }
+  }catch(e){}
+  return false;
+}
+function unlockedAchievements(){
+  // Achievement tidak pernah dianggap unlocked dari localStorage.
+  // Local hanya boleh menyimpan statistik/game state, sedangkan status unlock
+  // harus berasal dari user_achievements di server.
+  return [...minamiServerAchievementCodes];
+}
+      async function updateAchievements(){
+        const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
+        if(!token) return false;
+
+        const s=featureStats();
         const a=[
           ["first-win","🏆","First Win","Menang 1 match",(s.matchWins||0)>=1],
           ["first-champion","👑","First Champion","Menang 1 Game sampai 25 poin",(s.gameWins||0)>=1],
@@ -9215,10 +9241,28 @@ function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAM
           ["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut",(Number(localStorage.getItem("minamiWinStreak"))||0)>=3],
           ["minami2-clean-5","🛡️","Clean Five","Menyelesaikan 5 Game Minami 2 berturut-turut tanpa mati tangan",(Number(localStorage.getItem(MINAMI2_CLEAN_STREAK_KEY))||0)>=5]
         ];
-        let ch=false;
-        a.forEach(x=>{if(x[4]&&!u.has(x[0])){u.add(x[0]);ch=true;showPlayFeedback(x[1]+" ACHIEVEMENT: "+x[2],false)}});
-        if(ch)localStorage.setItem(MINAMI_ACH_KEY,JSON.stringify([...u]));
-        if(ch)syncAccountAchievements([...u]);
+        const localCandidates=a.filter(x=>x[4]).map(x=>x[0]);
+        if(!localCandidates.length){
+          await loadAccountAchievements();
+          renderAchievements();
+          return true;
+        }
+
+        // Server menjadi sumber kebenaran. Kirim kandidat yang memang sudah
+        // memenuhi syarat berdasarkan statistik game, lalu baca ulang hasilnya
+        // dari server. Jangan pernah menambahkan status unlock ke localStorage.
+        const before=new Set(minamiServerAchievementCodes);
+        const ok=await syncAccountAchievements(localCandidates);
+        if(ok){
+          await loadAccountAchievements();
+          for(const x of a){
+            if(x[4]&&!before.has(x[0])&&minamiServerAchievementCodes.has(x[0])){
+              showPlayFeedback(x[1]+" ACHIEVEMENT: "+x[2],false);
+            }
+          }
+          renderAchievements();
+        }
+        return ok;
       }
       function getGameMVP(){if(!game?.stats)return null;let best=null;for(let i=0;i<playerCount;i++){const st=game.stats,v=(st.cardsPlayed[i]||0)+(st.pots[i]||0)*3+(st.jokers[i]||0)*2+(st.bases[i]||0)+(game.lastResult?.winner===i?10:0),x={i,value:v,name:getPlayerName(i)};if(!best||v>best.value)best=x}return best}
       function getMinamiRankInfo(){
@@ -9371,7 +9415,8 @@ function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAM
       }
       function renderAchievements(){
   const b=document.getElementById("featureAchievementsPanel");if(!b)return;
-  const u=new Set([...unlockedAchievements(),...minamiServerAchievementCodes]);
+  // Hanya status dari server yang boleh menentukan unlocked/locked.
+  const u=new Set(minamiServerAchievementCodes);
   const defs=[
     ["first-win","🏆","First Win","Menangkan match untuk pertama kali.","GLOBAL"],
     ["first-champion","👑","First Champion","Menang Game sampai target poin pertama kali.","GLOBAL"],
