@@ -358,32 +358,59 @@ function gameResult(PDO $db,array $b):never{
   }
 }
 function ensureAchievementTables(PDO $db):void{
-  $db->exec('CREATE TABLE IF NOT EXISTS achievements (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    code VARCHAR(64) NOT NULL,
-    name VARCHAR(120) NOT NULL,
-    description VARCHAR(255) NOT NULL,
-    icon VARCHAR(16) NOT NULL DEFAULT "🏆",
-    mode VARCHAR(16) NOT NULL DEFAULT "global",
-    sort_order INT NOT NULL DEFAULT 0,
-    PRIMARY KEY(id), UNIQUE KEY uq_achievement_code(code)
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-  $db->exec('CREATE TABLE IF NOT EXISTS user_achievements (
+  /*
+   * Kompatibilitas schema lama:
+   * schema.sql versi awal memakai achievements.id VARCHAR(64), sedangkan
+   * versi achievement profil memakai id numerik + kolom code/icon/sort_order.
+   * Migrasi dilakukan tanpa menghapus achievement/user_achievement lama.
+   */
+  $cols=[];
+  try{
+    $st=$db->query("SHOW COLUMNS FROM achievements");
+    foreach($st->fetchAll() as $row)$cols[strtolower((string)$row['Field'])]=strtolower((string)$row['Type']);
+  }catch(Throwable $e){$cols=[];}
+
+  $legacy=!isset($cols['code']);
+  if(!$cols){
+    $db->exec('CREATE TABLE IF NOT EXISTS achievements (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      code VARCHAR(64) NOT NULL,
+      name VARCHAR(120) NOT NULL,
+      description VARCHAR(255) NOT NULL,
+      icon VARCHAR(16) NOT NULL DEFAULT "🏆",
+      mode VARCHAR(16) NOT NULL DEFAULT "global",
+      sort_order INT NOT NULL DEFAULT 0,
+      PRIMARY KEY(id), UNIQUE KEY uq_achievement_code(code)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+    $legacy=false;
+  }elseif($legacy){
+    try{$db->exec("ALTER TABLE achievements ADD COLUMN code VARCHAR(64) NULL, ADD COLUMN icon VARCHAR(16) NOT NULL DEFAULT '🏆', ADD COLUMN sort_order INT NOT NULL DEFAULT 0");}catch(Throwable $e){}
+    try{$db->exec("UPDATE achievements SET code=CAST(id AS CHAR) WHERE code IS NULL OR code=''");}catch(Throwable $e){}
+    try{$db->exec("ALTER TABLE achievements MODIFY code VARCHAR(64) NOT NULL");}catch(Throwable $e){}
+    try{$db->exec("ALTER TABLE achievements ADD UNIQUE KEY uq_achievement_code(code)");}catch(Throwable $e){}
+  }
+
+  /* user_achievements mengikuti tipe PK achievements.id yang sudah ada. */
+  $achIdType=$legacy?'VARCHAR(64)':'BIGINT UNSIGNED';
+  $db->exec("CREATE TABLE IF NOT EXISTS user_achievements (
     user_id BIGINT UNSIGNED NOT NULL,
-    achievement_id BIGINT UNSIGNED NOT NULL,
+    achievement_id $achIdType NOT NULL,
     unlocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(user_id,achievement_id),
     CONSTRAINT fk_user_ach_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_user_ach_achievement FOREIGN KEY(achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');  $db->exec('CREATE TABLE IF NOT EXISTS user_featured_achievements (
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+  $db->exec("CREATE TABLE IF NOT EXISTS user_featured_achievements (
     user_id BIGINT UNSIGNED NOT NULL,
-    achievement_id BIGINT UNSIGNED NOT NULL,
+    achievement_id $achIdType NOT NULL,
     slot TINYINT UNSIGNED NOT NULL,
     PRIMARY KEY(user_id,slot),
     UNIQUE KEY uq_user_featured_achievement(user_id,achievement_id),
     CONSTRAINT fk_user_featured_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_user_featured_achievement FOREIGN KEY(achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
   $items=[
     ['first-win','First Win','Menang 1 match','🏆','global',10],
     ['first-champion','First Champion','Menang 1 Game sampai target poin','👑','global',20],
@@ -409,12 +436,18 @@ function ensureAchievementTables(PDO $db):void{
     ['hot-streak','Hot Streak','Rank 1 dalam 3 match berturut-turut','🔥','joker',210],
     ['unstoppable','Unstoppable','Rank 1 dalam 5 match berturut-turut','👑','joker',220]
   ];
-  $q=$db->prepare('INSERT IGNORE INTO achievements(code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?)');
-  foreach($items as $x)$q->execute($x);
-  // Achievement mekanik Minami berlaku untuk Minami 1 dan Minami 2.
+
+  if($legacy){
+    $q=$db->prepare('INSERT IGNORE INTO achievements(code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?)');
+    foreach($items as $x)$q->execute($x);
+  }else{
+    $q=$db->prepare('INSERT IGNORE INTO achievements(code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?)');
+    foreach($items as $x)$q->execute($x);
+  }
   $db->exec("UPDATE achievements SET mode='minami' WHERE code IN ('tenho','pot-master','joker-master','combo-master','mvp','rank-climber','marathon','triple-champion','veteran','streak-3')");
   $db->exec("UPDATE achievements SET name='Clean Five',description='5 Game Minami 2 berturut-turut tanpa mati tangan awal karena tidak memiliki Dasar legal di putaran pertama',mode='minami2' WHERE code='minami2-clean-5'");
 }
+
 function achievementList(PDO $db):never{
   ensureAchievementTables($db);
   $u=auth($db);
