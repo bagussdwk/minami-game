@@ -31,7 +31,6 @@ if($queryAction!=='') $path=$queryAction;
 $prefix=trim($c['api_prefix']??'api','/');
 if($prefix && str_starts_with($path,$prefix.'/')) $path=substr($path,strlen($prefix)+1);
 $body=json_decode(file_get_contents('php://input')?:'{}',true); if(!is_array($body))$body=[];
-ensureAchievementTables($db);
 switch($path){
   case 'register': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); registerUser($db,$body); break;
   case 'login': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); loginUser($db,$body); break;
@@ -394,6 +393,7 @@ function ensureAchievementTables(PDO $db):void{
   foreach($items as $x)$q->execute($x);
 }
 function achievementList(PDO $db):never{
+  ensureAchievementTables($db);
   $u=auth($db);
   $q=$db->prepare('SELECT a.code,a.name,a.description,a.icon,a.mode,ua.unlocked_at FROM achievements a LEFT JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=? ORDER BY a.sort_order,a.id');
   $q->execute([$u['id']]);
@@ -402,6 +402,7 @@ function achievementList(PDO $db):never{
   ok(['achievements'=>$out]);
 }
 function achievement(PDO $db,array $b):never{
+  ensureAchievementTables($db);
   $u=auth($db);
   $ids=$b['achievement_ids']??[$b['achievement_id']??''];
   if(!is_array($ids))$ids=[$ids];
