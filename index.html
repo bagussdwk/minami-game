@@ -8285,11 +8285,14 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         }
       }
 
-      document.getElementById("activeRulesBtn").onclick = () => {
-        updateActiveRulesForMode();
-        setYourHandOverlayHidden(true);
-        document.getElementById("activeRulesModal").classList.add("show");
-      };
+      const activeRulesBtn = document.getElementById("activeRulesBtn");
+      if (activeRulesBtn) {
+        activeRulesBtn.onclick = () => {
+          updateActiveRulesForMode();
+          setYourHandOverlayHidden(true);
+          document.getElementById("activeRulesModal").classList.add("show");
+        };
+      }
       document.getElementById("activeRulesClose").onclick = () => {
         document.getElementById("activeRulesModal").classList.remove("show");
         setYourHandOverlayHidden(false);
