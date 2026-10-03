@@ -31,6 +31,7 @@ if($queryAction!=='') $path=$queryAction;
 $prefix=trim($c['api_prefix']??'api','/');
 if($prefix && str_starts_with($path,$prefix.'/')) $path=substr($path,strlen($prefix)+1);
 $body=json_decode(file_get_contents('php://input')?:'{}',true); if(!is_array($body))$body=[];
+ensureAchievementTables($db);
 switch($path){
   case 'register': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); registerUser($db,$body); break;
   case 'login': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); loginUser($db,$body); break;
@@ -42,7 +43,10 @@ switch($path){
   case 'game-load': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameLoad($db,$body); break;
   case 'game-delete': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameDelete($db,$body); break;
   case 'game-result': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameResult($db,$body); break;
-  case 'achievement': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); achievement($db,$body); break;
+  case 'achievement':
+    if($_SERVER['REQUEST_METHOD']==='GET'){ achievementList($db); break; }
+    if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405);
+    achievement($db,$body); break;
   default: fail('Endpoint tidak ditemukan.',404);
 }
 function fail(string $m,int $s=400):never{http_response_code($s);echo json_encode(['ok'=>false,'error'=>$m],JSON_UNESCAPED_UNICODE);exit;}
@@ -343,7 +347,67 @@ function gameResult(PDO $db,array $b):never{
     fail('Statistik gagal disimpan.',500);
   }
 }
+function ensureAchievementTables(PDO $db):void{
+  $db->exec('CREATE TABLE IF NOT EXISTS achievements (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code VARCHAR(64) NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    icon VARCHAR(16) NOT NULL DEFAULT "🏆",
+    mode VARCHAR(16) NOT NULL DEFAULT "global",
+    sort_order INT NOT NULL DEFAULT 0,
+    PRIMARY KEY(id), UNIQUE KEY uq_achievement_code(code)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+  $db->exec('CREATE TABLE IF NOT EXISTS user_achievements (
+    user_id BIGINT UNSIGNED NOT NULL,
+    achievement_id BIGINT UNSIGNED NOT NULL,
+    unlocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(user_id,achievement_id),
+    CONSTRAINT fk_user_ach_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_ach_achievement FOREIGN KEY(achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+  $items=[
+    ['first-win','First Win','Menang 1 match','🏆','global',10],
+    ['first-champion','First Champion','Menang 1 Game sampai target poin','👑','global',20],
+    ['tenho','TENHO!','Mendapatkan TENHO di Minami','🃏','minami1',30],
+    ['pot-master','POT Hunter','Membuat 5 POT','♟️','minami1',40],
+    ['joker-master','Joker Master','Memainkan Joker 5 kali','🃏','minami1',50],
+    ['combo-master','Combo Master','Menurunkan 5 kartu atau lebih sekaligus','🔥','minami1',60],
+    ['mvp','MVP','Menjadi MVP 1 kali','⭐','minami1',70],
+    ['rank-climber','Rank Climber','Mengumpulkan 10 Rank 1','📈','minami1',80],
+    ['marathon','Marathon','Menyelesaikan 10 Game sampai target','🎴','minami1',90],
+    ['triple-champion','Triple Champion','Menang 3 Game sampai target','🏆','minami1',100],
+    ['veteran','Veteran','Menyelesaikan 25 match','🎖️','minami1',110],
+    ['streak-3','Winning Streak','Menang 3 match berturut-turut','⚡','minami1',120],
+    ['first-joker','First Joker','Menggunakan Joker pertama dalam kombinasi','🃏','joker',130],
+    ['set-master','Set Master','Membuat set pertama','🎯','joker',140],
+    ['joker-collector','Joker Collector','Menggunakan 10 Joker','🔥','joker',150],
+    ['joker-hoarder','Joker Hoarder','Menggunakan 25 Joker','💎','joker',160],
+    ['triple-set','Triple Set','Membuat 3 set dalam satu match','🎴','joker',170],
+    ['perfect-close','Perfect Close','Menutup dengan Joker','⚡','joker',180],
+    ['gotcha','Gotcha!','Mengambil buangan lalu langsung menutup','🪤','joker',190],
+    ['payback','Payback','Buanganmu diambil lawan lalu lawan menutup','😈','joker',200],
+    ['hot-streak','Hot Streak','Rank 1 dalam 3 match berturut-turut','🔥','joker',210],
+    ['unstoppable','Unstoppable','Rank 1 dalam 5 match berturut-turut','👑','joker',220]
+  ];
+  $q=$db->prepare('INSERT IGNORE INTO achievements(code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?)');
+  foreach($items as $x)$q->execute($x);
+}
+function achievementList(PDO $db):never{
+  $u=auth($db);
+  $q=$db->prepare('SELECT a.code,a.name,a.description,a.icon,a.mode,ua.unlocked_at FROM achievements a LEFT JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=? ORDER BY a.sort_order,a.id');
+  $q->execute([$u['id']]);
+  $rows=$q->fetchAll();
+  $out=[]; foreach($rows as $r){$out[]=['code'=>$r['code'],'name'=>$r['name'],'description'=>$r['description'],'icon'=>$r['icon'],'mode'=>$r['mode'],'unlocked'=>(bool)$r['unlocked_at'],'unlocked_at'=>$r['unlocked_at']];}
+  ok(['achievements'=>$out]);
+}
 function achievement(PDO $db,array $b):never{
-  $u=auth($db);$id=trim((string)($b['achievement_id']??''));if(!preg_match('/^[a-z0-9_-]{1,64}$/',$id))fail('Achievement tidak valid.');
-  $db->prepare('INSERT IGNORE INTO user_achievements(user_id,achievement_id) VALUES(?,?)')->execute([$u['id'],$id]);ok();
+  $u=auth($db);
+  $ids=$b['achievement_ids']??[$b['achievement_id']??''];
+  if(!is_array($ids))$ids=[$ids];
+  $q=$db->prepare('SELECT id FROM achievements WHERE code=? LIMIT 1');
+  $ins=$db->prepare('INSERT IGNORE INTO user_achievements(user_id,achievement_id) VALUES(?,?)');
+  $count=0;
+  foreach($ids as $id){$id=trim((string)$id);if(!preg_match('/^[a-z0-9_-]{1,64}$/',$id))continue;$q->execute([$id]);$a=$q->fetch();if($a){$ins->execute([$u['id'],$a['id']]);$count++;}}
+  ok(['saved'=>$count]);
 }
