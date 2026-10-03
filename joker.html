@@ -2090,10 +2090,13 @@ function advance() {
         function analyzePartial(cs) {
           // Saat tumpukan habis:
           // - minimal ada 1 dasar murni tanpa Joker;
-          // - setelah syarat dasar terpenuhi, semua meld valid yang saling
-          //   tidak memakai kartu yang sama dibuat hidup;
-          // - pot 3/4 kartu dan sequence diperlakukan sama;
-          // - utamakan jumlah kartu hidup terbanyak, lalu nilai hidup.
+          // - semua dasar murni lain yang memakai kartu fisik berbeda
+          //   juga boleh hidup;
+          // - semua pot/sequence valid yang tidak memakai kartu fisik
+          //   yang sama juga boleh hidup;
+          // - dalam satu pot, bunga tetap harus berbeda;
+          // - dua deck membuat kartu rank+bunga yang sama menjadi dua kartu fisik
+          //   berbeda dan keduanya boleh dipakai pada kelompok berbeda.
           let ms = melds(cs),
             best = { ids: [], values: {}, v: 0, melds: [] };
 
@@ -2116,13 +2119,7 @@ function advance() {
             return candidate.v > best.v;
           }
 
-          // Urutkan kandidat dasar murni lebih dulu. Setelah satu dasar
-          // ditemukan, pencarian tetap boleh menambahkan semua pot/sequence
-          // lain selama tidak memakai kartu yang sama.
-          let pure = ms.filter(isPureBase),
-            rest = ms.filter((m) => !isPureBase(m));
-
-          function expand(start, pool, used, vals, v, chosen) {
+          function expand(start, used, vals, v, chosen) {
             let candidate = {
               ids: [...used],
               values: { ...vals },
@@ -2131,8 +2128,8 @@ function advance() {
             };
             if (better(candidate)) best = candidate;
 
-            for (let i = start; i < pool.length; i++) {
-              let m = pool[i];
+            for (let i = start; i < ms.length; i++) {
+              let m = ms[i];
               if (!disjoint(m.ids, used)) continue;
 
               let nextUsed = new Set(used);
@@ -2140,7 +2137,6 @@ function advance() {
 
               expand(
                 i + 1,
-                pool,
                 nextUsed,
                 { ...vals, ...m.values },
                 v + m.v,
@@ -2149,12 +2145,15 @@ function advance() {
             }
           }
 
-          // Setiap kemungkinan dasar murni menjadi titik awal. Ini memastikan
-          // dasar 5-6-7 tidak membuat 2-3-4, pot 5, atau pot 10 terbuang.
+          // Mulai dari SETIAP dasar murni yang mungkin. Penting:
+          // gunakan seluruh ms sebagai pool lanjutan, bukan hanya meld non-pure.
+          // Dengan ini dua dasar murni seperti 3-4-5 spade dan 5-6-7 club
+          // bisa hidup bersamaan jika 5-nya adalah kartu fisik berbeda.
+          let pure = ms.filter(isPureBase);
+
           for (let base of pure) {
             let used = new Set(base.ids);
-            let vals = { ...base.values };
-            expand(0, rest, used, vals, base.v, [base]);
+            expand(0, used, { ...base.values }, base.v, [base]);
           }
 
           return best;
