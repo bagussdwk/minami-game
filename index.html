@@ -4033,6 +4033,23 @@
 <style id="minami-ui-safe-result-help">
 .help-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.help-modal-head h2{margin:0}.help-close-x{width:34px;height:34px;min-width:34px;padding:0;border-radius:50%;background:rgba(255,255,255,.09);color:#fff;font-size:22px;line-height:1}body.result-table-mode .table.game-victory{animation:minamiVictoryTable 1.8s ease-in-out infinite}body.result-table-mode .player.victory-player{animation:minamiVictoryPlayer 1.45s ease-in-out infinite;z-index:100}.result-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}.result-actions .start-btn{margin:0;flex:1 1 180px}.result-table-btn{display:none;position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:1200;min-width:190px;background:linear-gradient(145deg,#f1cb70,#d9a441);color:#18251d;box-shadow:0 10px 25px rgba(0,0,0,.3)}body.result-table-mode .result-table-btn{display:inline-flex;align-items:center;justify-content:center}body.result-table-mode .your-hand{display:block!important}body.result-table-mode #resultModal{display:none!important}@media(max-width:700px){.result-actions{gap:7px}.result-actions .start-btn{font-size:12px;padding:11px 10px}.result-table-btn{bottom:8px;min-width:170px;font-size:12px}}
 </style>
+  <style id="leaderboard-mode-stats-style">
+    .feature-stat-mode-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:9px}
+    .feature-stat-mode-tab{padding:8px 5px;border-radius:8px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);color:#9fb8ad;font-size:8px;font-weight:900}
+    .feature-stat-mode-tab.active{background:rgba(243,207,112,.11);border-color:rgba(243,207,112,.28);color:#f3cf70}
+    .feature-mode-title{margin-bottom:9px;color:#f3cf70;font-size:11px;font-weight:900;letter-spacing:.8px}
+    .feature-mode-title span{float:right;color:#789f90;font-size:7px;letter-spacing:.5px}
+    .leaderboard-detail-global-title{margin:10px 0 7px;color:#f3cf70;font-size:9px;font-weight:900;letter-spacing:.8px}
+    .leaderboard-mode-list{display:grid;gap:8px;margin-top:10px}
+    .leaderboard-mode-card{padding:10px;border-radius:11px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
+    .leaderboard-mode-title{margin-bottom:7px;color:#f3cf70;font-size:9px;font-weight:900;letter-spacing:.7px}
+    .leaderboard-mode-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+    .leaderboard-mode-grid>div{padding:6px 3px;border-radius:7px;background:rgba(255,255,255,.035);text-align:center}
+    .leaderboard-mode-grid b{display:block;color:#f3cf70;font-size:11px}
+    .leaderboard-mode-grid span{display:block;margin-top:2px;color:#9fb8ad;font-size:6px;font-weight:900}
+    .leaderboard-mode-foot{margin-top:6px;color:#789f90;font-size:7px;text-align:right}
+    @media(max-width:700px){.feature-stat-mode-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.leaderboard-mode-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+</style>
   <style id="leaderboard-style">
 .leaderboard-list{display:grid;gap:7px}
 .leaderboard-row{display:grid;grid-template-columns:34px 42px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;padding:9px 10px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.04);color:#fff;text-align:left;cursor:pointer}
@@ -8610,6 +8627,8 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
       const MINAMI_API_URL="/api/index.php";
       const MINAMI_API_TOKEN_KEY="minamiApiToken";
       const MINAMI_API_SYNC_KEY="minamiApiSyncLedgerV1";
+      let minamiModeStats={};
+      let minamiStatsModeView="global";
       function minamiApiSyncLedger(){
         try{
           const x=JSON.parse(localStorage.getItem(MINAMI_API_SYNC_KEY)||"[]");
@@ -8631,7 +8650,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
             body:JSON.stringify({
               token,
               event_id:String(resultId),
-              mode:Number(minamiMode)===2?"minami2":"minami1",
+              mode:Number(game?.mode??minamiMode)===3?"joker":(Number(game?.mode??minamiMode)===2?"minami2":"minami1"),
               games_finished:Number(values.games_finished)||0,
               game_wins:Number(values.game_wins)||0,
               rank1:Number(values.rank1)||0,
@@ -8832,6 +8851,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         try{
           const d=await minamiApiPost("stats",{token});
           window.minamiGlobalStats=d.stats||{};
+          minamiModeStats=(d.mode_stats&&typeof d.mode_stats==="object")?d.mode_stats:{};
           mergeServerStatsIntoFeatureStats(window.minamiGlobalStats);
           renderAccountUI();applyPlayerProfile();renderFeatureStats();renderAchievements();
           return window.minamiGlobalStats;
@@ -9104,41 +9124,100 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
       }
       function renderFeatureStats(){
         const b=document.getElementById("featureStatsPanel");if(!b)return;
-        const local=featureStats(),remote=window.minamiGlobalStats;
-        const s=remote ? {...local,matches:Number(remote.match_finished)||0,games:Number(remote.games_finished)||0,gameWins:Number(remote.game_wins)||0,rank1:Number(remote.rank1)||0} : local;
-        const games=s.games||0,gameWins=s.gameWins||0;
-        const gameWinRate=games?Math.round(gameWins/games*100):0;
-        const rank1=s.rank1||0,rank1Rate=s.matches?Math.round(rank1/s.matches*100):0;
+        const local=featureStats(),remote=window.minamiGlobalStats||{};
+        const modeMap={
+          global:{label:"🌐 GLOBAL",short:"Global"},
+          minami1:{label:"🃏 MINAMI 1",short:"Minami 1"},
+          minami2:{label:"🃏 MINAMI 2",short:"Minami 2"},
+          joker:{label:"🃏 JOKER",short:"Joker"}
+        };
+        if(!modeMap[minamiStatsModeView])minamiStatsModeView="global";
+
+        const modes=["minami1","minami2","joker"];
+        const modeData={};
+        modes.forEach(k=>{
+          modeData[k]=minamiModeStats?.[k]||{};
+        });
+
+        const sum=(key)=>{
+          const n=modes.reduce((t,k)=>t+(Number(modeData[k]?.[key])||0),0);
+          if(n>0)return n;
+          return Number(remote[key])||0;
+        };
+        const totalMatches=sum("match_finished");
+        const totalGames=sum("games_finished");
+        const globalRank1=Number(remote.rank1);
+        const globalGameWins=Number(remote.game_wins);
+        const rank1=Number.isFinite(globalRank1)?globalRank1:(Number(local.rank1)||0);
+        const gameWins=Number.isFinite(globalGameWins)?globalGameWins:(Number(local.gameWins)||0);
+        const rank1Rate=totalMatches?Math.round(rank1/totalMatches*100):0;
+        const gameWinRate=totalGames?Math.round(gameWins/totalGames*100):0;
         const rank=getMinamiRankInfo();
-        const stats=[
-          ["matches","Match selesai"],
-          ["games","Game selesai"],
-          ["rank1","Rank 1"],["rank1Rate","Rank 1 Rate"],
-          ["gameWins","Win Game"],["gameWinRate","Win Rate Game"],
-          ["tenho","TENHO"],["pots","POT"],["jokers","Joker dimainkan"],
-          ["bestCombo","Combo terbesar"],["bestStreak","Win streak terbaik"],["dead","Mati Tangan"]
-        ];
-        b.innerHTML=
-          '<div class="minami-rank-card">'+
-            '<div class="minami-rank-icon">'+rank.icon+'</div>'+
-            '<div class="minami-rank-main">'+
-              '<div class="minami-rank-label">RANK</div>'+
-              '<div class="minami-rank-name">'+rank.name+(rank.level?' '+rank.level:'')+'</div>'+
-              '<div class="minami-rank-progress-text">'+
-                rank.current+' / '+rank.next+' Rank 1 • '+rank.progress+'%'+
+
+        const tabButtons=["global","minami1","minami2","joker"].map(k=>
+          '<button type="button" class="feature-stat-mode-tab '+(minamiStatsModeView===k?"active":"")+'" data-stat-mode="'+k+'">'+modeMap[k].label+'</button>'
+        ).join("");
+
+        let body="";
+        if(minamiStatsModeView==="global"){
+          body=
+            '<div class="minami-rank-card">'+
+              '<div class="minami-rank-icon">'+rank.icon+'</div>'+
+              '<div class="minami-rank-main">'+
+                '<div class="minami-rank-label">RANK GLOBAL</div>'+
+                '<div class="minami-rank-name">'+rank.name+(rank.level?' '+rank.level:'')+'</div>'+
+                '<div class="minami-rank-progress-text">'+rank.current+' / '+rank.next+' Rank 1 • '+rank.progress+'%</div>'+
+                '<div class="minami-rank-progress"><span style="width:'+rank.progress+'%"></span></div>'+
+                (rank.name==="GRANDMASTER"
+                  ? '<div class="minami-rank-note">Grandmaster naik 1 level setiap 50 Rank 1.</div>'
+                  : rank.name==="MASTER"
+                    ? '<div class="minami-rank-note">100 Rank 1 + minimal 25 Game selesai + 10 Win Game untuk Grandmaster.</div>'
+                    : '')+
               '</div>'+
-              '<div class="minami-rank-progress"><span style="width:'+rank.progress+'%"></span></div>'+
-              (rank.name==="GRANDMASTER"
-                ? '<div class="minami-rank-note">Grandmaster naik 1 level setiap 50 Rank 1.</div>'
-                : rank.name==="MASTER"
-                  ? '<div class="minami-rank-note">100 Rank 1 + minimal 25 Game selesai + 10 Win Game untuk Grandmaster.</div>'
-                  : '')+
             '</div>'+
-          '</div>'+
-          '<div class="feature-stat-grid">'+stats.map(x=>{
-            const pct=x[0]==="gameWinRate"?gameWinRate:x[0]==="rank1Rate"?rank1Rate:null;
-            return '<div><b>'+(pct!==null?pct+"%":(s[x[0]]||0))+'</b><span>'+x[1]+'</span></div>';
-          }).join('')+'</div>';
+            '<div class="feature-stat-grid">'+
+              '<div><b>'+rank1+'</b><span>RANK 1 • 3 GAME</span></div>'+
+              '<div><b>'+rank1Rate+'%</b><span>RANK 1 RATE</span></div>'+
+              '<div><b>'+gameWins+'</b><span>WIN GAME • 3 GAME</span></div>'+
+              '<div><b>'+gameWinRate+'%</b><span>WIN RATE GAME</span></div>'+
+            '</div>'+
+            '<div class="feature-current-card">🌐 <b>Statistik Global</b>Rank 1 dan Win Game digabung dari Minami 1 + Minami 2 + Joker. Jumlah match/game di bawah hanya dipakai sebagai dasar perhitungan rate.</div>';
+        }else{
+          const s=modeData[minamiStatsModeView];
+          const matches=Number(s.match_finished)||0;
+          const games=Number(s.games_finished)||0;
+          const cards=Number(s.cards)||0;
+          const cardsPerMatch=matches?Math.round(cards/matches):0;
+          const stats=[
+            ["match_finished","Match selesai"],
+            ["games_finished","Game selesai"],
+            ["tenho","TENHO"],
+            ["pots","POT"],
+            ["cards","Kartu dimainkan"],
+            ["jokers","Joker dimainkan"],
+            ["best_combo","Combo terbesar"],
+            ["best_streak","Win streak terbaik"],
+            ["dead","Mati Tangan"],
+            ["mvp","MVP"],
+            ["cardsPerMatch","Rata-rata kartu/match"]
+          ];
+          body=
+            '<div class="feature-mode-title">'+modeMap[minamiStatsModeView].label+' <span>STATISTIK KHUSUS MODE</span></div>'+
+            '<div class="feature-stat-grid">'+stats.map(x=>{
+              const value=x[0]==="cardsPerMatch"?cardsPerMatch:(Number(s[x[0]])||0);
+              return '<div><b>'+value+'</b><span>'+x[1]+'</span></div>';
+            }).join('')+'</div>'+
+            '<div class="feature-current-card">🎮 Rank 1 dan Win Game mode ini <b>tidak ditambahkan ke statistik global terpisah</b>; hasilnya tetap ikut dihitung ke Rank 1 dan Win Game global akun.</div>';
+        }
+        b.innerHTML=
+          '<div class="feature-stat-mode-tabs">'+tabButtons+'</div>'+
+          body;
+        b.querySelectorAll("[data-stat-mode]").forEach(btn=>{
+          btn.onclick=()=>{
+            minamiStatsModeView=btn.dataset.statMode||"global";
+            renderFeatureStats();
+          };
+        });
       }
       function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menangkan match untuk pertama kali."],["first-champion","👑","First Champion","Menang Game pertama sampai 25 poin."],["tenho","🃏","TENHO!","Keluar dengan TENHO dan dapatkan bonus."],["pot-master","♟️","POT Hunter","Buat 5 POT dalam permainan."],["joker-master","🃏","Joker Master","Mainkan Joker 5 kali."],["combo-master","🔥","Combo Master","Turunkan 5 kartu atau lebih sekaligus."],["mvp","⭐","MVP","Menjadi MVP dalam 1 match."],["rank-climber","📈","Rank Climber","Kumpulkan 10 Rank 1."],["marathon","🎴","Marathon","Selesaikan 10 Game sampai 25 poin."],["triple-champion","🏆","Triple Champion","Menang 3 Game sampai 25 poin."],["veteran","🎖️","Veteran","Selesaikan 25 match."],["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut."]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div class="achievement-info"><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
       function renderFeaturePanels(){
@@ -9195,7 +9274,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
             return;
           }
           panel.innerHTML=
-            '<div class="leaderboard-head-note">🏆 Peringkat berdasarkan jumlah <b>Rank 1</b> lifetime. Gelar otomatis mengikuti Rank 1, Game selesai, dan Win Game.</div>'+
+            '<div class="leaderboard-head-note">🏆 Peringkat berdasarkan <b>Rank 1 global</b> dari Minami 1 + Minami 2 + Joker. Win Game global juga digabung dari ketiga permainan.</div>'+
             '<div class="leaderboard-list">'+
             players.map((p,i)=>{
               const rank=leaderboardRankForPlayer(p);
@@ -9222,10 +9301,41 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         const panel=document.getElementById("featureLeaderboardPanel");
         if(!panel)return;
         const rank=leaderboardRankForPlayer(p);
-        const games=Math.max(0,Number(p.games_finished)||0),gameWins=Math.max(0,Number(p.game_wins)||0);
-        const matches=Math.max(0,Number(p.match_finished)||0),matchWins=Math.max(0,Number(p.match_wins)||0);
-        const gameRate=games?Math.round(gameWins/games*100):0;
-        const matchRate=matches?Math.round(matchWins/matches*100):0;
+        const games=Math.max(0,Number(p.games_finished)||0);
+        const gameWins=Math.max(0,Number(p.game_wins)||0);
+        const modeStats=p.mode_stats&&typeof p.mode_stats==="object"?p.mode_stats:{};
+        const modes=[
+          ["minami1","🃏 MINAMI 1"],
+          ["minami2","🃏 MINAMI 2"],
+          ["joker","🃏 JOKER"]
+        ];
+        const totalMatches=modes.reduce((t,[k])=>t+(Number(modeStats[k]?.match_finished)||0),0);
+        const totalGames=modes.reduce((t,[k])=>t+(Number(modeStats[k]?.games_finished)||0),0);
+        const gameRate=totalGames?Math.round(gameWins/totalGames*100):0;
+        const rank1Rate=totalMatches?Math.round(Number(p.rank1||0)/totalMatches*100):0;
+        const modeCards=modes.map(([k,label])=>{
+          const s=modeStats[k]||{};
+          const cards=Number(s.cards)||0, matches=Number(s.match_finished)||0;
+          const stats=[
+            ["match_finished","MATCH"],
+            ["games_finished","GAME"],
+            ["tenho","TENHO"],
+            ["pots","POT"],
+            ["cards","KARTU"],
+            ["jokers","JOKER"],
+            ["best_combo","COMBO"],
+            ["dead","MATI"],
+            ["mvp","MVP"],
+            ["best_streak","STREAK"]
+          ];
+          return '<div class="leaderboard-mode-card">'+
+            '<div class="leaderboard-mode-title">'+label+'</div>'+
+            '<div class="leaderboard-mode-grid">'+
+              stats.map(([key,label2])=>'<div><b>'+Number(s[key]||0)+'</b><span>'+label2+'</span></div>').join('')+
+            '</div>'+
+            '<div class="leaderboard-mode-foot">'+(matches?Math.round(cards/matches):0)+' kartu/match</div>'+
+          '</div>';
+        }).join("");
         panel.innerHTML=
           '<button type="button" class="leaderboard-detail-back" id="leaderboardBackBtn">‹ Kembali ke Leaderboard</button>'+
           '<div class="leaderboard-detail-profile">'+
@@ -9234,16 +9344,16 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
             '<div class="leaderboard-detail-title">'+rank.name+(rank.level?" "+rank.level:"")+'</div>'+
             '<div class="leaderboard-detail-rank">Rank #'+(minamiLeaderboardCache.indexOf(p)+1)+' • '+Number(p.rank1||0)+' Rank 1</div></div>'+
           '</div>'+
+          '<div class="leaderboard-detail-global-title">🌐 GLOBAL • 3 GAME</div>'+
           '<div class="leaderboard-detail-grid">'+
             '<div class="leaderboard-detail-stat"><b>'+games+'</b><span>GAME FINISHED</span></div>'+
             '<div class="leaderboard-detail-stat"><b>'+gameWins+'</b><span>GAME WINS</span></div>'+
             '<div class="leaderboard-detail-stat"><b>'+Number(p.rank1||0)+'</b><span>RANK 1</span></div>'+
-            '<div class="leaderboard-detail-stat"><b>'+matches+'</b><span>MATCH FINISHED</span></div>'+
-            '<div class="leaderboard-detail-stat"><b>'+matchWins+'</b><span>MATCH WINS</span></div>'+
-            '<div class="leaderboard-detail-stat"><b>'+matchRate+'%</b><span>WINRATE MATCH</span></div>'+
+            '<div class="leaderboard-detail-stat"><b>'+rank1Rate+'%</b><span>RANK 1 RATE</span></div>'+
             '<div class="leaderboard-detail-stat"><b>'+gameRate+'%</b><span>WINRATE GAME</span></div>'+
-            '<div class="leaderboard-detail-stat"><b>'+(matches?Math.round(Number(p.rank1||0)/matches*100):0)+'%</b><span>RANK 1 RATE</span></div>'+
-          '</div>';
+            '<div class="leaderboard-detail-stat"><b>'+totalMatches+'</b><span>TOTAL MATCH</span></div>'+
+          '</div>'+
+          '<div class="leaderboard-mode-list">'+modeCards+'</div>';
         document.getElementById("leaderboardBackBtn").onclick=renderLeaderboard;
       }
       function getAIReactionText(i,label,joker){const p=game?.aiProfiles?.[i]||"balanced";if(label==="Mati")return"💀 MATI";if(joker)return p==="jokerHunter"?"😎 JOKER!":"🃏 Joker!";if(label.includes("POT"))return p==="potHunter"?"🔥 POT!":"😏 POT";if(label.includes("Dasar"))return p==="aggressive"?"⚔️ Gas!":"🎴 Turun";return"👍 Jalan"}
