@@ -8142,7 +8142,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         document.getElementById("jokerInfo").textContent =
           minamiMode === 1 ? "Menentukan Joker..." : "Kartu mati tertutup";
 
-        document.getElementById("status").textContent = "Game dimulai";
+        document.getElementById("status").textContent = "";
 
         document.getElementById("resultModal").classList.remove("show");
 
@@ -8237,7 +8237,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
       let minamiMode = 1;
       function showSetupMode(mode) {
         minamiMode = mode === 2 ? 2 : 1;
-        document.getElementById("status").textContent = minamiMode === 1 ? "MINAMI 1" : "MINAMI 2";
+        document.getElementById("status").textContent = "";
       }
       document.getElementById("startBtn").onclick = () => { minamiMode = 1; startGame(); };
       document.getElementById("startMinami2Btn").onclick = () => { minamiMode = 2; startGame(); };
