@@ -1137,6 +1137,47 @@
             return false;
           }
         }
+        const JOKER_API_URL="https://cardarena.site.je/api/index.php";
+        const JOKER_API_TOKEN_KEY="minamiApiToken";
+        const JOKER_API_SYNC_KEY="minamiJokerApiSyncV1";
+        function jokerApiSyncLedger(){
+          try{
+            const x=JSON.parse(localStorage.getItem(JOKER_API_SYNC_KEY)||"[]");
+            return Array.isArray(x)?x:[];
+          }catch(e){return[]}
+        }
+        function saveJokerApiSyncLedger(a){
+          try{localStorage.setItem(JOKER_API_SYNC_KEY,JSON.stringify(a.slice(-5000)))}catch(e){}
+        }
+        async function syncJokerResult(resultId, values){
+          const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
+          if(!token||!resultId)return;
+          const ledger=jokerApiSyncLedger();
+          if(ledger.includes(resultId))return;
+          try{
+            const r=await fetch(JOKER_API_URL+"?action=game-result",{
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({
+                token,
+                event_id:String(resultId),
+                mode:"joker",
+                games_finished:Number(values.games_finished)||0,
+                game_wins:Number(values.game_wins)||0,
+                rank1:0,
+                match_finished:1,
+                match_wins:Number(values.match_wins)||0
+              })
+            });
+            const d=await r.json();
+            if(r.ok&&d.ok){
+              ledger.push(resultId);
+              saveJokerApiSyncLedger(ledger);
+            }
+          }catch(e){
+            // Game tetap berjalan normal jika API sedang offline.
+          }
+        }
         function clearSavedGame() {
           try {
             localStorage.removeItem("minami_joker_state");
@@ -2266,6 +2307,14 @@ function advance() {
             const totals = cardTotals(p);
             p.score += totals.liveValue - totals.deadValue;
           });
+          const resultId="joker-"+Date.now()+"-"+Math.random().toString(36).slice(2);
+          const gameFinished=g.p.some((x)=>Number(x.score)>=1500);
+          const userGameWin=Number(g.p[0]?.score)>=1500;
+          syncJokerResult(resultId,{
+            games_finished:gameFinished?1:0,
+            game_wins:userGameWin?1:0,
+            match_wins:w===0?1:0
+          });
           g.over = false;
           render();
           saveGame();
@@ -2334,6 +2383,14 @@ function advance() {
         function empty() {
           let totals = g.p.map(cardTotals);
           totals.forEach((v, i) => (g.p[i].score += v.total));
+          const resultId="joker-"+Date.now()+"-"+Math.random().toString(36).slice(2);
+          const gameFinished=g.p.some((x)=>Number(x.score)>=1500);
+          const userGameWin=Number(g.p[0]?.score)>=1500;
+          syncJokerResult(resultId,{
+            games_finished:gameFinished?1:0,
+            game_wins:userGameWin?1:0,
+            match_wins:0
+          });
           let order = g.p
               .map((p, i) => ({ i, score: p.score }))
               .sort((a, b) => a.score - b.score || a.i - b.i),
