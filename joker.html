@@ -1272,33 +1272,94 @@
               }
             }
           }
-          for (let s of suits.map((x) => x[0])) {
-            for (let k = 3; k <= 13; k++) {
-              for (let st = 0; st <= 13 - k; st++) {
-                let seq = ranks.slice(st, st + k),
-                  fixed = [],
-                  miss = 0;
-                for (let r of seq) {
-                  let c = x.find(
-                    (c) =>
-                      c.suit === s &&
-                      c.rank === r &&
-                      !fixed.some((z) => z.id === c.id),
+          function addSequenceVariants(seq, suit) {
+            let options = [];
+            for (let r of seq) {
+              let same = x.filter((c) => c.suit === suit && c.rank === r);
+              options.push(same);
+            }
+
+            function build(pos, picked) {
+              if (pos === options.length) {
+                let ids = picked.map((c) => c.id),
+                  values = {};
+                picked.forEach((c) => (values[c.id] = rv(c.rank)));
+                addMeld(
+                  "seq",
+                  null,
+                  ids,
+                  values,
+                  seq.reduce((z, r) => z + rv(r), 0),
+                );
+                return;
+              }
+              for (let c of options[pos]) {
+                if (picked.some((z) => z.id === c.id)) continue;
+                build(pos + 1, picked.concat(c));
+              }
+            }
+
+            let missing = options.filter((a) => !a.length).length;
+            if (!missing) build(0, []);
+            else if (missing <= j.length) {
+              let fixedRanks = [];
+              options.forEach((a, i) => {
+                if (a.length) fixedRanks.push({ i, a });
+              });
+              function fillJoker(pos, picked, usedJokers) {
+                if (pos === options.length) {
+                  if (usedJokers.length !== missing) return;
+                  let ids = picked.map((c) => c.id),
+                    values = {};
+                  picked.forEach((c) => (values[c.id] = rv(c.rank)));
+                  usedJokers.forEach((jv, idx) => {
+                    let rank = seq[jv];
+                    ids.push(j[idx].id);
+                    values[j[idx].id] = rv(rank);
+                  });
+                  addMeld(
+                    "seq",
+                    null,
+                    ids,
+                    values,
+                    seq.reduce((z, r) => z + rv(r), 0),
                   );
-                  if (c) fixed.push(c);
-                  else miss++;
+                  return;
                 }
-                if (miss <= j.length) {
-                  for (let js of combos(j, miss)) {
-                    let ids = fixed.map((c) => c.id),
-                      values = {},
-                      ji = 0;
-                    fixed.forEach((c) => (values[c.id] = rv(c.rank)));
-                    for (let r of seq) {
-                      if (!fixed.some((c) => c.rank === r)) {
+                if (options[pos].length) {
+                  for (let c of options[pos]) {
+                    if (!picked.some((z) => z.id === c.id))
+                      fillJoker(pos + 1, picked.concat(c), usedJokers);
+                  }
+                } else {
+                  for (let rankIndex = 0; rankIndex < seq.length; rankIndex++) {
+                    if (seq[rankIndex] !== seq[pos]) continue;
+                    if (!usedJokers.includes(rankIndex))
+                      fillJoker(pos + 1, picked, usedJokers.concat(rankIndex));
+                  }
+                }
+              }
+              // Missing ranks are unique in a sequence, so each missing
+              // position gets exactly one Joker.
+              let missingPositions = options
+                .map((a, i) => (!a.length ? i : -1))
+                .filter((i) => i >= 0);
+              for (let js of combos(j, missing)) {
+                let ids = [];
+                let values = {};
+                let choices = [];
+                function choose(pos, picked) {
+                  if (pos === options.length) {
+                    let ji = 0;
+                    for (let i = 0; i < options.length; i++) {
+                      if (options[i].length) {
+                        let c = picked[i];
+                        ids.push(c.id);
+                        values[c.id] = rv(c.rank);
+                      } else {
                         let jc = js[ji++];
                         ids.push(jc.id);
-                        values[jc.id] = rv(r);
+                        values[jc.id] = rv(seq[i]);
                       }
                     }
                     addMeld(
@@ -1308,51 +1369,33 @@
                       values,
                       seq.reduce((z, r) => z + rv(r), 0),
                     );
+                    return;
+                  }
+                  if (!options[pos].length) {
+                    choose(pos + 1, picked.concat([null]));
+                    return;
+                  }
+                  for (let c of options[pos]) {
+                    if (!picked.some((z) => z && z.id === c.id))
+                      choose(pos + 1, picked.concat([c]));
                   }
                 }
+                choose(0, []);
               }
             }
           }
+
           for (let s of suits.map((x) => x[0])) {
-            for (let a of [
-              ["Q", "K", "A"],
-              ["J", "Q", "K", "A"],
-            ]) {
-              let fixed = [],
-                miss = 0;
-              for (let r of a) {
-                let c = x.find(
-                  (c) =>
-                    c.suit === s &&
-                    c.rank === r &&
-                    !fixed.some((z) => z.id === c.id),
-                );
-                if (c) fixed.push(c);
-                else miss++;
-              }
-              if (miss <= j.length) {
-                for (let js of combos(j, miss)) {
-                  let ids = fixed.map((c) => c.id),
-                    values = {},
-                    ji = 0;
-                  fixed.forEach((c) => (values[c.id] = rv(c.rank)));
-                  for (let r of a) {
-                    if (!fixed.some((c) => c.rank === r)) {
-                      let jc = js[ji++];
-                      ids.push(jc.id);
-                      values[jc.id] = rv(r);
-                    }
-                  }
-                  addMeld(
-                    "seq",
-                    null,
-                    ids,
-                    values,
-                    a.reduce((z, r) => z + rv(r), 0),
-                  );
-                }
+            for (let k = 3; k <= 13; k++) {
+              for (let st = 0; st <= 13 - k; st++) {
+                addSequenceVariants(ranks.slice(st, st + k), s);
               }
             }
+          }
+
+          for (let s of suits.map((x) => x[0])) {
+            addSequenceVariants(["Q", "K", "A"], s);
+            addSequenceVariants(["J", "Q", "K", "A"], s);
           }
           return out;
         }
