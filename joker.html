@@ -42,6 +42,24 @@
         font-weight: 800;
         cursor: pointer;
       }
+
+      /* ===== HAMBURGER MENU JOKER ===== */
+      .joker-menu-btn{width:40px;height:40px;padding:0;border:1px solid #ffffff20;border-radius:11px;background:#ffffff0d;color:#f3cf70;font-size:21px;font-weight:900;cursor:pointer;display:grid;place-items:center;transition:.15s}
+      .joker-menu-btn:hover{background:#f3cf7015;transform:translateY(-1px)}
+      .joker-menu-overlay{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.68);display:none;align-items:flex-start;justify-content:flex-end;padding:68px 14px 14px}
+      .joker-menu-overlay.show{display:flex}
+      .joker-menu-box{width:min(360px,calc(100vw - 28px));max-height:calc(100vh - 82px);overflow:auto;background:linear-gradient(180deg,#073326,#041e16);border:1px solid #f3cf7030;border-radius:20px;box-shadow:0 25px 70px #0008;padding:15px}
+      .joker-menu-head{display:flex;align-items:center;justify-content:space-between;padding:2px 3px 12px;border-bottom:1px solid #ffffff12}
+      .joker-menu-title{font-size:16px;font-weight:900;color:#f3cf70}.joker-menu-sub{font-size:9px;color:#aacdc0;margin-top:3px}
+      .joker-menu-close{width:32px;height:32px;border:0;border-radius:50%;background:#ffffff0d;color:#fff;font-size:22px;cursor:pointer}
+      .joker-menu-profile{display:flex;gap:10px;align-items:center;margin:12px 0;padding:11px;border-radius:14px;background:#ffffff08;border:1px solid #ffffff0d}
+      .joker-menu-avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#173b2d;border:2px solid #f3cf7066;font-size:21px;overflow:hidden}.joker-menu-avatar img{width:100%;height:100%;object-fit:cover}
+      .joker-menu-name{font-weight:900;font-size:12px}.joker-menu-score{font-size:10px;color:#f3cf70;margin-top:3px}
+      .joker-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+      .joker-menu-item{display:flex;align-items:center;gap:9px;min-height:62px;padding:10px;border:1px solid #ffffff12;border-radius:13px;background:#ffffff07;color:#fff;text-align:left;cursor:pointer}.joker-menu-item:hover{background:#f3cf7012;border-color:#f3cf7038}.joker-menu-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#f3cf7014;font-size:18px;flex:0 0 34px}.joker-menu-item b{font-size:11px}.joker-menu-item small{display:block;color:#aacdc0;font-size:8px;margin-top:3px;line-height:1.3}
+      .joker-menu-footer{margin-top:10px;width:100%;padding:10px;border-radius:12px;border:1px solid #ffffff12;background:#ffffff07;color:#dbece4;font-weight:800;cursor:pointer}.joker-menu-footer:hover{background:#ffffff10}
+      @media(max-width:700px){.joker-menu-overlay{padding:64px 8px 8px}.joker-menu-box{width:100%;border-radius:18px}.joker-menu-grid{grid-template-columns:1fr 1fr}.joker-menu-item{min-height:58px}}
+      .joker-rules-wrap{width:min(700px,calc(100vw - 24px));max-height:84vh;overflow:auto;padding:16px}.joker-rules-head{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #ffffff12;padding-bottom:10px;margin-bottom:11px}.joker-rules-head h2{margin:0;font-size:18px;color:#f3cf70}.joker-rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.joker-rule-card{display:flex;gap:9px;padding:10px;border-radius:12px;background:#ffffff07;border:1px solid #ffffff0d}.joker-rule-icon{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border-radius:10px;background:#f3cf7014;font-size:19px}.joker-rule-card h3{margin:0 0 3px;font-size:11px;color:#f3cf70}.joker-rule-card p{margin:0;color:#d9eee3;font-size:10px;line-height:1.45}.joker-rule-note{margin-top:10px;padding:10px;border-radius:11px;background:#f3cf700b;border:1px solid #f3cf7020;color:#f4e6bb;font-size:10px;line-height:1.45}@media(max-width:560px){.joker-rule-grid{grid-template-columns:1fr}}
       .gold {
         background: linear-gradient(145deg, #f3cf70, #c99e35);
         color: #182019;
@@ -957,9 +975,7 @@
   <body>
     <header class="top">
       <b class="brand">🃏 JOKER</b>
-      <div>
-        <button class="btn" id="back">← Menu</button>
-      </div>
+      <button class="joker-menu-btn" id="jokerMenuBtn" type="button" aria-label="Buka menu">☰</button>
     </header>
     <section id="setup">
       <div class="setupbox">
@@ -1010,6 +1026,25 @@
         <div class="actions"><button class="btn" id="close">Tutup</button></div>
       </div>
     </section>
+    <div class="joker-menu-overlay" id="jokerMenuOverlay">
+      <div class="joker-menu-box">
+        <div class="joker-menu-head">
+          <div><div class="joker-menu-title">☰ Menu JOKER</div><div class="joker-menu-sub">Pengaturan permainan</div></div>
+          <button class="joker-menu-close" id="jokerMenuClose" type="button">×</button>
+        </div>
+        <div class="joker-menu-profile">
+          <div class="joker-menu-avatar" id="jokerMenuAvatar">🃏</div>
+          <div><div class="joker-menu-name" id="jokerMenuName">Anda</div><div class="joker-menu-score" id="jokerMenuScore">+0 poin</div></div>
+        </div>
+        <div class="joker-menu-grid">
+          <button class="joker-menu-item" id="jokerProfileBtn" type="button"><span class="joker-menu-icon">👤</span><span><b>Profil</b><small>Profil pemain saat ini</small></span></button>
+          <button class="joker-menu-item" id="jokerStatsBtn" type="button"><span class="joker-menu-icon">📊</span><span><b>Statistik</b><small>Ringkasan permainan Joker</small></span></button>
+          <button class="joker-menu-item" id="jokerAchievementBtn" type="button"><span class="joker-menu-icon">🏆</span><span><b>Achievement</b><small>Perjalanan pencapaian Anda</small></span></button>
+          <button class="joker-menu-item" id="jokerRulesBtn" type="button"><span class="joker-menu-icon">📖</span><span><b>Aturan Joker</b><small>Lihat aturan lengkap permainan</small></span></button>
+        </div>
+        <button class="joker-menu-footer" id="jokerBackBtn" type="button">← Kembali ke Menu Utama</button>
+      </div>
+    </div>
     <div class="modal" id="modal">      <div class="modalbox">
         <h2 id="mt"></h2>
         <div id="mb"></div>
@@ -2657,6 +2692,26 @@ function advance() {
         function closeModal() {
           $("modal").classList.remove("show");
         }
+        function closeJokerMenu(){ $("jokerMenuOverlay").classList.remove("show"); }
+        function openJokerMenu(){ 
+          if(g?.p?.[0]){
+            $("jokerMenuName").textContent=g.p[0].name||"Anda";
+            $("jokerMenuScore").textContent=(g.p[0].score>=0?"+":"")+g.p[0].score+" poin";
+            $("jokerMenuAvatar").innerHTML=g.p[0].photo?'<img src="'+g.p[0].photo+'">':"🃏";
+          }
+          $("jokerMenuOverlay").classList.add("show");
+        }
+        $("jokerMenuBtn").onclick=openJokerMenu;
+        $("jokerMenuClose").onclick=closeJokerMenu;
+        $("jokerMenuOverlay").onclick=(e)=>{if(e.target===$("jokerMenuOverlay"))closeJokerMenu();};
+        $("jokerProfileBtn").onclick=()=>{closeJokerMenu();modal("👤 PROFIL JOKER",'<div class="row"><b>Pemain</b><span>'+((g?.p?.[0]?.name)||"Anda")+'</span></div><div class="row"><b>Skor saat ini</b><span>'+((g?.p?.[0]?.score)||0)+'</span></div>',"Tutup",closeModal,true);};
+        $("jokerStatsBtn").onclick=()=>{closeJokerMenu();modal("📊 STATISTIK JOKER",'<div class="row"><b>Match selesai</b><span>Data tersimpan di akun</span></div><div class="row"><b>Rank 1</b><span>Data tersimpan di akun</span></div><div class="row"><b>Win Game</b><span>Target 1.500 poin</span></div>',"Tutup",closeModal,true);};
+        $("jokerAchievementBtn").onclick=()=>{closeJokerMenu();modal("🏆 ACHIEVEMENT",'<div class="joker-rule-note">Achievement Joker tersimpan bersama akun. Statistik detail dapat dilihat dari menu utama MINAMI.</div>',"Tutup",closeModal,true);};
+        $("jokerRulesBtn").onclick=()=>{
+          closeJokerMenu();
+          modal("📖 ATURAN JOKER",'<div class="joker-rules-wrap"><div class="joker-rules-head"><div><h2>JOKER</h2><div class="joker-menu-sub">Panduan bermain</div></div></div><div class="joker-rule-grid"><div class="joker-rule-card"><div class="joker-rule-icon">🃏</div><div><h3>Joker</h3><p>Satu kartu penentu menentukan rank Joker. Kartu dengan rank sama dan warna berlawanan menjadi Joker.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🎴</div><div><h3>Awal Giliran</h3><p>Pilih mengambil kartu buangan pemain sebelumnya atau mengambil satu kartu dari tumpukan tengah.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🧩</div><div><h3>Dasar & Set</h3><p>Buat dasar berurutan satu bunga atau set dengan rank yang sama. Joker dapat membantu kombinasi.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">♻️</div><div><h3>Buang</h3><p>Setelah mengambil kartu, buang satu kartu. Buangan terbaru selalu berada di sisi kanan.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🏁</div><div><h3>Tutup</h3><p>Tutup dengan A atau Joker setelah memiliki minimal satu dasar yang sah dan kartu lain sudah tersusun.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🏆</div><div><h3>Target Game</h3><p>Game berakhir ketika pemain mencapai 1.500 poin. Rank 1/Win Match dicatat berdasarkan hasil match.</p></div></div></div><div class="joker-rule-note">💡 Gunakan tombol ◷ pada kotak buangan untuk melihat riwayat kartu yang pernah dibuang.</div></div>',"Tutup",closeModal,true);
+        };
+        $("jokerBackBtn").onclick=()=>{$("back").click();};
         $("start").onclick = () => {
           try {
             if (!loadGame()) {
