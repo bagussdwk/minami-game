@@ -1129,6 +1129,8 @@
           } catch (e) {}
         }
         function newMatch(start = 0, dir = 1, keep = true) {
+          // Pastikan overlay hasil match sebelumnya tidak ikut terbawa ke match baru.
+          closeModal();
           let d = sh(deck()),
             h = Array.from({ length: n }, () => []);
           for (let q = 0; q < 13; q++)
