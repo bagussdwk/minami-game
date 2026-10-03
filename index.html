@@ -5250,8 +5250,12 @@
         if (!c) return false;
         // MINAMI 2: Joker adalah kartu fisik, tidak bergantung pada rank.
         if (c.isJoker === true) return true;
-        // MINAMI 1: semua kartu dengan rank Joker yang ditentukan menjadi Joker.
-        return !!game && game.mode !== 2 && c.rank === game.jokerRank;
+
+        // MINAMI 1: SEMUA kartu dengan rank yang sama dengan kartu penentu
+        // Joker menjadi Joker, termasuk kedua deck.
+        if (!game || Number(game.mode) === 2) return false;
+        const jokerRank = game.jokerRank ?? game.joker?.rank ?? null;
+        return jokerRank != null && c.rank === jokerRank;
       }
       function cardValue(c) {
         return isJoker(c) ? 25 : val(c.rank);
@@ -8031,7 +8035,7 @@
           mode: minamiMode,
           hands,
           // MINAMI 1 menyimpan rank Joker; MINAMI 2 tidak memakai rank Joker.          
-jokerRank: joker ? joker.rank : null,
+jokerRank: minamiMode === 1 && joker ? joker.rank : null,
           joker,
           playerCount,
           scores: window.minamiScores || Array(playerCount).fill(0),
