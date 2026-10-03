@@ -8617,7 +8617,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         document.getElementById("resultModal").classList.remove("show");
       };
 
-      const MINAMI_FEATURE_KEY="minamiFeatureStatsV2", MINAMI_ACH_KEY="minamiAchievementsV1", MINAMI_RANK1_LEDGER_KEY="minamiRank1LedgerV1";
+      const MINAMI_FEATURE_KEY="minamiFeatureStatsV2", MINAMI_ACH_KEY="minamiAchievementsV1", MINAMI_RANK1_LEDGER_KEY="minamiRank1LedgerV1", MINAMI2_CLEAN_STREAK_KEY="minami2CleanGameStreakV1";
       const MINAMI_API_URL="/api/index.php";
       const MINAMI_API_TOKEN_KEY="minamiApiToken";
       const MINAMI_API_SYNC_KEY="minamiApiSyncLedgerV1";
@@ -9029,6 +9029,13 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         const finalGame=Array.isArray(game.scores)&&game.scores.some(x=>Number(x)>=25);
         if(finalGame){
           s.games++;
+          // Khusus Minami 2: satu GAME dihitung bersih jika seluruh match di game tersebut tidak menghasilkan mati tangan NO_BASE.
+          if(Number(game?.mode)===2){
+            const clean=!Array.isArray(game.deadReason)||!game.deadReason.some(x=>x==="NO_BASE");
+            const ck=MINAMI2_CLEAN_STREAK_KEY;
+            const prevClean=Number(localStorage.getItem(ck))||0;
+            localStorage.setItem(ck,String(clean?prevClean+1:0));
+          }
           const finalWinner=game.scores.findIndex(x=>Number(x)>=25);
           if(finalWinner===0) s.gameWins++;
         }
@@ -9077,7 +9084,8 @@ function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAM
           ["marathon","🎴","Marathon","Menyelesaikan 10 Game sampai 25",(s.games||0)>=10],
           ["triple-champion","🏆","Triple Champion","Menang 3 Game sampai 25",(s.gameWins||0)>=3],
           ["veteran","🎖️","Veteran","Menyelesaikan 25 match",(s.matches||0)>=25],
-          ["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut",(Number(localStorage.getItem("minamiWinStreak"))||0)>=3]
+          ["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut",(Number(localStorage.getItem("minamiWinStreak"))||0)>=3],
+          ["minami2-clean-5","🛡️","Clean Five","Menyelesaikan 5 Game Minami 2 berturut-turut tanpa mati tangan",(Number(localStorage.getItem(MINAMI2_CLEAN_STREAK_KEY))||0)>=5]
         ];
         let ch=false;
         a.forEach(x=>{if(x[4]&&!u.has(x[0])){u.add(x[0]);ch=true;showPlayFeedback(x[1]+" ACHIEVEMENT: "+x[2],false)}});
@@ -9239,16 +9247,17 @@ function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAM
   const defs=[
     ["first-win","🏆","First Win","Menangkan match untuk pertama kali.","GLOBAL"],
     ["first-champion","👑","First Champion","Menang Game sampai target poin pertama kali.","GLOBAL"],
-    ["tenho","🃏","TENHO!","Mendapatkan TENHO di Minami.","MINAMI 1"],
-    ["pot-master","♟️","POT Hunter","Membuat 5 POT.","MINAMI 1"],
-    ["joker-master","🃏","Joker Master","Memainkan Joker 5 kali.","MINAMI 1"],
-    ["combo-master","🔥","Combo Master","Menurunkan 5 kartu atau lebih sekaligus.","MINAMI 1"],
-    ["mvp","⭐","MVP","Menjadi MVP 1 kali.","MINAMI 1"],
-    ["rank-climber","📈","Rank Climber","Mengumpulkan 10 Rank 1.","MINAMI 1"],
-    ["marathon","🎴","Marathon","Menyelesaikan 10 Game sampai target.","MINAMI 1"],
-    ["triple-champion","🏆","Triple Champion","Menang 3 Game sampai target.","MINAMI 1"],
-    ["veteran","🎖️","Veteran","Menyelesaikan 25 match.","MINAMI 1"],
-    ["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut.","MINAMI 1"],
+    ["tenho","🃏","TENHO!","Mendapatkan TENHO di Minami 1 atau Minami 2.","MINAMI"],
+    ["pot-master","♟️","POT Hunter","Membuat 5 POT.","MINAMI"],
+    ["joker-master","🃏","Joker Master","Memainkan Joker 5 kali.","MINAMI"],
+    ["combo-master","🔥","Combo Master","Menurunkan 5 kartu atau lebih sekaligus.","MINAMI"],
+    ["mvp","⭐","MVP","Menjadi MVP 1 kali.","MINAMI"],
+    ["rank-climber","📈","Rank Climber","Mengumpulkan 10 Rank 1.","MINAMI"],
+    ["marathon","🎴","Marathon","Menyelesaikan 10 Game sampai target.","MINAMI"],
+    ["triple-champion","🏆","Triple Champion","Menang 3 Game sampai target.","MINAMI"],
+    ["veteran","🎖️","Veteran","Menyelesaikan 25 match.","MINAMI"],
+    ["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut.","MINAMI"],
+    ["minami2-clean-5","🛡️","Clean Five","Menyelesaikan 5 Game Minami 2 berturut-turut tanpa mati tangan.","MINAMI 2"],
     ["first-joker","🃏","First Joker","Menggunakan Joker pertama dalam kombinasi.","JOKER"],
     ["set-master","🎯","Set Master","Membuat set pertama.","JOKER"],
     ["joker-collector","🔥","Joker Collector","Menggunakan 10 Joker.","JOKER"],
