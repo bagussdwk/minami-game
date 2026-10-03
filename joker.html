@@ -1124,9 +1124,11 @@
           const p=g.p[0], ms=melds(p.hand)||[];
           for(const m of ms){
             const sig=m.type+"|"+String(m.rank??"")+"|"+m.ids.slice().sort().join(",");
-            if(m.type==="set"&&!g.jokerStats.seenSets.includes(sig)){
-              g.jokerStats.seenSets.push(sig);
-              g.jokerStats.sets++;
+            if(m.type==="set"){
+              // Set dihitung maksimal 1 kali untuk setiap match,
+              // walaupun pemain membuat beberapa set dalam match yang sama.
+              if(!g.jokerStats.seenSets.includes(sig))g.jokerStats.seenSets.push(sig);
+              g.jokerStats.sets=1;
             }
             for(const id of m.ids){
               const card=p.hand.find(x=>x.id===id);
