@@ -37,6 +37,9 @@ switch($path){
   case 'logout': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); logoutUser($db); break;
   case 'me': me($db); break;
   case 'stats': stats($db); break;
+  case 'game-save': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameSave($db,$body); break;
+  case 'game-load': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameLoad($db,$body); break;
+  case 'game-delete': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameDelete($db,$body); break;
   case 'game-result': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameResult($db,$body); break;
   case 'achievement': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); achievement($db,$body); break;
   default: fail('Endpoint tidak ditemukan.',404);
@@ -99,6 +102,88 @@ function logoutUser(PDO $db):never{
 }
 function me(PDO $db):never{$u=auth($db);ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name']]]);}
 function stats(PDO $db):never{$u=auth($db);$q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');$q->execute([$u['id']]);ok(['stats'=>$q->fetch()?:[]]);}
+function ensureGameSavesTable(PDO $db):void{
+  $db->exec('CREATE TABLE IF NOT EXISTS player_game_saves (
+    user_id BIGINT UNSIGNED NOT NULL,
+    mode VARCHAR(16) NOT NULL,
+    state_json MEDIUMTEXT NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    revision INT UNSIGNED NOT NULL DEFAULT 1,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, mode),
+    CONSTRAINT fk_player_game_saves_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+}
+function gameSave(PDO $db,array $b):never{
+  $u=auth($db);
+  ensureGameSavesTable($db);
+  $mode=trim((string)($b['mode']??''));
+  if(!in_array($mode,['minami1','minami2','joker'],true))fail('Mode tidak valid.');
+  $state=$b['state']??null;
+  if(!is_array($state))fail('Data permainan tidak valid.');
+  $json=json_encode($state,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+  if($json===false)fail('Data permainan tidak dapat disimpan.');
+  if(strlen($json)>12000000)fail('Data permainan terlalu besar.');
+  $active=($b['active']??true)?1:0;
+  $sql='INSERT INTO player_game_saves(user_id,mode,state_json,active,revision)
+        VALUES(?,?,?,?,1)
+        ON DUPLICATE KEY UPDATE
+          state_json=VALUES(state_json),
+          active=VALUES(active),
+          revision=revision+1,
+          updated_at=CURRENT_TIMESTAMP';
+  $db->prepare($sql)->execute([$u['id'],$mode,$json,$active]);
+  $q=$db->prepare('SELECT mode,active,revision,updated_at,state_json FROM player_game_saves WHERE user_id=? AND mode=? LIMIT 1');
+  $q->execute([$u['id'],$mode]);
+  $row=$q->fetch();
+  if(!$row)fail('Data permainan gagal disimpan.',500);
+  ok(['save'=>[
+    'mode'=>$row['mode'],
+    'active'=>(bool)$row['active'],
+    'revision'=>(int)$row['revision'],
+    'updated_at'=>$row['updated_at']
+  ]]);
+}
+function gameLoad(PDO $db,array $b):never{
+  $u=auth($db);
+  ensureGameSavesTable($db);
+  $mode=trim((string)($b['mode']??''));
+  if($mode!=='') {
+    if(!in_array($mode,['minami1','minami2','joker'],true))fail('Mode tidak valid.');
+    $q=$db->prepare('SELECT mode,active,revision,updated_at,state_json FROM player_game_saves WHERE user_id=? AND mode=? AND active=1 LIMIT 1');
+    $q->execute([$u['id'],$mode]);
+  } else {
+    $q=$db->prepare('SELECT mode,active,revision,updated_at,state_json FROM player_game_saves WHERE user_id=? AND active=1 ORDER BY updated_at DESC');
+    $q->execute([$u['id']]);
+  }
+  $rows=$q->fetchAll();
+  $saves=[];
+  foreach($rows as $row){
+    $state=json_decode((string)$row['state_json'],true);
+    if(!is_array($state))continue;
+    $saves[]=[
+      'mode'=>$row['mode'],
+      'active'=>(bool)$row['active'],
+      'revision'=>(int)$row['revision'],
+      'updated_at'=>$row['updated_at'],
+      'state'=>$state
+    ];
+  }
+  ok(['saves'=>$saves,'save'=>$saves[0]??null]);
+}
+function gameDelete(PDO $db,array $b):never{
+  $u=auth($db);
+  ensureGameSavesTable($db);
+  $mode=trim((string)($b['mode']??''));
+  if($mode!==''){
+    if(!in_array($mode,['minami1','minami2','joker'],true))fail('Mode tidak valid.');
+    $q=$db->prepare('DELETE FROM player_game_saves WHERE user_id=? AND mode=?');
+    $q->execute([$u['id'],$mode]);
+  } else {
+    $db->prepare('DELETE FROM player_game_saves WHERE user_id=?')->execute([$u['id']]);
+  }
+  ok();
+}
 function gameResult(PDO $db,array $b):never{
   $u=auth($db);$mode=trim((string)($b['mode']??''));if(!in_array($mode,['minami1','minami2','joker'],true))fail('Mode tidak valid.');
   $vals=[];foreach(['games_finished','game_wins','rank1','match_finished','match_wins'] as $k){$v=(int)($b[$k]??0);if($v<0||$v>100000)fail('Statistik tidak valid.');$vals[$k]=$v;}
