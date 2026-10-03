@@ -42,22 +42,29 @@ switch($path){
 function fail(string $m,int $s=400):never{http_response_code($s);echo json_encode(['ok'=>false,'error'=>$m],JSON_UNESCAPED_UNICODE);exit;}
 function ok(array $d=[]):never{echo json_encode(['ok'=>true]+$d,JSON_UNESCAPED_UNICODE);exit;}
 function auth(PDO $db):array{
+  global $body;
+  $token='';
   $h=(string)($_SERVER['HTTP_AUTHORIZATION']??'');
-  if($h==='') $h=(string)($_SERVER['REDIRECT_HTTP_AUTHORIZATION']??'');
+  if($h==='')$h=(string)($_SERVER['REDIRECT_HTTP_AUTHORIZATION']??'');
   if($h===''){
     foreach(['Authorization','authorization','HTTP_AUTHORIZATION'] as $k){
-      if(isset($_SERVER[$k]) && $_SERVER[$k]!==''){ $h=(string)$_SERVER[$k]; break; }
+      if(isset($_SERVER[$k])&&$_SERVER[$k]!==''){ $h=(string)$_SERVER[$k]; break; }
     }
   }
-  if($h==='' && function_exists('getallheaders')){
+  if($h===''&&function_exists('getallheaders')){
     $headers=getallheaders();
     foreach($headers as $k=>$v){
       if(strtolower((string)$k)==='authorization'){ $h=(string)$v; break; }
     }
   }
-  if(!preg_match('/^Bearer\\s+(.+)$/i',trim($h),$m))fail('Login diperlukan.',401);
+  if(preg_match('/^Bearer\s+(.+)$/i',trim($h),$m))$token=trim($m[1]);
+  if($token==='')$token=trim((string)($body['token']??''));
+  if($token==='')fail('Login diperlukan.',401);
   $q=$db->prepare('SELECT u.* FROM login_sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>NOW() LIMIT 1');
-  $q->execute([hash('sha256',trim($m[1]))]);$u=$q->fetch();if(!$u)fail('Sesi tidak valid.',401);return $u;
+  $q->execute([hash('sha256',$token)]);
+  $u=$q->fetch();
+  if(!$u)fail('Sesi tidak valid.',401);
+  return $u;
 }
 function registerUser(PDO $db,array $b):never{
   $u=strtolower(trim((string)($b['username']??'')));$p=(string)($b['password']??'');$n=trim((string)($b['display_name']??$u));
@@ -80,7 +87,13 @@ function loginUser(PDO $db,array $b):never{
   ok(['token'=>$token,'user'=>['username'=>$row['username'],'display_name'=>$row['display_name']]]);
 }
 function logoutUser(PDO $db):never{
-  $h=$_SERVER['HTTP_AUTHORIZATION']??'';if(preg_match('/^Bearer\\s+(.+)$/i',$h,$m))$db->prepare('DELETE FROM login_sessions WHERE token_hash=?')->execute([hash('sha256',trim($m[1]))]);ok();
+  global $body;
+  $token='';
+  $h=(string)($_SERVER['HTTP_AUTHORIZATION']??'');
+  if(preg_match('/^Bearer\s+(.+)$/i',trim($h),$m))$token=trim($m[1]);
+  if($token==='')$token=trim((string)($body['token']??''));
+  if($token!=='')$db->prepare('DELETE FROM login_sessions WHERE token_hash=?')->execute([hash('sha256',$token)]);
+  ok();
 }
 function me(PDO $db):never{$u=auth($db);ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name']]]);}
 function stats(PDO $db):never{$u=auth($db);$q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');$q->execute([$u['id']]);ok(['stats'=>$q->fetch()?:[]]);}
