@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minami API Tester</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:760px;margin:30px auto;padding:20px;background:#f5f5f5;color:#222}
+.card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 12px #0001}
+h1{margin-top:0}.row{display:grid;gap:6px;margin:12px 0}
+input{padding:11px;border:1px solid #ccc;border-radius:8px;font-size:16px}
+button{padding:11px 16px;border:0;border-radius:8px;cursor:pointer;margin:5px 5px 5px 0}
+.primary{background:#222;color:#fff}.secondary{background:#ddd}
+pre{white-space:pre-wrap;word-break:break-word;background:#111;color:#0f0;padding:14px;border-radius:10px;min-height:120px}
+.status{font-weight:bold;margin:12px 0}
+small{color:#666}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>🔧 Minami API Tester</h1>
+<p><small>Tester sementara untuk register, login, ME, dan STATS.</small></p>
+
+<div class="row"><label>Username</label><input id="username" value="testminami" autocomplete="username"></div>
+<div class="row"><label>Password</label><input id="password" value="TestMinami123!" type="password" autocomplete="new-password"></div>
+<div class="row"><label>Nama</label><input id="display" value="Test Minami"></div>
+
+<button class="primary" id="register">REGISTER</button>
+<button class="primary" id="login">LOGIN</button>
+<button class="secondary" id="me">ME</button>
+<button class="secondary" id="stats">STATS</button>
+<button class="secondary" id="logout">LOGOUT</button>
+
+<div class="status" id="status">Status: siap.</div>
+<pre id="output">Belum ada request.</pre>
+</div>
+
+<script>
+(function(){
+  const API='https://cardarena.site.je/api/index.php';
+  const TOKEN_KEY='minamiApiTestToken';
+
+  const $=id=>document.getElementById(id);
+  const show=(msg,data)=>{
+    $('status').textContent='Status: '+msg;
+    $('output').textContent=typeof data==='string'?data:JSON.stringify(data,null,2);
+  };
+  const creds=()=>({
+    username:$('username').value.trim(),
+    password:$('password').value,
+    display_name:$('display').value.trim()
+  });
+
+  async function call(action,body){
+    const headers={'Content-Type':'application/json'};
+    const token=localStorage.getItem(TOKEN_KEY);
+    if(token) headers.Authorization='Bearer '+token;
+
+    const r=await fetch(API+'?action='+encodeURIComponent(action),{
+      method:body?'POST':'GET',
+      headers,
+      body:body?JSON.stringify(body):undefined
+    });
+    const text=await r.text();
+    let data;
+    try{data=JSON.parse(text)}catch(e){data={ok:false,error:text}};
+    if(!r.ok||!data.ok) throw new Error(data.error||('HTTP '+r.status));
+    return data;
+  }
+
+  $('register').onclick=async()=>{
+    try{
+      show('mendaftarkan...', '');
+      const d=creds();
+      const res=await call('register',d);
+      show('REGISTER berhasil',res);
+    }catch(e){show('REGISTER gagal',e.message)}
+  };
+
+  $('login').onclick=async()=>{
+    try{
+      show('login...', '');
+      const d=creds();
+      const res=await call('login',{username:d.username,password:d.password});
+      localStorage.setItem(TOKEN_KEY,res.token);
+      show('LOGIN berhasil — token tersimpan sementara',res);
+    }catch(e){show('LOGIN gagal',e.message)}
+  };
+
+  $('me').onclick=async()=>{
+    try{show('memuat ME...','');show('ME berhasil',await call('me'))}
+    catch(e){show('ME gagal',e.message)}
+  };
+
+  $('stats').onclick=async()=>{
+    try{show('memuat STATS...','');show('STATS berhasil',await call('stats'))}
+    catch(e){show('STATS gagal',e.message)}
+  };
+
+  $('logout').onclick=async()=>{
+    try{
+      const res=await call('logout',{});
+      localStorage.removeItem(TOKEN_KEY);
+      show('LOGOUT berhasil',res);
+    }catch(e){
+      localStorage.removeItem(TOKEN_KEY);
+      show('Token lokal dihapus; API logout memberi error',e.message);
+    }
+  };
+})();
+</script>
+</body>
+</html>
