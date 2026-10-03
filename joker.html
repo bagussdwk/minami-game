@@ -1352,7 +1352,7 @@
           p.hand.push(g.draw.pop());
           return true;
         }
-        function takeOut(p) { if (!p.out.length) return false; let receiverIndex=g.p.indexOf(p), pi=prev(), card=p.out.pop(); p.hand.push(card); let ev=[...g.history].reverse().find((x)=>x.player===pi&&x.card.id===card.id&&!x.takenBy); if(ev){ev.takenBy=p.name;ensureJokerActionStats();if(receiverIndex===0)g.jokerStats.caught++;if(ev.player===0)g.jokerStats.caughtBy++;} return true; }  function melds(cs) {
+        function takeOut(p) { if (!p.out.length) return false; let receiverIndex=g.p.indexOf(p), pi=prev(), card=p.out.pop(); p.hand.push(card); let ev=[...g.history].reverse().find((x)=>x.player===pi&&x.card.id===card.id&&!x.takenBy); if(ev) ev.takenBy=p.name; return true; }  function melds(cs) {
           let out = [],
             j = cs.filter((c) => c.joker),
             x = cs.filter((c) => !c.joker);
@@ -2406,6 +2406,15 @@ function advance() {
           const userGameWin=Number(g.p[0]?.score)>=1500;
           ensureJokerActionStats();
           const rank1=w===0?1:0;
+          // Menangkap / Ditangkap hanya dihitung jika pengambilan buangan
+          // langsung berujung pada penutupan match pada giliran yang sama.
+          // g.source === "discard" memastikan pemenang memang mengambil
+          // kartu buangan, bukan kartu dari tumpukan tengah.
+          if(g.source === "discard"){
+            ensureJokerActionStats();
+            if(w===0) g.jokerStats.caught++;
+            if(t===0) g.jokerStats.caughtBy++;
+          }
           const streak=rank1?jokerCurrentStreak()+1:0;
           if(rank1)saveJokerCurrentStreak(streak); else saveJokerCurrentStreak(0);
           syncJokerResult(resultId,{
