@@ -5086,6 +5086,7 @@
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
         document.getElementById("setupJoker").style.display = "none";
+        document.getElementById("setupJendral").style.display = "none";
         minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
@@ -8229,6 +8230,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         document.getElementById("setup").style.display = "none";
         document.getElementById("setupMinami2").style.display = "none";
         document.getElementById("setupJoker").style.display = "none";
+        document.getElementById("setupJendral").style.display = "none";
         minamiMode = Number(game.mode) === 2 ? 2 : 1;
         document.getElementById("menuModal").classList.add("game-active");
         document.getElementById("scoreTopBtn").style.display = "inline-flex";
@@ -8508,7 +8510,8 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         document.getElementById("setup").style.display = "";
         document.getElementById("setupMinami2").style.display = "";
         document.getElementById("setupJoker").style.display = "";
-        // Menu awal selalu menampilkan dua card MINAMI secara bersamaan.
+        document.getElementById("setupJendral").style.display = "";
+        // Menu awal menampilkan semua card game yang tersedia/coming soon.
         showSetupMode(minamiMode);
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       };
