@@ -490,7 +490,11 @@ function achievementList(PDO $db):never{
   $q->execute([$u['id']]);
   $rows=$q->fetchAll();
   $out=[]; foreach($rows as $r){$out[]=['code'=>$r['code'],'name'=>$r['name'],'description'=>$r['description'],'icon'=>$r['icon'],'mode'=>$r['mode'],'unlocked'=>(bool)$r['unlocked_at'],'unlocked_at'=>$r['unlocked_at']];}
-  $f=$db->prepare('SELECT a.code FROM user_featured_achievements f JOIN achievements a ON a.id=f.achievement_id JOIN user_achievements ua ON ua.user_id=f.user_id AND ua.achievement_id=f.achievement_id WHERE f.user_id=? ORDER BY f.slot');
+  // Featured sudah divalidasi saat disimpan hanya dari achievement yang unlocked.
+  // Saat membaca ulang, cukup ambil dari tabel featured + master achievement.
+  // Jangan JOIN ulang ke user_achievements karena perubahan/legacy ID dapat
+  // membuat pilihan yang sebenarnya tersimpan terlihat hilang setelah refresh.
+  $f=$db->prepare('SELECT a.code FROM user_featured_achievements f JOIN achievements a ON a.id=f.achievement_id WHERE f.user_id=? ORDER BY f.slot');
   $f->execute([$u['id']]);
   $featured=array_map(fn($x)=>(string)$x['code'],$f->fetchAll());
   ok(['achievements'=>$out,'featured_achievements'=>$featured]);
