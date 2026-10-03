@@ -4033,7 +4033,35 @@
 <style id="minami-ui-safe-result-help">
 .help-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.help-modal-head h2{margin:0}.help-close-x{width:34px;height:34px;min-width:34px;padding:0;border-radius:50%;background:rgba(255,255,255,.09);color:#fff;font-size:22px;line-height:1}body.result-table-mode .table.game-victory{animation:minamiVictoryTable 1.8s ease-in-out infinite}body.result-table-mode .player.victory-player{animation:minamiVictoryPlayer 1.45s ease-in-out infinite;z-index:100}.result-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}.result-actions .start-btn{margin:0;flex:1 1 180px}.result-table-btn{display:none;position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:1200;min-width:190px;background:linear-gradient(145deg,#f1cb70,#d9a441);color:#18251d;box-shadow:0 10px 25px rgba(0,0,0,.3)}body.result-table-mode .result-table-btn{display:inline-flex;align-items:center;justify-content:center}body.result-table-mode .your-hand{display:block!important}body.result-table-mode #resultModal{display:none!important}@media(max-width:700px){.result-actions{gap:7px}.result-actions .start-btn{font-size:12px;padding:11px 10px}.result-table-btn{bottom:8px;min-width:170px;font-size:12px}}
 </style>
-  </head>
+  <style id="leaderboard-style">
+.leaderboard-list{display:grid;gap:7px}
+.leaderboard-row{display:grid;grid-template-columns:34px 42px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;padding:9px 10px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.04);color:#fff;text-align:left;cursor:pointer}
+.leaderboard-row:hover{background:rgba(243,207,112,.08);border-color:rgba(243,207,112,.22)}
+.leaderboard-row.you{border-color:rgba(243,207,112,.3);background:rgba(243,207,112,.07)}
+.leaderboard-pos{font-size:13px;font-weight:900;color:#aacdc0;text-align:center}
+.leaderboard-pos.top{color:#f3cf70}
+.leaderboard-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:rgba(243,207,112,.08);border:1px solid rgba(243,207,112,.13);font-size:22px}
+.leaderboard-main{min-width:0}
+.leaderboard-name{font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.leaderboard-title{margin-top:3px;color:#f3cf70;font-size:8px;font-weight:900;letter-spacing:.55px}
+.leaderboard-rank1{text-align:right;white-space:nowrap}
+.leaderboard-rank1 b{display:block;color:#f3cf70;font-size:15px}
+.leaderboard-rank1 span{display:block;margin-top:2px;color:#aacdc0;font-size:7px}
+.leaderboard-loading,.leaderboard-empty{padding:22px 10px;text-align:center;color:#aacdc0;font-size:10px}
+.leaderboard-head-note{margin-bottom:9px;padding:9px 10px;border-radius:10px;background:rgba(243,207,112,.055);border:1px solid rgba(243,207,112,.11);color:#d8eee3;font-size:9px;line-height:1.35}
+.leaderboard-detail-back{width:100%;margin-bottom:9px;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#d8eee3;font-size:10px;font-weight:900}
+.leaderboard-detail-profile{display:flex;align-items:center;gap:11px;margin-bottom:11px;padding:12px;border-radius:12px;background:linear-gradient(145deg,rgba(243,207,112,.08),rgba(255,255,255,.035));border:1px solid rgba(243,207,112,.15)}
+.leaderboard-detail-icon{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:rgba(243,207,112,.1);font-size:28px}
+.leaderboard-detail-name{font-size:16px;font-weight:900}
+.leaderboard-detail-title{margin-top:3px;color:#f3cf70;font-size:9px;font-weight:900;letter-spacing:.7px}
+.leaderboard-detail-rank{margin-top:3px;color:#aacdc0;font-size:9px}
+.leaderboard-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.leaderboard-detail-stat{padding:11px 8px;border-radius:10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);text-align:center}
+.leaderboard-detail-stat b{display:block;color:#f3cf70;font-size:18px}
+.leaderboard-detail-stat span{display:block;margin-top:3px;color:#aacdc0;font-size:8px}
+@media(max-width:700px),(hover:none) and (pointer:coarse){.feature-tabs{gap:4px}.feature-tab{font-size:9px;padding:9px 5px}.leaderboard-row{grid-template-columns:29px 37px minmax(0,1fr) auto;padding:8px}.leaderboard-icon{width:36px;height:36px;font-size:20px}}
+</style>
+</head>
   <body>
     <div class="topbar">
       <div class="logo">MINAMI</div>
@@ -4342,7 +4370,7 @@
     <div class="modal" id="quickChatModal"><div class="modal-box quick-chat-box"><div class="score-modal-head"><div><h2 class="score-modal-title">💬 Quick Chat</h2><div class="score-modal-subtitle">Kirim reaksi tanpa mengganggu permainan</div></div><button type="button" class="score-modal-close" id="quickChatClose">×</button></div><div class="quick-chat-grid" id="quickChatGrid"></div></div></div>
 
     <div class="modal" id="playerActionModal"><div class="modal-box player-action-box"><div class="score-modal-head"><div><h2 class="score-modal-title" id="playerActionTitle">🎯 Interaksi Pemain</h2><div class="score-modal-subtitle">Pilih reaksi untuk pemain ini</div></div><button type="button" class="score-modal-close" id="playerActionClose">×</button></div><div class="player-action-grid" id="playerActionGrid"></div></div></div>
-    <div class="modal" id="featureModal"><div class="modal-box feature-modal-box"><div class="score-modal-head"><div><h2 class="score-modal-title">📊 Statistik Saya & Achievement</h2><div class="score-modal-subtitle">Perjalanan Anda di MINAMI</div></div><button type="button" class="score-modal-close" id="featureModalClose">×</button></div><div class="feature-tabs"><button type="button" class="feature-tab active" data-feature-tab="stats">Statistik</button><button type="button" class="feature-tab" data-feature-tab="achievements">Achievement</button></div><div id="featureStatsPanel"></div><div id="featureAchievementsPanel" style="display:none"></div></div></div>
+    <div class="modal" id="featureModal"><div class="modal-box feature-modal-box"><div class="score-modal-head"><div><h2 class="score-modal-title">📊 Statistik & Achievement</h2><div class="score-modal-subtitle">Perjalanan Anda di MINAMI</div></div><button type="button" class="score-modal-close" id="featureModalClose">×</button></div><div class="feature-tabs"><button type="button" class="feature-tab active" data-feature-tab="stats">Statistik</button><button type="button" class="feature-tab" data-feature-tab="achievements">Achievement</button><button type="button" class="feature-tab" data-feature-tab="leaderboard">🏆 Leaderboard</button></div><div id="featureStatsPanel"></div><div id="featureAchievementsPanel" style="display:none"></div><div id="featureLeaderboardPanel" style="display:none"></div></div></div>
     <div class="modal" id="resultModal">
       <div class="modal-box">
         <h2 id="resultTitle">Hasil Game</h2>
@@ -9110,7 +9138,93 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
           }).join('')+'</div>';
       }
       function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menangkan match untuk pertama kali."],["first-champion","👑","First Champion","Menang Game pertama sampai 25 poin."],["tenho","🃏","TENHO!","Keluar dengan TENHO dan dapatkan bonus."],["pot-master","♟️","POT Hunter","Buat 5 POT dalam permainan."],["joker-master","🃏","Joker Master","Mainkan Joker 5 kali."],["combo-master","🔥","Combo Master","Turunkan 5 kartu atau lebih sekaligus."],["mvp","⭐","MVP","Menjadi MVP dalam 1 match."],["rank-climber","📈","Rank Climber","Kumpulkan 10 Rank 1."],["marathon","🎴","Marathon","Selesaikan 10 Game sampai 25 poin."],["triple-champion","🏆","Triple Champion","Menang 3 Game sampai 25 poin."],["veteran","🎖️","Veteran","Selesaikan 25 match."],["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut."]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div class="achievement-info"><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
-      function renderFeaturePanels(){renderFeatureStats();renderAchievements()}
+      function renderFeaturePanels(){
+        renderFeatureStats();
+        renderAchievements();
+        const panel=document.getElementById("featureLeaderboardPanel");
+        if(panel && panel.dataset.loaded!=="1") renderLeaderboard();
+      }
+
+      let minamiLeaderboardCache=null;
+      async function fetchMinamiLeaderboard(){
+        const r=await fetch(MINAMI_API_URL+"?action=leaderboard",{method:"GET",cache:"no-store"});
+        let d=null;
+        try{d=await r.json()}catch(e){throw new Error("Respons leaderboard tidak valid.")}
+        if(!r.ok||!d?.ok)throw new Error(d?.error||"Leaderboard gagal dimuat.");
+        return Array.isArray(d.players)?d.players:[];
+      }
+      function leaderboardRankForPlayer(p){
+        return minamiRankTitleFromStats(Number(p?.rank1)||0,Number(p?.games_finished)||0,Number(p?.game_wins)||0);
+      }
+      function leaderboardEscape(v){
+        const el=document.createElement("div");
+        el.textContent=String(v??"");
+        return el.innerHTML;
+      }
+      function renderLeaderboard(){
+        const panel=document.getElementById("featureLeaderboardPanel");
+        if(!panel)return;
+        panel.dataset.loaded="1";
+        panel.innerHTML='<div class="leaderboard-loading">⏳ Memuat leaderboard...</div>';
+        fetchMinamiLeaderboard().then(players=>{
+          minamiLeaderboardCache=players;
+          const me=(loadAccountUser()?.display_name||getPlayerProfile().name||"").trim().toLowerCase();
+          if(!players.length){
+            panel.innerHTML='<div class="leaderboard-empty">Belum ada pemain.</div>';
+            return;
+          }
+          panel.innerHTML=
+            '<div class="leaderboard-head-note">🏆 Peringkat berdasarkan jumlah <b>Rank 1</b> lifetime. Gelar otomatis mengikuti Rank 1, Game selesai, dan Win Game.</div>'+
+            '<div class="leaderboard-list">'+
+            players.map((p,i)=>{
+              const rank=leaderboardRankForPlayer(p);
+              const isMe=me&&String(p.name||"").trim().toLowerCase()===me;
+              return '<button type="button" class="leaderboard-row '+(isMe?"you":"")+'" data-leaderboard-index="'+i+'">'+
+                '<div class="leaderboard-pos '+(i<3?"top":"")+'">'+(i+1)+'</div>'+
+                '<div class="leaderboard-icon">'+rank.icon+'</div>'+
+                '<div class="leaderboard-main"><div class="leaderboard-name">'+leaderboardEscape(p.name||"Pemain")+'</div><div class="leaderboard-title">'+rank.name+(rank.level?" "+rank.level:"")+'</div></div>'+
+                '<div class="leaderboard-rank1"><b>'+Number(p.rank1||0)+'</b><span>RANK 1</span></div>'+
+              '</button>';
+            }).join("")+
+            '</div>';
+          panel.querySelectorAll("[data-leaderboard-index]").forEach(btn=>{
+            btn.onclick=()=>{
+              const p=minamiLeaderboardCache?.[Number(btn.dataset.leaderboardIndex)];
+              if(p)renderLeaderboardPlayer(p);
+            };
+          });
+        }).catch(()=>{
+          panel.innerHTML='<div class="leaderboard-empty">Leaderboard belum dapat dimuat. Coba buka lagi beberapa saat.</div>';
+        });
+      }
+      function renderLeaderboardPlayer(p){
+        const panel=document.getElementById("featureLeaderboardPanel");
+        if(!panel)return;
+        const rank=leaderboardRankForPlayer(p);
+        const games=Math.max(0,Number(p.games_finished)||0),gameWins=Math.max(0,Number(p.game_wins)||0);
+        const matches=Math.max(0,Number(p.match_finished)||0),matchWins=Math.max(0,Number(p.match_wins)||0);
+        const gameRate=games?Math.round(gameWins/games*100):0;
+        const matchRate=matches?Math.round(matchWins/matches*100):0;
+        panel.innerHTML=
+          '<button type="button" class="leaderboard-detail-back" id="leaderboardBackBtn">‹ Kembali ke Leaderboard</button>'+
+          '<div class="leaderboard-detail-profile">'+
+            '<div class="leaderboard-detail-icon">'+rank.icon+'</div>'+
+            '<div><div class="leaderboard-detail-name">'+leaderboardEscape(p.name||"Pemain")+'</div>'+
+            '<div class="leaderboard-detail-title">'+rank.name+(rank.level?" "+rank.level:"")+'</div>'+
+            '<div class="leaderboard-detail-rank">Rank #'+(minamiLeaderboardCache.indexOf(p)+1)+' • '+Number(p.rank1||0)+' Rank 1</div></div>'+
+          '</div>'+
+          '<div class="leaderboard-detail-grid">'+
+            '<div class="leaderboard-detail-stat"><b>'+games+'</b><span>GAME FINISHED</span></div>'+
+            '<div class="leaderboard-detail-stat"><b>'+gameWins+'</b><span>GAME WINS</span></div>'+
+            '<div class="leaderboard-detail-stat"><b>'+Number(p.rank1||0)+'</b><span>RANK 1</span></div>'+
+            '<div class="leaderboard-detail-stat"><b>'+matches+'</b><span>MATCH FINISHED</span></div>'+
+            '<div class="leaderboard-detail-stat"><b>'+matchWins+'</b><span>MATCH WINS</span></div>'+
+            '<div class="leaderboard-detail-stat"><b>'+matchRate+'%</b><span>WINRATE MATCH</span></div>'+
+            '<div class="leaderboard-detail-stat"><b>'+gameRate+'%</b><span>WINRATE GAME</span></div>'+
+            '<div class="leaderboard-detail-stat"><b>'+(matches?Math.round(Number(p.rank1||0)/matches*100):0)+'%</b><span>RANK 1 RATE</span></div>'+
+          '</div>';
+        document.getElementById("leaderboardBackBtn").onclick=renderLeaderboard;
+      }
       function getAIReactionText(i,label,joker){const p=game?.aiProfiles?.[i]||"balanced";if(label==="Mati")return"💀 MATI";if(joker)return p==="jokerHunter"?"😎 JOKER!":"🃏 Joker!";if(label.includes("POT"))return p==="potHunter"?"🔥 POT!":"😏 POT";if(label.includes("Dasar"))return p==="aggressive"?"⚔️ Gas!":"🎴 Turun";return"👍 Jalan"}
       function showPlayerBubble(i,textValue,kind="chat"){const el=document.getElementById("player"+(i+1));if(!el)return;let b=el.querySelector(".player-reaction-bubble");if(!b){b=document.createElement("div");b.className="player-reaction-bubble";el.appendChild(b)}b.textContent=textValue;b.className="player-reaction-bubble "+kind;b.classList.remove("show");void b.offsetWidth;b.classList.add("show");clearTimeout(b._hideTimer);b._hideTimer=setTimeout(()=>{b.classList.remove("show")},2100)}
       function setAIReaction(i,label,joker=false){if(!game||i===0)return;if(!game.reactions)game.reactions=Array(playerCount).fill(null);const textValue=getAIReactionText(i,label,joker);game.reactions[i]={text:textValue,until:Date.now()+1800};showPlayerBubble(i,textValue,joker?"joker":label.includes("POT")?"pot":"reaction")}
@@ -9215,7 +9329,16 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
       document.getElementById("menuStatsBtn").onclick=()=>{closeMenu();setYourHandOverlayHidden(true);renderFeaturePanels();document.getElementById("featureModal").classList.add("show")};
       document.getElementById("featureModalClose").onclick=()=>{document.getElementById("featureModal").classList.remove("show");setYourHandOverlayHidden(false)};
       document.getElementById("featureModal").onclick=e=>{if(e.target.id==="featureModal"){e.currentTarget.classList.remove("show");setYourHandOverlayHidden(false)}};
-      document.querySelectorAll(".feature-tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".feature-tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");const s=b.dataset.featureTab==="stats";document.getElementById("featureStatsPanel").style.display=s?"":"none";document.getElementById("featureAchievementsPanel").style.display=s?"none":""});
+      document.querySelectorAll(".feature-tab").forEach(b=>b.onclick=()=>{
+        document.querySelectorAll(".feature-tab").forEach(x=>x.classList.remove("active"));
+        b.classList.add("active");
+        const tab=b.dataset.featureTab;
+        const s=tab==="stats",a=tab==="achievements",l=tab==="leaderboard";
+        document.getElementById("featureStatsPanel").style.display=s?"":"none";
+        document.getElementById("featureAchievementsPanel").style.display=a?"":"none";
+        document.getElementById("featureLeaderboardPanel").style.display=l?"":"none";
+        if(l)renderLeaderboard();
+      });
       
       // Saat pertama kali membuka halaman:
       // jika ada game tersimpan, lanjutkan game tersebut.
