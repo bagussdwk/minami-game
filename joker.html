@@ -1330,6 +1330,7 @@
             history: [],
             round: g ? g.round + 1 : 1,
             over: false,
+            jokerStats: { jokers: 0, sets: 0, caught: 0, caughtBy: 0, seenSets: [], seenJokers: [] },
           };
           for (let i = 1; i < n; i++) {
             g.p[i].name = rs[i - 1].name;
@@ -1875,6 +1876,7 @@
         function takeCenterHuman() {
           if (g.turn !== 0 || g.phase !== "take" || !g.draw.length) return;
           if (takeDraw(g.p[0])) {
+            recordJokerActionStats(0);
             g.phase = "discard";
             g.source = "draw";
             g.sourceCard = g.p[0].hand.at(-1).id;
@@ -1887,6 +1889,7 @@
           if (g.turn !== 0 || g.phase !== "take" || !g.p[prev()].out.length)
             return;
           if (takeOut(g.p[0])) {
+            recordJokerActionStats(0);
             g.phase = "discard";
             g.source = "discard";
             g.sourceCard = g.p[0].hand.at(-1).id;
@@ -1928,6 +1931,7 @@
           p.hand.splice(sel, 1);
           p.out.push(c);
           g.history.push({ name: p.name, player: 0, card: c, takenBy: null });
+          recordJokerActionStats(0);
           sel = -1;
           if (close) {
             saveGame();
