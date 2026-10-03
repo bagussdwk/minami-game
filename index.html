@@ -6377,14 +6377,9 @@
 
         if(game.stats){game.stats.winner=winner;game.stats.reason=reason;game.stats.delta=scoreDelta.slice()}
         window.minamiWinStreak=winner===0?(Number(localStorage.getItem("minamiWinStreak"))||0)+1:0;localStorage.setItem("minamiWinStreak",String(window.minamiWinStreak));
-        updateLifetimeStatsFromGame();updateAchievements();renderFeatureStats();renderAchievements();
-        syncMinamiGameResult(resultId,{
-          match_finished:1,
-          match_wins:winner===0?1:0,
-          games_finished:Array.isArray(game.scores)&&game.scores.some(x=>Number(x)>=25)?1:0,
-          game_wins:Array.isArray(game.scores)&&game.scores.some(x=>Number(x)>=25)&&game.scores.findIndex(x=>Number(x)>=25)===0?1:0,
-          rank1:(reason!=="ALL_DEAD"&&Number(winner)===0)?1:0
-        });
+        const featureDelta=updateLifetimeStatsFromGame();
+        updateAchievements();renderFeatureStats();renderAchievements();
+        if(featureDelta)syncMinamiGameResult(resultId,featureDelta);
         playMinamiSfx(reason==="TENHO"?"tenho":winner!==null?"win":"dead");
         saveGameState();
 
@@ -8609,7 +8604,15 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
               game_wins:Number(values.game_wins)||0,
               rank1:Number(values.rank1)||0,
               match_finished:Number(values.match_finished)||0,
-              match_wins:Number(values.match_wins)||0
+              match_wins:Number(values.match_wins)||0,
+              tenho:Number(values.tenho)||0,
+              pots:Number(values.pots)||0,
+              cards:Number(values.cards)||0,
+              jokers:Number(values.jokers)||0,
+              best_combo:Number(values.best_combo)||0,
+              dead:Number(values.dead)||0,
+              mvp:Number(values.mvp)||0,
+              best_streak:Number(values.best_streak)||0
             })
           });
           const d=await r.json();
@@ -8920,7 +8923,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         renderAchievements();
       }
       function updateLifetimeStatsFromGame(){
-        if(!game||game._lifetimeCounted)return;
+        if(!game||game._lifetimeCounted)return null;
         game._lifetimeCounted=true;
         const s=featureStats(),st=game.stats||{};
         s.matches=Number(s.matches)||0;
@@ -8929,12 +8932,9 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         s.gameWins=Number(s.gameWins)||0;
         s.rank1=Number(s.rank1)||0;
 
-        // Setiap endGame() = 1 MATCH/ronde. Ini yang menghasilkan WIN +3/+4/+5/+7.
         s.matches++;
         if(game.lastResult?.winner===0) s.matchWins++;
 
-        // GAME = keseluruhan pertandingan sampai ada skor >=25.
-        // Hanya di titik ini Win Game bertambah; bukan saat mendapat WIN +3.
         const finalGame=Array.isArray(game.scores)&&game.scores.some(x=>Number(x)>=25);
         if(finalGame){
           s.games++;
@@ -8942,7 +8942,6 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
           if(finalWinner===0) s.gameWins++;
         }
 
-        const delta=Array.isArray(game.lastResult?.delta)?game.lastResult.delta:[];
         if(game.lastResult?.reason==="TENHO")s.tenho++;
         s.dead+=(Array.isArray(game.deadReason)?game.deadReason.filter(x=>x==="NO_BASE").length:0);
         const mvp=getGameMVP();
@@ -8951,6 +8950,22 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         s.cardsPerMatch=s.matches?Math.round(s.cards/s.matches):0;
         saveFeatureStats(s);
         updateAchievements();
+
+        return {
+          match_finished:1,
+          match_wins:game.lastResult?.winner===0?1:0,
+          games_finished:finalGame?1:0,
+          game_wins:finalGame&&game.scores.findIndex(x=>Number(x)>=25)===0?1:0,
+          rank1:(game.lastResult?.reason!=="ALL_DEAD"&&Number(game.lastResult?.winner)===0)?1:0,
+          tenho:game.lastResult?.reason==="TENHO"?1:0,
+          pots:Number(st.pots?.[0])||0,
+          cards:Number(st.cardsPlayed?.[0])||0,
+          jokers:Number(st.jokers?.[0])||0,
+          best_combo:Number(st.maxCombo?.[0])||0,
+          dead:Array.isArray(game.deadReason)?game.deadReason.filter(x=>x==="NO_BASE").length:0,
+          mvp:mvp?.i===0?1:0,
+          best_streak:Number(localStorage.getItem("minamiWinStreak"))||0
+        };
       }
       function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAMI_ACH_KEY)||"[]")}catch(e){return[]}}
       function updateAchievements(){
