@@ -8765,12 +8765,38 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
           document.getElementById("accountGames").textContent=Number(gs.games_finished)||0;
         }
       }
+      function mergeServerStatsIntoFeatureStats(serverStats){
+        if(!serverStats||typeof serverStats!=="object")return;
+        const s=featureStats();
+        const map={
+          matches:"match_finished",
+          matchWins:"match_wins",
+          games:"games_finished",
+          gameWins:"game_wins",
+          rank1:"rank1",
+          tenho:"tenho",
+          pots:"pots",
+          cards:"cards",
+          jokers:"jokers",
+          bestCombo:"best_combo",
+          dead:"dead",
+          mvp:"mvp",
+          bestStreak:"best_streak"
+        };
+        for(const [localKey,serverKey] of Object.entries(map)){
+          const serverValue=Number(serverStats[serverKey]);
+          if(Number.isFinite(serverValue))s[localKey]=Math.max(Number(s[localKey])||0,serverValue);
+        }
+        s.cardsPerMatch=s.matches?Math.round((Number(s.cards)||0)/s.matches):0;
+        saveFeatureStats(s);
+      }
       async function refreshAccountStats(){
         const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
         if(!token){window.minamiGlobalStats=null;renderAccountUI();return null}
         try{
           const d=await minamiApiPost("stats",{token});
           window.minamiGlobalStats=d.stats||{};
+          mergeServerStatsIntoFeatureStats(window.minamiGlobalStats);
           renderAccountUI();applyPlayerProfile();renderFeatureStats();renderAchievements();
           return window.minamiGlobalStats;
         }catch(e){
