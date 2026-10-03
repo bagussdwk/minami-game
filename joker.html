@@ -1366,7 +1366,20 @@
           p.hand.push(g.draw.pop());
           return true;
         }
-        function takeOut(p) { if (!p.out.length) return false; let receiverIndex=g.p.indexOf(p), pi=prev(), card=p.out.pop(); p.hand.push(card); let ev=[...g.history].reverse().find((x)=>x.player===pi&&x.card.id===card.id&&!x.takenBy); if(ev) ev.takenBy=p.name; return true; }  function melds(cs) {
+        function takeOut(p) {
+          let pi = prev(),
+            s = g.p[pi];
+          if (!s.out.length) return false;
+          let card = s.out.pop();
+          p.hand.push(card);
+          let ev = [...g.history]
+            .reverse()
+            .find(
+              (x) => x.player === pi && x.card.id === card.id && !x.takenBy,
+            );
+          if (ev) ev.takenBy = p.name;
+          return true;
+        }  function melds(cs) {
           let out = [],
             j = cs.filter((c) => c.joker),
             x = cs.filter((c) => !c.joker);
