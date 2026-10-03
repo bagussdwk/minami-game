@@ -1,8 +1,8 @@
 <?php
 return [
-  'db_host' => '127.0.0.1',
-  'db_name' => 'minami',
-  'db_user' => 'minami_user',
-  'db_pass' => 'GANTI_PASSWORD_DATABASE',
-  'api_prefix' => 'api',
+    'db_host' => 'sql313.infinityfree.com',
+    'db_name' => 'if0_43074195_minami',
+    'db_user' => 'if0_43074195',
+    'db_pass' => 'Bgss250802',
+    'api_prefix' => 'api',
 ];
