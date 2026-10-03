@@ -7048,10 +7048,10 @@
         return initialBaseCandidates(h).length > 0;
       }
       function canFullyArrange(h) {
-        // TENHO harus bisa mengenali seluruh tangan yang memang dapat
-        // disusun habis menjadi DASAR/POT, bukan hanya kombinasi 3 kartu.
-        // Versi lama hanya mencoba grup 3 kartu sehingga tangan yang
-        // sebenarnya bisa habis dengan dasar 4/5 kartu bisa lolos.
+        // TENHO harus benar-benar bisa menghabiskan seluruh tangan menjadi
+        // DASAR/POT legal. Pencarian dibuat berbasis urutan DASAR, bukan
+        // kombinasi mentah, supaya DASAR panjang (6+ kartu) tetap terbaca
+        // tanpa meledakkan jumlah kombinasi.
         const memo = new Map();
 
         function rec(arr) {
@@ -7060,8 +7060,8 @@
           const key = arr.map(c => c.id).sort().join("|");
           if (memo.has(key)) return memo.get(key);
 
-          // Mulai dari kartu non-Joker supaya jumlah kandidat tidak meledak.
-          let firstIndex = arr.findIndex(c => !isJoker(c));
+          // Mulai dari kartu non-Joker agar setiap langkah punya anchor rank.
+          const firstIndex = arr.findIndex(c => !isJoker(c));
           if (firstIndex < 0) {
             memo.set(key, false);
             return false;
@@ -7069,54 +7069,105 @@
 
           const a = arr[firstIndex];
           const rest = arr.filter((_, i) => i !== firstIndex);
+          const jokers = rest.filter(c => isJoker(c));
+          const sameSuit = rest.filter(c => !isJoker(c) && c.suit === a.suit);
+          const sameRank = rest.filter(c => !isJoker(c) && c.rank === a.rank);
           const candidates = [];
-          const seen = new Set();
 
-          const testGroup = (group) => {
-            if (group.length < 3) return;
-            const ids = group.map(c => c.id).sort().join("|");
-            if (seen.has(ids)) return;
-            seen.add(ids);
+          // ---------------------------------------------------------
+          // DASAR
+          // Cari semua urutan 3..13 kartu yang mengandung kartu 'a'.
+          // Karena DASAR adalah urutan rank berurutan satu bunga, kita
+          // tidak perlu mencoba kombinasi kartu acak satu per satu.
+          // ---------------------------------------------------------
+          const aPos = rankSeq(a.rank);
 
-            // DASAR: kartu berurutan satu bunga, Joker boleh menjadi pengganti.
-            const base = makeBaseCards(group);
-            if (base) candidates.push(group);
+          for (let size = 3; size <= 13; size++) {
+            for (let start = 1; start <= 15 - size; start++) {
+              const end = start + size - 1;
+              if (aPos < start || aPos > end) continue;
 
-            // POT: angka sama, bunga bebas, Joker boleh menggantikan.
-            const pot = potCards(group);
-            if (pot) candidates.push(group);
-          };
+              const cards = [a];
+              const usedIds = new Set([a.id]);
+              let missing = 0;
+              let valid = true;
 
-          const buildCombos = (pool, maxSize) => {
-            const choose = (source, need, picked, offset) => {
-              if (need === 0) {
-                testGroup([a, ...picked]);
-                return;
+              for (let pos = start; pos <= end; pos++) {
+                const rank = rankAtPosition(pos);
+                if (rank === a.rank) continue;
+
+                const card = sameSuit.find(c => !usedIds.has(c.id) && c.rank === rank);
+                if (card) {
+                  cards.push(card);
+                  usedIds.add(card.id);
+                } else {
+                  missing++;
+                }
               }
-              for (let i = offset; i <= source.length - need; i++) {
-                picked.push(source[i]);
-                choose(source, need - 1, picked, i + 1);
-                picked.pop();
-              }
-            };
 
-            for (let size = 3; size <= Math.min(maxSize, pool.length + 1); size++) {
-              choose(pool, size - 1, [], 0);
+              if (missing > jokers.length) continue;
+              if (size === 3 && missing > 1) continue;
+
+              // Joker 4+ tidak boleh menjadi kartu ujung DASAR.
+              if (size >= 4) {
+                const firstRank = rankAtPosition(start);
+                const lastRank = rankAtPosition(end);
+                const firstMissing = !cards.some(c => !isJoker(c) && c.rank === firstRank);
+                const lastMissing = !cards.some(c => !isJoker(c) && c.rank === lastRank);
+
+                if (firstMissing || lastMissing) continue;
+              }
+
+              // Tambahkan Joker hanya untuk slot rank yang belum terisi.
+              const ordered = [];
+              let ji = 0;
+              for (let pos = start; pos <= end; pos++) {
+                const rank = rankAtPosition(pos);
+                const real =
+                  rank === a.rank
+                    ? a
+                    : cards.find(c => !isJoker(c) && c.rank === rank && c.suit === a.suit && !ordered.includes(c));
+
+                if (real) {
+                  ordered.push(real);
+                } else {
+                  const j = jokers[ji++];
+                  if (!j) {
+                    valid = false;
+                    break;
+                  }
+                  ordered.push(j);
+                }
+              }
+
+              if (!valid) continue;
+              const m = makeBaseCards(ordered);
+              if (m) candidates.push(ordered);
             }
-          };
+          }
 
-          // Kandidat DASAR hanya berasal dari bunga yang sama + Joker.
-          const basePool = rest.filter(c => isJoker(c) || c.suit === a.suit);
-          // Dasar panjang cukup dicari sampai 5 kartu. Dasar 6+ bisa
-          // dipecah menjadi grup 3 + 3/4/5 tanpa mengubah legalitas urutan.
-          buildCombos(basePool, 5);
+          // ---------------------------------------------------------
+          // POT
+          // Semua kartu nyata harus rank yang sama dengan 'a'.
+          // Joker boleh menjadi pengganti. Untuk kartu rank yang sama,
+          // memilih kartu nyata mana yang dipakai tidak mengubah legalitas,
+          // jadi cukup ambil kombinasi berdasarkan jumlah kartu.
+          // ---------------------------------------------------------
+          const maxPotSize = sameRank.length + 1 + jokers.length;
+          for (let size = 3; size <= maxPotSize; size++) {
+            for (let jokerCount = 0; jokerCount <= Math.min(jokers.length, size - 3); jokerCount++) {
+              const realNeeded = size - jokerCount;
+              if (realNeeded < 1 || realNeeded > sameRank.length + 1) continue;
 
-          // Kandidat POT maksimal 6 kartu pada dua deck + Joker.
-          // Dibuat terpisah agar POT 4+ juga bisa dikenali sebagai TENHO.
-          const potPool = rest.filter(c => isJoker(c) || c.rank === a.rank);
-          buildCombos(potPool, 6);
+              const group = [a, ...sameRank.slice(0, realNeeded - 1), ...jokers.slice(0, jokerCount)];
+              if (group.length !== size) continue;
 
-          // Coba kandidat yang paling banyak menghabiskan kartu terlebih dahulu.
+              const p = potCards(group);
+              if (p) candidates.push(group);
+            }
+          }
+
+          // Prioritaskan grup terbesar agar TENHO cepat ditemukan.
           candidates.sort((x, y) => y.length - x.length);
 
           for (const group of candidates) {
@@ -7124,7 +7175,8 @@
             const remaining = arr.filter(c => !used.has(c.id));
             if (rec(remaining)) {
               memo.set(key, true);
-              return true;            }
+              return true;
+            }
           }
 
           memo.set(key, false);
