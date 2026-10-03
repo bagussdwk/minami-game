@@ -8850,6 +8850,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
           const d=await minamiApiPost("stats",{token});
           window.minamiGlobalStats=d.stats||{};
           minamiModeStats=(d.mode_stats&&typeof d.mode_stats==="object")?d.mode_stats:{};
+          await loadAccountAchievements();
           mergeServerStatsIntoFeatureStats(window.minamiGlobalStats);
           renderAccountUI();applyPlayerProfile();renderFeatureStats();renderAchievements();
           return window.minamiGlobalStats;
