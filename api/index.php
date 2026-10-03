@@ -180,6 +180,15 @@ function leaderboard(PDO $db):never{
     ];
   }
   $players=[];
+  $fq=$db->query('SELECT ufa.user_id,ufa.slot,a.code,a.name,a.description,a.icon,a.mode FROM user_featured_achievements ufa JOIN achievements a ON a.id=ufa.achievement_id ORDER BY ufa.user_id,ufa.slot');
+  $featuredByUser=[];
+  foreach($fq->fetchAll() as $fa){
+    $uid=(int)$fa['user_id'];
+    $featuredByUser[$uid][]=[
+      'slot'=>(int)$fa['slot'],'code'=>$fa['code'],'name'=>$fa['name'],
+      'description'=>$fa['description'],'icon'=>$fa['icon'],'mode'=>$fa['mode']
+    ];
+  }
   foreach($rows as $row){
     $uid=(int)$row['user_id'];
     $players[]=[
@@ -187,7 +196,8 @@ function leaderboard(PDO $db):never{
       'games_finished'=>(int)$row['games_finished'],
       'game_wins'=>(int)$row['game_wins'],
       'rank1'=>(int)$row['rank1'],
-      'mode_stats'=>$byUser[$uid]??[]
+      'mode_stats'=>$byUser[$uid]??[],
+      'featured_achievements'=>$featuredByUser[$uid]??[]
     ];
   }
   ok(['players'=>$players]);
