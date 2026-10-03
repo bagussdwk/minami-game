@@ -22,6 +22,9 @@ try {
     $c['db_user'],$c['db_pass'],
     [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC]
   );
+  // Selalu sinkronkan tabel dan master achievement setiap API dijalankan.
+  // Aman dijalankan berulang karena seed memakai INSERT IGNORE.
+  ensureAchievementTables($db);
 } catch(Throwable $e) { fail('Database tidak dapat dihubungkan.',500); }
 
 $path=trim(parse_url($_SERVER['REQUEST_URI']??'/',PHP_URL_PATH)??'/','/');
