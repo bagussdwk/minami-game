@@ -4095,7 +4095,7 @@
 .leaderboard-featured-card{text-align:left;display:flex;align-items:center;gap:7px}
 .leaderboard-featured-card .leaderboard-featured-icon{flex:0 0 30px;text-align:center}
 .leaderboard-featured-card b{margin-top:0}
-@media(max-width:700px){.featured-achievement-grid,.leaderboard-featured-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.featured-achievement-card,.leaderboard-featured-card{padding:7px 4px}.featured-achievement-icon,.leaderboard-featured-icon{font-size:20px}}
+@media(max-width:700px){.featured-achievement-grid,.leaderboard-featured-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.featured-achievement-card,.leaderboard-featured-card{padding:8px 4px;min-height:76px}.featured-achievement-icon,.leaderboard-featured-icon{font-size:20px}}
 </style></style>
 </head>
   <body>
@@ -9279,17 +9279,17 @@ function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAM
   const defs=[
     ["first-win","🏆","First Win","Menangkan match untuk pertama kali.","GLOBAL"],
     ["first-champion","👑","First Champion","Menang Game sampai target poin pertama kali.","GLOBAL"],
-    ["tenho","🃏","TENHO!","Mendapatkan TENHO di Minami 1 atau Minami 2.","MINAMI"],
-    ["pot-master","♟️","POT Hunter","Membuat 5 POT.","MINAMI"],
-    ["joker-master","🃏","Joker Master","Memainkan Joker 5 kali.","MINAMI"],
-    ["combo-master","🔥","Combo Master","Menurunkan 5 kartu atau lebih sekaligus.","MINAMI"],
-    ["mvp","⭐","MVP","Menjadi MVP 1 kali.","MINAMI"],
-    ["rank-climber","📈","Rank Climber","Mengumpulkan 10 Rank 1.","MINAMI"],
-    ["marathon","🎴","Marathon","Menyelesaikan 10 Game sampai target.","MINAMI"],
-    ["triple-champion","🏆","Triple Champion","Menang 3 Game sampai target.","MINAMI"],
-    ["veteran","🎖️","Veteran","Menyelesaikan 25 match.","MINAMI"],
-    ["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut.","MINAMI"],
-    ["minami2-clean-5","🛡️","Clean Five","5 Game Minami 2 berturut-turut tanpa mati tangan awal.","MINAMI 2"],
+    ["tenho","🃏","TENHO!","Mendapatkan TENHO di Minami 1 atau Minami 2.","MINAMI 1 + 2"],
+    ["pot-master","♟️","POT Hunter","Membuat 5 POT di Minami 1 atau Minami 2.","MINAMI 1 + 2"],
+    ["joker-master","🃏","Joker Master","Memainkan Joker 5 kali di Minami 1 atau Minami 2.","MINAMI 1 + 2"],
+    ["combo-master","🔥","Combo Master","Menurunkan 5 kartu atau lebih sekaligus di Minami 1 atau Minami 2.","MINAMI 1 + 2"],
+    ["mvp","⭐","MVP","Menjadi MVP 1 kali di Minami 1 atau Minami 2.","MINAMI 1 + 2"],
+    ["rank-climber","📈","Rank Climber","Mengumpulkan 10 Rank 1 dari Minami.","MINAMI 1 + 2"],
+    ["marathon","🎴","Marathon","Menyelesaikan 10 Game sampai target di Minami.","MINAMI 1 + 2"],
+    ["triple-champion","🏆","Triple Champion","Menang 3 Game sampai target di Minami.","MINAMI 1 + 2"],
+    ["veteran","🎖️","Veteran","Menyelesaikan 25 match di Minami.","MINAMI 1 + 2"],
+    ["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut di Minami.","MINAMI 1 + 2"],
+    ["minami2-clean-5","🛡️","Clean Five","5 Game Minami 2 berturut-turut tanpa mati tangan awal karena tidak ada Dasar legal.","MINAMI 2"],
     ["first-joker","🃏","First Joker","Menggunakan Joker pertama dalam kombinasi.","JOKER"],
     ["set-master","🎯","Set Master","Membuat set pertama.","JOKER"],
     ["joker-collector","🔥","Joker Collector","Menggunakan 10 Joker.","JOKER"],
