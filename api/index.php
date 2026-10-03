@@ -48,6 +48,10 @@ switch($path){
   case 'achievement':
     if($_SERVER['REQUEST_METHOD']==='GET'){ achievementList($db); break; }
     if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405);
+    // InfinityFree/shared hosting dapat menghapus Authorization header.
+    // Sediakan mode POST khusus untuk membaca daftar achievement dengan token
+    // di body, tanpa pernah mengubah status achievement.
+    if(!empty($body['list'])){ achievementList($db); break; }
     achievement($db,$body); break;
   default: fail('Endpoint tidak ditemukan.',404);
 }
