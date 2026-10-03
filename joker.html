@@ -1109,6 +1109,20 @@
             if (!x || !x.g || !x.g.p || x.g.p.length !== x.n) return false;
             n = x.n;
             g = x.g;
+
+            // Migrasi save lama: kartu di draw pile mungkin belum memiliki
+            // flag Joker karena versi sebelumnya hanya menandai kartu di tangan.
+            // Tandai ulang seluruh kartu berdasarkan marker yang tersimpan.
+            if (g.marker && g.draw && Array.isArray(g.p)) {
+              const jokerColor = g.marker.color === "r" ? "b" : "r";
+              for (let p of g.p)
+                for (let c of p.hand || [])
+                  c.joker =
+                    c.rank === g.marker.rank && c.color === jokerColor;
+              for (let c of g.draw)
+                c.joker = c.rank === g.marker.rank && c.color === jokerColor;
+            }
+
             sel = typeof x.sel === "number" ? x.sel : -1;
             render();
             if (
