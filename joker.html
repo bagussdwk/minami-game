@@ -777,29 +777,41 @@
         .discards.reverse .d2:hover {
           transform: translateX(-50%) translateY(-1px);
         }
+        /* Posisi normal mobile: satu kotak buangan untuk setiap sisi pemain. */
         .d1 {
-                    left: 6px;
-          bottom: 100px;
-        }
-        .d5 {
-         left: 1px;
-          top: 82px;
+          left: 50%;
           right: auto;
-          transform: none;                                                                                                     
+          bottom: 88px;
+          top: auto;
+          transform: translateX(-50%);
         }
         .d2 {
           right: 6px;
-          top: 82px;
+          left: auto;
+          bottom: 100px;
+          top: auto;
         }
         .d3 {
-          left: 1px;
+          right: 6px;
+          left: auto;
           top: 82px;
-          right: auto;
-          transform: none;
+          bottom: auto;
         }
         .d4 {
           left: 6px;
+          right: auto;
+          top: 82px;
+          bottom: auto;
+        }
+        .d5 {
+          left: 6px;
+          right: auto;
           bottom: 100px;
+          top: auto;
+          transform: none;
+        }
+        .d1:hover {
+          transform: translateX(-50%) translateY(-1px);
         }
         .discard {
           min-height: 100px;
