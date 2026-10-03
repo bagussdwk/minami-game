@@ -9164,6 +9164,18 @@ async function saveFeaturedAchievements(codes){
     return false;
   }
   try{
+    // Pastikan achievement yang dipilih juga sudah tercatat di server.
+    // Statistik lokal dapat mengetahui achievement terbuka sebelum sinkronisasi akun selesai.
+    if(next.length){
+      const sr=await fetch(new URL("api/index.php?action=achievement",document.baseURI).href,{
+        method:"POST",
+        headers:{"Content-Type":"text/plain;charset=UTF-8","Accept":"application/json"},
+        body:JSON.stringify({token,achievement_ids:next})
+      });
+      const sraw=await sr.text();
+      let sd=null; try{sd=JSON.parse(sraw)}catch(e){}
+      if(!sr.ok||!sd?.ok||Number(sd.saved||0)<next.length) throw new Error(sd?.error||"Achievement belum tersinkron ke akun.");
+    }
     const r=await fetch(new URL("api/index.php?action=achievement",document.baseURI).href,{
       method:"POST",
       headers:{"Content-Type":"text/plain;charset=UTF-8","Accept":"application/json"},
@@ -9171,8 +9183,8 @@ async function saveFeaturedAchievements(codes){
     });
     const raw=await r.text();
     let d=null; try{d=JSON.parse(raw)}catch(e){}
-    if(!r.ok||!d?.ok) throw new Error(d?.error||("HTTP "+r.status));
-    minamiFeaturedAchievementCodes=next;
+    if(!r.ok||!d?.ok||Number(d.saved||0)!==next.length) throw new Error(d?.error||"Achievement pilihan belum tersimpan.");
+    minamiFeaturedAchievementCodes=Array.isArray(d.featured_codes)?d.featured_codes:next;
     renderAchievements();
     const lp=document.getElementById("featureLeaderboardPanel");
     if(lp){lp.dataset.loaded=""; if(lp.style.display!=="none") renderLeaderboard();}
