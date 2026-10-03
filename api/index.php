@@ -362,39 +362,57 @@ function gameResult(PDO $db,array $b):never{
 }
 function ensureAchievementTables(PDO $db):void{
   /*
-   * Kompatibilitas schema lama:
-   * schema.sql versi awal memakai achievements.id VARCHAR(64), sedangkan
-   * versi achievement profil memakai id numerik + kolom code/icon/sort_order.
-   * Migrasi dilakukan tanpa menghapus achievement/user_achievement lama.
+   * Sinkronisasi master achievement yang aman untuk schema lama maupun schema baru.
+   * Schema InfinityFree saat ini memakai achievements.id VARCHAR(64) sebagai PK.
+   * Jangan pernah menghapus/mengganti id lama karena user_achievements bergantung pada PK tersebut.
    */
   $cols=[];
   try{
     $st=$db->query("SHOW COLUMNS FROM achievements");
-    foreach($st->fetchAll() as $row)$cols[strtolower((string)$row['Field'])]=strtolower((string)$row['Type']);
+    foreach($st->fetchAll() as $row){
+      $cols[strtolower((string)$row['Field'])]=strtolower((string)$row['Type']);
+    }
   }catch(Throwable $e){$cols=[];}
 
-  $legacy=!isset($cols['code']);
   if(!$cols){
     $db->exec('CREATE TABLE IF NOT EXISTS achievements (
-      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-      code VARCHAR(64) NOT NULL,
+      id VARCHAR(64) NOT NULL,
+      mode VARCHAR(16) NOT NULL,
       name VARCHAR(120) NOT NULL,
       description VARCHAR(255) NOT NULL,
+      code VARCHAR(64) NOT NULL,
       icon VARCHAR(16) NOT NULL DEFAULT "🏆",
-      mode VARCHAR(16) NOT NULL DEFAULT "global",
       sort_order INT NOT NULL DEFAULT 0,
-      PRIMARY KEY(id), UNIQUE KEY uq_achievement_code(code)
+      PRIMARY KEY(id),
+      UNIQUE KEY uq_achievement_code(code)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-    $legacy=false;
-  }elseif($legacy){
-    try{$db->exec("ALTER TABLE achievements ADD COLUMN code VARCHAR(64) NULL, ADD COLUMN icon VARCHAR(16) NOT NULL DEFAULT '🏆', ADD COLUMN sort_order INT NOT NULL DEFAULT 0");}catch(Throwable $e){}
-    try{$db->exec("UPDATE achievements SET code=CAST(id AS CHAR) WHERE code IS NULL OR code=''");}catch(Throwable $e){}
-    try{$db->exec("ALTER TABLE achievements MODIFY code VARCHAR(64) NOT NULL");}catch(Throwable $e){}
-    try{$db->exec("ALTER TABLE achievements ADD UNIQUE KEY uq_achievement_code(code)");}catch(Throwable $e){}
+    $st=$db->query("SHOW COLUMNS FROM achievements");
+    foreach($st->fetchAll() as $row){
+      $cols[strtolower((string)$row['Field'])]=strtolower((string)$row['Type']);
+    }
   }
 
-  /* user_achievements mengikuti tipe PK achievements.id yang sudah ada. */
-  $achIdType=$legacy?'VARCHAR(64)':'BIGINT UNSIGNED';
+  /* Pastikan kolom master yang diperlukan tersedia. */
+  if(!isset($cols['code'])){
+    $db->exec("ALTER TABLE achievements ADD COLUMN code VARCHAR(64) NULL");
+    $db->exec("UPDATE achievements SET code=CAST(id AS CHAR) WHERE code IS NULL OR code=''");
+    $db->exec("ALTER TABLE achievements MODIFY code VARCHAR(64) NOT NULL");
+    try{$db->exec("ALTER TABLE achievements ADD UNIQUE KEY uq_achievement_code(code)");}catch(Throwable $e){}
+  }
+  if(!isset($cols['icon'])){
+    $db->exec("ALTER TABLE achievements ADD COLUMN icon VARCHAR(16) NOT NULL DEFAULT '🏆'");
+  }
+  if(!isset($cols['sort_order'])){
+    $db->exec("ALTER TABLE achievements ADD COLUMN sort_order INT NOT NULL DEFAULT 0");
+  }
+
+  /* Emoji achievement wajib disimpan dengan utf8mb4. */
+  try{$db->exec("ALTER TABLE achievements CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");}catch(Throwable $e){}
+
+  /* Tipe FK harus mengikuti tipe achievements.id yang benar-benar ada. */
+  $idType=(string)($cols['id']??'varchar(64)');
+  $achIdType=(stripos($idType,'bigint')!==false||stripos($idType,'int')!==false)?'BIGINT UNSIGNED':'VARCHAR(64)';
+
   $db->exec("CREATE TABLE IF NOT EXISTS user_achievements (
     user_id BIGINT UNSIGNED NOT NULL,
     achievement_id $achIdType NOT NULL,
@@ -441,17 +459,24 @@ function ensureAchievementTables(PDO $db):void{
     ['dead-hand','Dead Hand','Mati tangan karena tidak memiliki Dasar legal pada putaran pertama','💀','minami',230]
   ];
 
-  if($legacy){
-    // Schema lama memakai achievements.id sebagai PK VARCHAR tanpa auto-increment.
-    // Isi id=code agar setiap achievement mendapat PK unik dan seluruh seed masuk.
-    $q=$db->prepare('INSERT IGNORE INTO achievements(id,code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?,?)');
-    foreach($items as $x)$q->execute([$x[0],$x[0],$x[1],$x[2],$x[3],$x[4],$x[5]]);
-  }else{
-    $q=$db->prepare('INSERT IGNORE INTO achievements(code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?)');
-    foreach($items as $x)$q->execute($x);
+  /*
+   * Seed berdasarkan code tanpa INSERT IGNORE.
+   * Jika achievement sudah ada, metadata diperbarui tanpa mengganti id/PK.
+   * Jika belum ada, id=code dibuat. Dengan cara ini seluruh 24 item tetap masuk
+   * walaupun sebelumnya baru ada First Win.
+   */
+  $find=$db->prepare('SELECT id FROM achievements WHERE code=? LIMIT 1');
+  $ins=$db->prepare('INSERT INTO achievements(id,code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?,?)');
+  $upd=$db->prepare('UPDATE achievements SET name=?,description=?,icon=?,mode=?,sort_order=? WHERE code=?');
+  foreach($items as $x){
+    $find->execute([$x[0]]);
+    $row=$find->fetch();
+    if($row){
+      $upd->execute([$x[1],$x[2],$x[3],$x[4],$x[5],$x[0]]);
+    }else{
+      $ins->execute([$x[0],$x[0],$x[1],$x[2],$x[3],$x[4],$x[5]]);
+    }
   }
-  $db->exec("UPDATE achievements SET mode='minami' WHERE code IN ('tenho','pot-master','joker-master','combo-master','mvp','rank-climber','marathon','triple-champion','veteran','streak-3','dead-hand')");
-  $db->exec("UPDATE achievements SET name='Clean Five',description='5 Game Minami 2 berturut-turut tanpa mati tangan awal karena tidak memiliki Dasar legal di putaran pertama',mode='minami2' WHERE code='minami2-clean-5'");
 }
 
 function achievementList(PDO $db):never{
@@ -480,7 +505,7 @@ function achievement(PDO $db,array $b):never{
       if(!preg_match('/^[a-z0-9_-]{1,64}$/',$code))continue;
       $find->execute([$u['id'],$code]);
       $row=$find->fetch();
-      if($row)$ids[]=(int)$row['id'];
+      if($row)$ids[]=(string)$row['id'];
     }
     $db->beginTransaction();
     try{
