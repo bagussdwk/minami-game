@@ -2669,7 +2669,8 @@ function advance() {
             clearTimeout(gameOverTimer);
             clearInterval(gameOverCountdown);
             closeModal();
-            newMatch();
+            // Game baru harus benar-benar dimulai dari 0 poin.
+            newMatch(0, 1, false);
           };
 
           modal(
