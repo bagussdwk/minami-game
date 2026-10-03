@@ -1089,16 +1089,125 @@
               n = +b.dataset.n;
             }),
         );
+        const JOKER_API_URL="/api/index.php";
+        const JOKER_API_TOKEN_KEY="minamiApiToken";
+        const JOKER_API_SYNC_KEY="minamiJokerApiSyncV1";
+        function jokerApiSyncLedger(){
+          try{const x=JSON.parse(localStorage.getItem(JOKER_API_SYNC_KEY)||"[]");return Array.isArray(x)?x:[]}
+          catch(e){return[]}
+        }
+        function saveJokerApiSyncLedger(a){
+          try{localStorage.setItem(JOKER_API_SYNC_KEY,JSON.stringify(a.slice(-5000)))}catch(e){}
+        }
+        async function jokerApiPost(action,payload={}){
+          const r=await fetch(JOKER_API_URL+"?action="+encodeURIComponent(action),{
+            method:"POST",
+            headers:{"Content-Type":"text/plain;charset=UTF-8"},
+            body:JSON.stringify(payload||{})
+          });
+          const d=await r.json().catch(()=>({ok:false,error:"Respons API tidak valid."}));
+          if(!r.ok||!d?.ok)throw new Error(d?.error||"API gagal.");
+          return d;
+        }
+        let jokerCloudTimer=null,jokerCloudPending=null;
+        function jokerCloudMeta(){
+          try{const x=JSON.parse(localStorage.getItem("minamiJokerCloudMetaV1")||"null");return x&&typeof x==="object"?x:null}
+          catch(e){return null}
+        }
+        function saveJokerCloudMeta(x){
+          try{localStorage.setItem("minamiJokerCloudMetaV1",JSON.stringify(x||{}))}catch(e){}
+        }
+        function buildJokerSaveState(){
+          if(!g||g.over)return null;
+          return {n,g,sel};
+        }
+        async function flushJokerCloudSave(){
+          const pending=jokerCloudPending;
+          jokerCloudPending=null;jokerCloudTimer=null;
+          const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
+          if(!token||!pending)return;
+          try{
+            const d=await jokerApiPost("game-save",{
+              token,mode:"joker",active:pending.active,state:JSON.parse(pending.payload)
+            });
+            saveJokerCloudMeta({revision:Number(d?.save?.revision)||0,updated_at:d?.save?.updated_at||null});
+          }catch(e){}
+        }
+        function queueJokerCloudSave(payload,active=true){
+          const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
+          if(!token||!payload)return;
+          jokerCloudPending={payload,active:!!active};
+          clearTimeout(jokerCloudTimer);
+          jokerCloudTimer=setTimeout(flushJokerCloudSave,650);
+        }
+        async function saveJokerCloudImmediately(){
+          const state=buildJokerSaveState();
+          if(!state)return;
+          queueJokerCloudSave(JSON.stringify(state),true);
+          await flushJokerCloudSave();
+        }
+        async function deleteJokerCloudSave(){
+          const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
+          if(token)try{await jokerApiPost("game-delete",{token,mode:"joker"})}catch(e){}
+          saveJokerCloudMeta({});
+        }
+        async function restoreJokerCloudAfterLogin(){
+          const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
+          if(!token)return;
+          try{
+            const d=await jokerApiPost("game-load",{token,mode:"joker"});
+            const save=d?.save||null;
+            if(!save){
+              if(g&&!g.over)await saveJokerCloudImmediately();
+              return;
+            }
+            const meta=jokerCloudMeta();
+            if(g&&!g.over){
+              if(Number(meta?.revision)===Number(save.revision))return;
+              const useCloud=window.confirm(
+                "Ditemukan permainan JOKER yang tersimpan di akun.\n\nOK = lanjutkan dari Cloud.\nBatal = pertahankan permainan di perangkat ini."
+              );
+              if(!useCloud){await saveJokerCloudImmediately();return;}
+            }
+            localStorage.setItem("minami_joker_state",JSON.stringify(save.state));
+            if(g!==null)render();
+            else if(loadGame()){$("setup").style.display="none";$("game").style.display="block";}
+            saveJokerCloudMeta({revision:Number(save.revision)||0,updated_at:save.updated_at||null});
+            if(!g&&loadGame()){$("setup").style.display="none";$("game").style.display="block";}
+          }catch(e){
+            console.warn("cloud resume",e);
+          }
+        }
+
+        async function syncJokerResult(resultId, values){
+          const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
+          if(!token||!resultId)return;
+          const ledger=jokerApiSyncLedger();
+          if(ledger.includes(resultId))return;
+          try{
+            const r=await fetch(JOKER_API_URL+"?action=game-result",{
+              method:"POST",
+              headers:{"Content-Type":"text/plain;charset=UTF-8"},
+              body:JSON.stringify({
+                token,event_id:String(resultId),mode:"joker",
+                games_finished:Number(values.games_finished)||0,
+                game_wins:Number(values.game_wins)||0,
+                rank1:0,match_finished:1,match_wins:Number(values.match_wins)||0
+              })
+            });
+            const d=await r.json();
+            if(r.ok&&d.ok){ledger.push(resultId);saveJokerApiSyncLedger(ledger);}
+          }catch(e){}
+        }
+
         function saveGame() {
           try {
-            if (g && !g.over)
-              localStorage.setItem(
-                "minami_joker_state",
-                JSON.stringify({ n, g, sel }),
-              );
-          } catch (e) {
-            console.warn("save", e);
-          }
+            if(g&&!g.over){
+              const payload=JSON.stringify({n,g,sel});
+              localStorage.setItem("minami_joker_state",payload);
+              queueJokerCloudSave(payload,true);
+            }
+          }catch(e){console.warn("save",e)}
         }
         function loadGame() {
           try {
@@ -1177,12 +1286,12 @@
             // Game tetap berjalan normal jika API sedang offline.
           }
         }
-        function clearSavedGame() {
-          try {
-            localStorage.removeItem("minami_joker_state");
-          } catch (e) {}
+        function clearSavedGame(removeCloud=false) {
+          try{localStorage.removeItem("minami_joker_state")}catch(e){}
+          if(removeCloud)deleteJokerCloudSave();
         }
         function newMatch(start = 0, dir = 1, keep = true) {
+          clearSavedGame(true);
           // Pastikan overlay hasil match sebelumnya tidak ikut terbawa ke match baru.
           closeModal();
           let d = sh(deck()),
@@ -2517,6 +2626,7 @@ function advance() {
             closeModal,
             true,
           );
+      setTimeout(restoreJokerCloudAfterLogin,0);
       })();
     </script>
   </body>
