@@ -9151,11 +9151,35 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
       let minamiServerAchievementCodes=new Set();
 let minamiAccountAchievements=[];
 let minamiFeaturedAchievementCodes=[];
-async function loadAccountAchievements(){const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);if(!token)return false;try{const r=await fetch(new URL("api/index.php?action=achievement",document.baseURI).href,{headers:{Authorization:"Bearer "+token}});const d=await r.json();if(r.ok&&d?.ok){
-  minamiAccountAchievements=Array.isArray(d.achievements)?d.achievements:[];
-  minamiServerAchievementCodes=new Set(minamiAccountAchievements.filter(x=>x.unlocked).map(x=>x.code));
-  minamiFeaturedAchievementCodes=Array.isArray(d.featured_achievements)?d.featured_achievements.map(x=>x.code):[];
-  return true}}catch(e){}return false}
+async function loadAccountAchievements(){
+  const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
+  if(!token)return false;
+  try{
+    // Gunakan POST + token di body karena beberapa shared hosting/InfinityFree
+    // dapat menghapus Authorization header dari request GET.
+    const r=await fetch(new URL("api/index.php?action=achievement",document.baseURI).href,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=UTF-8","Accept":"application/json"},
+      body:JSON.stringify({token,list:true})
+    });
+    const d=await r.json();
+    if(r.ok&&d?.ok){
+      minamiAccountAchievements=Array.isArray(d.achievements)?d.achievements:[];
+      minamiServerAchievementCodes=new Set(
+        minamiAccountAchievements.filter(x=>x&&x.unlocked).map(x=>x.code)
+      );
+      minamiFeaturedAchievementCodes=Array.isArray(d.featured_achievements)
+        ?d.featured_achievements.map(x=>x.code):[];
+      return true;
+    }
+  }catch(e){
+    console.error("loadAccountAchievements:",e);
+  }
+  minamiAccountAchievements=[];
+  minamiServerAchievementCodes=new Set();
+  minamiFeaturedAchievementCodes=[];
+  return false;
+}
 async function saveFeaturedAchievements(codes){
   const next=[...new Set(Array.isArray(codes)?codes:[])].slice(0,3);
   const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
