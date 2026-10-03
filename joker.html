@@ -2023,11 +2023,11 @@ function advance() {
         // lain yang tidak masuk susunan menjadi kartu mati/minus.
         function analyzePartial(cs) {
           // Saat tumpukan habis:
-          // 1) wajib ada minimal 1 dasar murni tanpa Joker;
-          // 2) semua meld lain yang tidak memakai kartu yang sama juga boleh hidup,
-          //    termasuk beberapa pot sekaligus;
-          // 3) pilih susunan dengan jumlah kartu hidup terbanyak, lalu nilai hidup
-          //    terbesar. Jadi pot 5 dan pot 10 diperlakukan sama.
+          // - minimal ada 1 dasar murni tanpa Joker;
+          // - setelah syarat dasar terpenuhi, semua meld valid yang saling
+          //   tidak memakai kartu yang sama dibuat hidup;
+          // - pot 3/4 kartu dan sequence diperlakukan sama;
+          // - utamakan jumlah kartu hidup terbanyak, lalu nilai hidup.
           let ms = melds(cs),
             best = { ids: [], values: {}, v: 0, melds: [] };
 
@@ -2040,49 +2040,57 @@ function advance() {
               let c = cs.find((x) => x.id === id);
               return c && c.joker;
             })) return false;
-            if (m.type === "seq") return true;
+            if (m.type === "seq" && m.ids.length >= 3) return true;
             return m.type === "set" && m.rank === "A" && m.ids.length === 4;
           }
 
           function better(candidate) {
-            let liveCount = candidate.ids.length;
-            let bestCount = best.ids.length;
-            if (liveCount !== bestCount) return liveCount > bestCount;
+            if (candidate.ids.length !== best.ids.length)
+              return candidate.ids.length > best.ids.length;
             return candidate.v > best.v;
           }
 
-          function rec(start, used, vals, v, chosen, hasBase) {
-            if (hasBase) {
-              let candidate = {
-                ids: [...used],
-                values: { ...vals },
-                v,
-                melds: chosen.slice(),
-              };
-              if (better(candidate)) best = candidate;
-            }
+          // Urutkan kandidat dasar murni lebih dulu. Setelah satu dasar
+          // ditemukan, pencarian tetap boleh menambahkan semua pot/sequence
+          // lain selama tidak memakai kartu yang sama.
+          let pure = ms.filter(isPureBase),
+            rest = ms.filter((m) => !isPureBase(m));
 
-            for (let i = start; i < ms.length; i++) {
-              let m = ms[i];
+          function expand(start, pool, used, vals, v, chosen) {
+            let candidate = {
+              ids: [...used],
+              values: { ...vals },
+              v,
+              melds: chosen.slice(),
+            };
+            if (better(candidate)) best = candidate;
+
+            for (let i = start; i < pool.length; i++) {
+              let m = pool[i];
               if (!disjoint(m.ids, used)) continue;
 
               let nextUsed = new Set(used);
               m.ids.forEach((id) => nextUsed.add(id));
 
-              let nextVals = { ...vals, ...m.values };
-
-              rec(
+              expand(
                 i + 1,
+                pool,
                 nextUsed,
-                nextVals,
+                { ...vals, ...m.values },
                 v + m.v,
                 chosen.concat([m]),
-                hasBase || isPureBase(m),
               );
             }
           }
 
-          rec(0, new Set(), {}, 0, [], false);
+          // Setiap kemungkinan dasar murni menjadi titik awal. Ini memastikan
+          // dasar 5-6-7 tidak membuat 2-3-4, pot 5, atau pot 10 terbuang.
+          for (let base of pure) {
+            let used = new Set(base.ids);
+            let vals = { ...base.values };
+            expand(0, rest, used, vals, base.v, [base]);
+          }
+
           return best;
         }
 
