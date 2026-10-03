@@ -42,8 +42,20 @@ switch($path){
 function fail(string $m,int $s=400):never{http_response_code($s);echo json_encode(['ok'=>false,'error'=>$m],JSON_UNESCAPED_UNICODE);exit;}
 function ok(array $d=[]):never{echo json_encode(['ok'=>true]+$d,JSON_UNESCAPED_UNICODE);exit;}
 function auth(PDO $db):array{
-  $h=$_SERVER['HTTP_AUTHORIZATION']??'';
-  if(!preg_match('/^Bearer\\s+(.+)$/i',$h,$m))fail('Login diperlukan.',401);
+  $h=(string)($_SERVER['HTTP_AUTHORIZATION']??'');
+  if($h==='') $h=(string)($_SERVER['REDIRECT_HTTP_AUTHORIZATION']??'');
+  if($h===''){
+    foreach(['Authorization','authorization','HTTP_AUTHORIZATION'] as $k){
+      if(isset($_SERVER[$k]) && $_SERVER[$k]!==''){ $h=(string)$_SERVER[$k]; break; }
+    }
+  }
+  if($h==='' && function_exists('getallheaders')){
+    $headers=getallheaders();
+    foreach($headers as $k=>$v){
+      if(strtolower((string)$k)==='authorization'){ $h=(string)$v; break; }
+    }
+  }
+  if(!preg_match('/^Bearer\\s+(.+)$/i',trim($h),$m))fail('Login diperlukan.',401);
   $q=$db->prepare('SELECT u.* FROM login_sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>NOW() LIMIT 1');
   $q->execute([hash('sha256',trim($m[1]))]);$u=$q->fetch();if(!$u)fail('Sesi tidak valid.',401);return $u;
 }
