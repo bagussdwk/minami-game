@@ -303,7 +303,7 @@ function gameResult(PDO $db,array $b):never{
 
     $cols='games_finished,game_wins,rank1,match_finished,match_wins,tenho,pots,cards,jokers,best_combo,dead,mvp,best_streak,joker_sets,caught,caught_by';
     $params=[$u['id'],$mode,$vals['games_finished'],$vals['game_wins'],$vals['rank1'],$vals['match_finished'],$vals['match_wins'],$vals['tenho'],$vals['pots'],$vals['cards'],$vals['jokers'],$vals['best_combo'],$vals['dead'],$vals['mvp'],$vals['best_streak'],$vals['joker_sets'],$vals['caught'],$vals['caught_by']];
-    $sql='INSERT INTO player_mode_stats(user_id,mode,'.$cols.') VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    $sql='INSERT INTO player_mode_stats(user_id,mode,'.$cols.') VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
       ON DUPLICATE KEY UPDATE
       games_finished=games_finished+VALUES(games_finished),
       game_wins=game_wins+VALUES(game_wins),
