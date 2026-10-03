@@ -6,10 +6,12 @@ const ALLOWED_ORIGIN = 'https://bagussdwk.github.io';
 const SESSION_DAYS = 30;
 
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: '.ALLOWED_ORIGIN);
-header('Vary: Origin');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+// API dipakai dari GitHub Pages dan juga saat game dijalankan lokal.
+// Tidak memakai cookie/credential browser, jadi wildcard aman untuk endpoint ini.
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Max-Age: 86400');
 if ($_SERVER['REQUEST_METHOD']==='OPTIONS') { http_response_code(204); exit; }
 
 if (!is_file(__DIR__.'/config.php')) fail('API belum dikonfigurasi.',500);
