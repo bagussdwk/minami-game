@@ -8819,7 +8819,15 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         if(!token){renderAccountUI();return}
         try{
           const d=await minamiApiPost("me",{token});
-          saveAccountUser(d.user||{});renderAccountUI();await refreshAccountStats();
+          saveAccountUser(d.user||{});
+          renderAccountUI();
+          await refreshAccountStats();
+
+          // Sesi akun yang masih tersimpan di perangkat kedua harus tetap
+          // memeriksa Cloud Save. Sebelumnya pemulihan hanya terjadi setelah
+          // login manual, sehingga buka game di device lain tidak melanjutkan
+          // pertandingan yang sedang berjalan.
+          await restoreMinamiCloudAfterAccountReady();
         }catch(e){clearAccountSession();renderAccountUI();}
       }
       async function doAccountLogin(){
