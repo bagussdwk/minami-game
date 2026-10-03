@@ -1138,9 +1138,15 @@
           h[start].push(d.pop());
           let marker = d.pop();
           const jokerColor = marker.color === "r" ? "b" : "r";
+
+          // Tandai seluruh kartu sejak awal, termasuk kartu yang masih berada
+          // di tumpukan tengah. Dengan begitu saat Joker nanti ditarik,
+          // statusnya tetap Joker dan tidak berubah menjadi kartu biasa.
           for (let a of h)
             for (let c of a)
               c.joker = c.rank === marker.rank && c.color === jokerColor;
+          for (let c of d)
+            c.joker = c.rank === marker.rank && c.color === jokerColor;
           let old = g && g.p ? g.p : null,
             rs =
               old && old.length === n
