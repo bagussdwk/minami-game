@@ -23,6 +23,7 @@ try {
     [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC]
   );
 } catch(Throwable $e) { fail('Database tidak dapat dihubungkan.',500); }
+ensureStatsSchema($db);
 
 $path=trim(parse_url($_SERVER['REQUEST_URI']??'/',PHP_URL_PATH)??'/','/');
 // Some shared hosts do not support PATH_INFO/rewrite for /api/me. Allow ?action=me too.
@@ -101,7 +102,37 @@ function logoutUser(PDO $db):never{
   ok();
 }
 function me(PDO $db):never{$u=auth($db);ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name']]]);}
-function stats(PDO $db):never{$u=auth($db);$q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');$q->execute([$u['id']]);ok(['stats'=>$q->fetch()?:[]]);}
+function stats(PDO $db):never{$u=auth($db);ensureStatsSchema($db);$q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');$q->execute([$u['id']]);ok(['stats'=>$q->fetch()?:[]]);}
+function ensureStatsSchema(PDO $db):void{
+  $global=[
+    'tenho'=>'INT UNSIGNED NOT NULL DEFAULT 0',
+    'pots'=>'INT UNSIGNED NOT NULL DEFAULT 0',
+    'cards'=>'INT UNSIGNED NOT NULL DEFAULT 0',
+    'jokers'=>'INT UNSIGNED NOT NULL DEFAULT 0',
+    'best_combo'=>'INT UNSIGNED NOT NULL DEFAULT 0',
+    'dead'=>'INT UNSIGNED NOT NULL DEFAULT 0',
+    'mvp'=>'INT UNSIGNED NOT NULL DEFAULT 0',
+    'best_streak'=>'INT UNSIGNED NOT NULL DEFAULT 0'
+  ];
+  foreach($global as $col=>$def){
+    $q=$db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='player_global_stats' AND COLUMN_NAME=?");
+    $q->execute([$col]);
+    if(!(int)$q->fetchColumn()) $db->exec("ALTER TABLE player_global_stats ADD COLUMN $col $def");
+  }
+  foreach($global as $col=>$def){
+    $q=$db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='player_mode_stats' AND COLUMN_NAME=?");
+    $q->execute([$col]);
+    if(!(int)$q->fetchColumn()) $db->exec("ALTER TABLE player_mode_stats ADD COLUMN $col $def");
+  }
+  $db->exec("CREATE TABLE IF NOT EXISTS player_stat_events (
+    user_id BIGINT UNSIGNED NOT NULL,
+    event_id VARCHAR(128) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id,event_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
 function ensureGameSavesTable(PDO $db):void{
   $db->exec('CREATE TABLE IF NOT EXISTS player_game_saves (
     user_id BIGINT UNSIGNED NOT NULL,
@@ -185,13 +216,73 @@ function gameDelete(PDO $db,array $b):never{
   ok();
 }
 function gameResult(PDO $db,array $b):never{
-  $u=auth($db);$mode=trim((string)($b['mode']??''));if(!in_array($mode,['minami1','minami2','joker'],true))fail('Mode tidak valid.');
-  $vals=[];foreach(['games_finished','game_wins','rank1','match_finished','match_wins'] as $k){$v=(int)($b[$k]??0);if($v<0||$v>100000)fail('Statistik tidak valid.');$vals[$k]=$v;}
+  $u=auth($db);ensureStatsSchema($db);
+  $mode=trim((string)($b['mode']??''));
+  if(!in_array($mode,['minami1','minami2','joker'],true))fail('Mode tidak valid.');
+
+  $eventId=trim((string)($b['event_id']??''));
+  if($eventId===''||strlen($eventId)>128)fail('Event statistik tidak valid.');
+
+  $keys=[
+    'games_finished','game_wins','rank1','match_finished','match_wins',
+    'tenho','pots','cards','jokers','dead','mvp'
+  ];
+  $vals=[];
+  foreach($keys as $k){
+    $v=(int)($b[$k]??0);
+    if($v<0||$v>1000000)fail('Statistik tidak valid.');
+    $vals[$k]=$v;
+  }
+  $vals['best_combo']=max(0,min(100,(int)($b['best_combo']??0)));
+  $vals['best_streak']=max(0,min(1000000,(int)($b['best_streak']??0)));
+
   $db->beginTransaction();
-  $sql='INSERT INTO player_mode_stats(user_id,mode,games_finished,game_wins,rank1,match_finished,match_wins) VALUES(?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE games_finished=games_finished+VALUES(games_finished),game_wins=game_wins+VALUES(game_wins),rank1=rank1+VALUES(rank1),match_finished=match_finished+VALUES(match_finished),match_wins=match_wins+VALUES(match_wins)';
-  $db->prepare($sql)->execute([$u['id'],$mode,$vals['games_finished'],$vals['game_wins'],$vals['rank1'],$vals['match_finished'],$vals['match_wins']]);
-  $db->prepare('UPDATE player_global_stats SET games_finished=games_finished+?,game_wins=game_wins+?,rank1=rank1+?,match_finished=match_finished+?,match_wins=match_wins+? WHERE user_id=?')->execute([$vals['games_finished'],$vals['game_wins'],$vals['rank1'],$vals['match_finished'],$vals['match_wins'],$u['id']]);
-  $db->commit();ok();
+  try{
+    $q=$db->prepare('INSERT IGNORE INTO player_stat_events(user_id,event_id) VALUES(?,?)');
+    $q->execute([$u['id'],$eventId]);
+    if($q->rowCount()===0){
+      $db->commit();
+      ok(['duplicate'=>true]);
+    }
+
+    $cols='games_finished,game_wins,rank1,match_finished,match_wins,tenho,pots,cards,jokers,best_combo,dead,mvp,best_streak';
+    $params=[$u['id'],$mode,$vals['games_finished'],$vals['game_wins'],$vals['rank1'],$vals['match_finished'],$vals['match_wins'],$vals['tenho'],$vals['pots'],$vals['cards'],$vals['jokers'],$vals['best_combo'],$vals['dead'],$vals['mvp'],$vals['best_streak']];
+    $sql='INSERT INTO player_mode_stats(user_id,mode,'.$cols.') VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      ON DUPLICATE KEY UPDATE
+      games_finished=games_finished+VALUES(games_finished),
+      game_wins=game_wins+VALUES(game_wins),
+      rank1=rank1+VALUES(rank1),
+      match_finished=match_finished+VALUES(match_finished),
+      match_wins=match_wins+VALUES(match_wins),
+      tenho=tenho+VALUES(tenho),
+      pots=pots+VALUES(pots),
+      cards=cards+VALUES(cards),
+      jokers=jokers+VALUES(jokers),
+      best_combo=GREATEST(best_combo,VALUES(best_combo)),
+      dead=dead+VALUES(dead),
+      mvp=mvp+VALUES(mvp),
+      best_streak=GREATEST(best_streak,VALUES(best_streak))';
+    $db->prepare($sql)->execute($params);
+
+    $sql2='UPDATE player_global_stats SET
+      games_finished=games_finished+?, game_wins=game_wins+?, rank1=rank1+?,
+      match_finished=match_finished+?, match_wins=match_wins+?,
+      tenho=tenho+?, pots=pots+?, cards=cards+?, jokers=jokers+?,
+      best_combo=GREATEST(best_combo,?), dead=dead+?, mvp=mvp+?,
+      best_streak=GREATEST(best_streak,?)
+      WHERE user_id=?';
+    $db->prepare($sql2)->execute([
+      $vals['games_finished'],$vals['game_wins'],$vals['rank1'],
+      $vals['match_finished'],$vals['match_wins'],
+      $vals['tenho'],$vals['pots'],$vals['cards'],$vals['jokers'],
+      $vals['best_combo'],$vals['dead'],$vals['mvp'],$vals['best_streak'],$u['id']
+    ]);
+    $db->commit();
+    ok();
+  }catch(Throwable $e){
+    if($db->inTransaction())$db->rollBack();
+    fail('Statistik gagal disimpan.',500);
+  }
 }
 function achievement(PDO $db,array $b):never{
   $u=auth($db);$id=trim((string)($b['achievement_id']??''));if(!preg_match('/^[a-z0-9_-]{1,64}$/',$id))fail('Achievement tidak valid.');
