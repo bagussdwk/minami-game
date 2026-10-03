@@ -4059,7 +4059,7 @@
 .leaderboard-pos.top{color:#f3cf70}
 .leaderboard-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:rgba(243,207,112,.08);border:1px solid rgba(243,207,112,.13);font-size:22px}
 .leaderboard-main{min-width:0}
-.leaderboard-name{font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.online-dot{display:inline-block;width:7px;height:7px;margin-left:5px;border-radius:50%;background:#45e08a;box-shadow:0 0 0 2px rgba(69,224,138,.12);vertical-align:middle}.leaderboard-name .online-dot{transform:translateY(-1px)}
+.leaderboard-name{font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.online-dot{display:inline-block;width:7px;height:7px;margin-left:5px;border-radius:50%;vertical-align:middle}.online-dot.online{background:#45e08a;box-shadow:0 0 0 2px rgba(69,224,138,.12)}.online-dot.offline{background:#ef5350;box-shadow:0 0 0 2px rgba(239,83,80,.12)}.leaderboard-name .online-dot{transform:translateY(-1px)}
 .leaderboard-title{margin-top:3px;color:#f3cf70;font-size:8px;font-weight:900;letter-spacing:.55px}
 .leaderboard-rank1{text-align:right;white-space:nowrap}
 .leaderboard-rank1 b{display:block;color:#f3cf70;font-size:15px}
@@ -9580,7 +9580,7 @@ function renderFeaturePanels(){
               return '<button type="button" class="leaderboard-row '+(isMe?"you":"")+'" data-leaderboard-index="'+i+'">'+
                 '<div class="leaderboard-pos '+(i<3?"top":"")+'">'+(i+1)+'</div>'+
                 '<div class="leaderboard-icon">'+rank.icon+'</div>'+
-                '<div class="leaderboard-main"><div class="leaderboard-name">'+leaderboardEscape(p.name||"Pemain")+(p.online?'<span class="online-dot" title="Online"></span>':'')+'</div><div class="leaderboard-title">'+rank.name+(rank.level?" "+rank.level:"")+'</div></div>'+
+                '<div class="leaderboard-main"><div class="leaderboard-name">'+leaderboardEscape(p.name||"Pemain")+'<span class="online-dot '+(p.online?"online":"offline")+'" title="'+(p.online?"Online":"Offline")+'"></span>'+'</div><div class="leaderboard-title">'+rank.name+(rank.level?" "+rank.level:"")+'</div></div>'+
                 '<div class="leaderboard-rank1"><b>'+Number(p.rank1||0)+'</b><span>RANK 1</span></div>'+
               '</button>';
             }).join("")+
