@@ -82,7 +82,7 @@ small{color:#666}
       show('login...', '');
       const d=creds();
       const res=await call('login',{username:d.username,password:d.password});
-      localStorage.setItem(TOKEN_KEY,res.token);
+      localStorage.setItem(TOKEN_KEY,res.token); localStorage.setItem("minamiApiToken",res.token);
       show('LOGIN berhasil — token tersimpan sementara',res);
     }catch(e){show('LOGIN gagal',e.message)}
   };
@@ -100,7 +100,7 @@ small{color:#666}
   $('logout').onclick=async()=>{
     try{
       const res=await call('logout',{});
-      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY); localStorage.removeItem("minamiApiToken");
       show('LOGOUT berhasil',res);
     }catch(e){
       localStorage.removeItem(TOKEN_KEY);
