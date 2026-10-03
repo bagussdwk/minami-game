@@ -1169,11 +1169,14 @@
               );
               if(!useCloud){await saveJokerCloudImmediately();return;}
             }
+            if(!save.state)return;
             localStorage.setItem("minami_joker_state",JSON.stringify(save.state));
-            if(g!==null)render();
-            else if(loadGame()){$("setup").style.display="none";$("game").style.display="block";}
+            try{sessionStorage.setItem("minami_joker_state",JSON.stringify(save.state))}catch(e){}
             saveJokerCloudMeta({revision:Number(save.revision)||0,updated_at:save.updated_at||null});
-            if(!g&&loadGame()){$("setup").style.display="none";$("game").style.display="block";}
+            if(loadGame()){
+              $("setup").style.display="none";
+              $("game").style.display="block";
+            }
           }catch(e){
             console.warn("cloud resume",e);
           }
@@ -1243,47 +1246,6 @@
           } catch (e) {
             console.warn("load", e);
             return false;
-          }
-        }
-        const JOKER_API_URL="/api/index.php";
-        const JOKER_API_TOKEN_KEY="minamiApiToken";
-        const JOKER_API_SYNC_KEY="minamiJokerApiSyncV1";
-        function jokerApiSyncLedger(){
-          try{
-            const x=JSON.parse(localStorage.getItem(JOKER_API_SYNC_KEY)||"[]");
-            return Array.isArray(x)?x:[];
-          }catch(e){return[]}
-        }
-        function saveJokerApiSyncLedger(a){
-          try{localStorage.setItem(JOKER_API_SYNC_KEY,JSON.stringify(a.slice(-5000)))}catch(e){}
-        }
-        async function syncJokerResult(resultId, values){
-          const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
-          if(!token||!resultId)return;
-          const ledger=jokerApiSyncLedger();
-          if(ledger.includes(resultId))return;
-          try{
-            const r=await fetch(JOKER_API_URL+"?action=game-result",{
-              method:"POST",
-              headers:{"Content-Type":"text/plain;charset=UTF-8"},
-              body:JSON.stringify({
-                token,
-                event_id:String(resultId),
-                mode:"joker",
-                games_finished:Number(values.games_finished)||0,
-                game_wins:Number(values.game_wins)||0,
-                rank1:0,
-                match_finished:1,
-                match_wins:Number(values.match_wins)||0
-              })
-            });
-            const d=await r.json();
-            if(r.ok&&d.ok){
-              ledger.push(resultId);
-              saveJokerApiSyncLedger(ledger);
-            }
-          }catch(e){
-            // Game tetap berjalan normal jika API sedang offline.
           }
         }
         function clearSavedGame(removeCloud=false) {
@@ -2425,6 +2387,7 @@ function advance() {
           g.over = false;
           render();
           saveGame();
+          deleteJokerCloudSave();
           let winnerCards = wp.hand.slice();
           winnerCards.push(c);
           let playersHtml = g.p.map((p, i) =>
@@ -2508,6 +2471,7 @@ function advance() {
           g.sourceCard = null;
           render();
           saveGame();
+          deleteJokerCloudSave();
           let rows = g.p
             .map(
               (p, i) =>
