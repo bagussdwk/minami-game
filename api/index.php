@@ -374,6 +374,14 @@ function ensureAchievementTables(PDO $db):void{
     PRIMARY KEY(user_id,achievement_id),
     CONSTRAINT fk_user_ach_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_user_ach_achievement FOREIGN KEY(achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');  $db->exec('CREATE TABLE IF NOT EXISTS user_featured_achievements (
+    user_id BIGINT UNSIGNED NOT NULL,
+    achievement_id BIGINT UNSIGNED NOT NULL,
+    slot TINYINT UNSIGNED NOT NULL,
+    PRIMARY KEY(user_id,slot),
+    UNIQUE KEY uq_user_featured_achievement(user_id,achievement_id),
+    CONSTRAINT fk_user_featured_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_featured_achievement FOREIGN KEY(achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
   $db->exec('CREATE TABLE IF NOT EXISTS user_featured_achievements (
     user_id BIGINT UNSIGNED NOT NULL,
@@ -417,31 +425,45 @@ function ensureAchievementTables(PDO $db):void{
 function achievementList(PDO $db):never{
   ensureAchievementTables($db);
   $u=auth($db);
-  $q=$db->prepare('SELECT a.code,a.name,a.description,a.icon,a.mode,ua.unlocked_at,ufa.slot AS featured_slot FROM achievements a LEFT JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=? LEFT JOIN user_featured_achievements ufa ON ufa.achievement_id=a.id AND ufa.user_id=? ORDER BY a.sort_order,a.id');
-  $q->execute([$u['id'],$u['id']]);
+  $q=$db->prepare('SELECT a.code,a.name,a.description,a.icon,a.mode,ua.unlocked_at FROM achievements a LEFT JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=? ORDER BY a.sort_order,a.id');
+  $q->execute([$u['id']]);
   $rows=$q->fetchAll();
-  $out=[]; foreach($rows as $r){$out[]=['code'=>$r['code'],'name'=>$r['name'],'description'=>$r['description'],'icon'=>$r['icon'],'mode'=>$r['mode'],'unlocked'=>(bool)$r['unlocked_at'],'unlocked_at'=>$r['unlocked_at'],'featured_slot'=>$r['featured_slot']===null?null:(int)$r['featured_slot']];}
-  $featured=array_values(array_filter($out,fn($x)=>$x['featured_slot']!==null));
-  usort($featured,fn($x,$y)=>$x['featured_slot']<=>$y['featured_slot']);
+  $out=[]; foreach($rows as $r){$out[]=['code'=>$r['code'],'name'=>$r['name'],'description'=>$r['description'],'icon'=>$r['icon'],'mode'=>$r['mode'],'unlocked'=>(bool)$r['unlocked_at'],'unlocked_at'=>$r['unlocked_at']];}
+  $f=$db->prepare('SELECT a.code FROM user_featured_achievements f JOIN achievements a ON a.id=f.achievement_id JOIN user_achievements ua ON ua.user_id=f.user_id AND ua.achievement_id=f.achievement_id WHERE f.user_id=? ORDER BY f.slot');
+  $f->execute([$u['id']]);
+  $featured=array_map(fn($x)=>(string)$x['code'],$f->fetchAll());
   ok(['achievements'=>$out,'featured_achievements'=>$featured]);
 }
 function achievement(PDO $db,array $b):never{
   ensureAchievementTables($db);
   $u=auth($db);
+  if(array_key_exists('featured_codes',$b)){
+    $codes=$b['featured_codes'];
+    if(!is_array($codes))fail('Achievement pilihan tidak valid.');
+    $codes=array_values(array_unique(array_map(fn($x)=>trim((string)$x),$codes)));
+    if(count($codes)>3)fail('Maksimal 3 achievement.');
+    $find=$db->prepare('SELECT a.id FROM achievements a JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=? WHERE a.code=? LIMIT 1');
+    $ids=[];
+    foreach($codes as $code){
+      if(!preg_match('/^[a-z0-9_-]{1,64}$/',$code))continue;
+      $find->execute([$u['id'],$code]);
+      $row=$find->fetch();
+      if($row)$ids[]=(int)$row['id'];
+    }
+    $db->beginTransaction();
+    try{
+      $db->prepare('DELETE FROM user_featured_achievements WHERE user_id=?')->execute([$u['id']]);
+      $ins=$db->prepare('INSERT INTO user_featured_achievements(user_id,achievement_id,slot) VALUES(?,?,?)');
+      foreach($ids as $i=>$id)$ins->execute([$u['id'],$id,$i+1]);
+      $db->commit();
+    }catch(Throwable $e){if($db->inTransaction())$db->rollBack();fail('Achievement pilihan gagal disimpan.',500);}
+    ok(['saved'=>count($ids),'featured_codes'=>array_slice($codes,0,3)]);
+  }
   $ids=$b['achievement_ids']??[$b['achievement_id']??''];
   if(!is_array($ids))$ids=[$ids];
   $q=$db->prepare('SELECT id FROM achievements WHERE code=? LIMIT 1');
   $ins=$db->prepare('INSERT IGNORE INTO user_achievements(user_id,achievement_id) VALUES(?,?)');
   $count=0;
   foreach($ids as $id){$id=trim((string)$id);if(!preg_match('/^[a-z0-9_-]{1,64}$/',$id))continue;$q->execute([$id]);$a=$q->fetch();if($a){$ins->execute([$u['id'],$a['id']]);$count++;}}
-  $featured=$b['featured_codes']??null;
-  if(is_array($featured)){
-    $featured=array_values(array_unique(array_filter(array_map(fn($x)=>trim((string)$x),$featured),fn($x)=>preg_match('/^[a-z0-9_-]{1,64}$/',$x))));
-    $featured=array_slice($featured,0,3);
-    $db->prepare('DELETE FROM user_featured_achievements WHERE user_id=?')->execute([$u['id']]);
-    $get=$db->prepare('SELECT a.id FROM achievements a JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=? WHERE a.code=? LIMIT 1');
-    $put=$db->prepare('INSERT INTO user_featured_achievements(user_id,slot,achievement_id) VALUES(?,?,?)');
-    foreach($featured as $i=>$code){$get->execute([$u['id'],$code]);$row=$get->fetch();if($row)$put->execute([$u['id'],$i+1,(int)$row['id']]);}
-  }
-  ok(['saved'=>$count,'featured_saved'=>is_array($featured)?count($featured):null]);
+  ok(['saved'=>$count]);
 }
