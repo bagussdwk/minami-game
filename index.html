@@ -8789,9 +8789,11 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
           mvp:"mvp",
           bestStreak:"best_streak"
         };
+        // Database adalah sumber utama statistik lifetime akun.
+        // Cache localStorage hanya dipakai sementara sebelum data akun berhasil dimuat.
         for(const [localKey,serverKey] of Object.entries(map)){
           const serverValue=Number(serverStats[serverKey]);
-          if(Number.isFinite(serverValue))s[localKey]=Math.max(Number(s[localKey])||0,serverValue);
+          if(Number.isFinite(serverValue))s[localKey]=serverValue;
         }
         s.cardsPerMatch=s.matches?Math.round((Number(s.cards)||0)/s.matches):0;
         saveFeatureStats(s);
