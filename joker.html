@@ -45,7 +45,7 @@
 
       /* ===== HAMBURGER MENU JOKER ===== */
       .joker-top-actions{display:flex;align-items:center;gap:7px}
-.joker-points-btn{min-height:40px;padding:0 12px;border:1px solid #f3cf7038;border-radius:11px;background:#f3cf7012;color:#f3cf70;font-size:11px;font-weight:900;cursor:pointer;display:flex;align-items:center;gap:6px}
+.joker-points-btn{display:none;min-height:40px;padding:0 12px;border:1px solid #f3cf7038;border-radius:11px;background:#f3cf7012;color:#f3cf70;font-size:11px;font-weight:900;cursor:pointer;display:flex;align-items:center;gap:6px}
 .joker-points-btn:hover{background:#f3cf7020;transform:translateY(-1px)}
 .joker-points-btn span{font-size:9px;letter-spacing:.5px}
 .joker-profile-rank{display:flex;align-items:center;gap:10px;margin:12px 0;padding:11px;border-radius:14px;background:linear-gradient(135deg,#f3cf7010,#ffffff06);border:1px solid #f3cf7022}
@@ -153,6 +153,16 @@
         font-size: 11px;
         line-height: 1.55;
       }
+      .joker-start-showcase{margin-top:22px;padding:18px 14px 14px;border:1px solid #f3cf7025;border-radius:18px;background:linear-gradient(145deg,#f3cf7010,#ffffff05 55%,#00000012);box-shadow:inset 0 1px 0 #ffffff0b,0 14px 35px #0003;position:relative;overflow:hidden}
+      .joker-start-showcase::before{content:"";position:absolute;inset:-55%;background:radial-gradient(circle,#f3cf7014 0 7%,transparent 8% 100%);background-size:34px 34px;transform:rotate(18deg);opacity:.45;pointer-events:none}
+      .joker-start-badge{position:relative;color:#f3cf70;font-size:19px;letter-spacing:9px;text-shadow:0 0 16px #f3cf7030}
+      .joker-start-title{position:relative;margin-top:9px;color:#f5d37a;font-size:12px;font-weight:1000;letter-spacing:2.5px}
+      .joker-start-sub{position:relative;margin-top:5px;color:#aacdc0;font-size:9px;line-height:1.45}
+      .joker-start-features{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:13px}
+      .joker-start-features div{padding:9px 5px;border-radius:10px;background:#00000012;border:1px solid #ffffff0b}
+      .joker-start-features b{display:block;color:#f3cf70;font-size:14px}
+      .joker-start-features span{display:block;margin-top:3px;color:#789f90;font-size:7px;font-weight:800}
+      @media(max-width:560px){.joker-start-showcase{padding:16px 10px 12px}.joker-start-badge{font-size:16px}.joker-start-features b{font-size:13px}}
       /* ===== STATUS BAR ===== */
       /* ===== STATUS BAR ===== */
       .status {
@@ -1021,15 +1031,17 @@
           </button>
         </div>
         <button class="btn gold" id="start">🃏 MULAI PERMAINAN</button>
-        <div class="rules">
-          <b>Ringkas:</b> 13 kartu/orang, pemain pertama 14. Satu kartu sisa
-          menjadi penentu Joker. Semua kartu dengan <b>warna berlawanan</b> dari
-          kartu penentu, dengan rank yang sama, menjadi Joker (4 kartu). Giliran
-          berikutnya memilih satu: ambil buangan pemain sebelumnya atau cabutan
-          tengah. Lalu buang satu. Tutup memakai A/Joker setelah punya dasar
-          minimal 3.
+        <div class="joker-start-showcase">
+          <div class="joker-start-badge">♠ ♥ ♦ ♣</div>
+          <div class="joker-start-title">MEJA JOKER</div>
+          <div class="joker-start-sub">Siapkan strategi. Baca lawan. Tutup di waktu yang tepat.</div>
+          <div class="joker-start-features">
+            <div><b>13</b><span>Kartu / pemain</span></div>
+            <div><b>4</b><span>Kartu Joker</span></div>
+            <div><b>1.500</b><span>Target Game</span></div>
+          </div>
         </div>
-      </div>
+   </div>
     </section>
     <section id="game" style="display: none">
       <div class="status">
@@ -2754,6 +2766,7 @@ function getJokerPlayerProfile(){try{const s=JSON.parse(localStorage.getItem("mi
 function updateJokerProfileUI(){const r=jokerRankInfo(jokerAccountStats.global),p=getJokerPlayerProfile();$("jokerMenuName").textContent=p.name;$("jokerRankIcon").textContent=r.icon;$("jokerRankName").textContent=r.name;$("jokerRankSub").textContent=r.sub;$("jokerRankProgress").style.width=r.progress+"%";$("jokerRankPercent").textContent=Math.round(r.progress)+"%";$("jokerRankNext").textContent=r.next||"Gelar tertinggi";$("jokerMenuAvatar").innerHTML=g?.p?.[0]?.photo?'<img src="'+g.p[0].photo+'">':"👤";const i=$("jokerProfileNameInput");if(i&&document.activeElement!==i)i.value=p.name==="Anda"?"":p.name}
 function openJokerFeature(tab){const g0=jokerAccountStats.global||{},s=jokerAccountStats.mode||{},global=[["rank1","Rank 1"],["game_wins","Win Game"],["match_finished","Match Selesai"]],jok=[["match_finished","Match Selesai"],["rank1","Rank 1"],["game_wins","Win Game"],["jokers","Joker Digunakan"],["joker_sets","Set"],["caught","Menangkap"],["caught_by","Ditangkap"],["best_streak","Best Streak"]];let body;if(tab==="global")body='<div class="joker-feature-grid">'+global.map(x=>'<div class="joker-feature-stat"><b>'+Number(g0[x[0]]||0)+'</b><span>'+x[1]+'</span></div>').join("")+'</div>';else if(tab==="joker")body='<div class="joker-feature-grid">'+jok.map(x=>'<div class="joker-feature-stat"><b>'+Number(s[x[0]]||0)+'</b><span>'+x[1]+'</span></div>').join("")+'</div>';else body=[["🏆","First Win","Menang 1 Match Joker",(Number(s.rank1)||0)>=1],["👑","First Champion","Memenangkan Game Joker",(Number(s.game_wins)||0)>=1]].map(x=>'<div class="joker-achievement '+(x[3]?"":"locked")+'"><div class="joker-achievement-icon">'+x[0]+'</div><div><b>'+x[1]+'</b><small>'+x[2]+' • '+(x[3]?"TERBUKA":"TERKUNCI")+'</small></div></div>').join("");modal("📊 STATISTIK & ACHIEVEMENT",'<div class="joker-feature-tabs"><button class="joker-feature-tab '+(tab==="global"?"active":"")+'" id="jFeatureGlobal">🌐 Global</button><button class="joker-feature-tab '+(tab==="joker"?"active":"")+'" id="jFeatureJoker">🃏 Joker</button><button class="joker-feature-tab '+(tab==="achievements"?"active":"")+'" id="jFeatureAchievements">🏆 Achievement</button></div><div id="jokerFeatureBody">'+body+'</div>',"Tutup",closeModal,true);$("jFeatureGlobal").onclick=()=>openJokerFeature("global");$("jFeatureJoker").onclick=()=>openJokerFeature("joker");$("jFeatureAchievements").onclick=()=>openJokerFeature("achievements")}
 function openJokerPoints(){if(!g?.p)return;const rows=g.p.map((p,i)=>{const v=Number(p.score)||0;return '<div class="joker-points-card"><b>'+((v>=0?"+":"")+v)+'</b><span>'+(i===0?"👤 ":"")+(p.name||("P"+(i+1)))+'</span></div>'}).join("");modal("🏆 POIN PERMAINAN",'<div class="joker-points-grid">'+rows+'</div><div class="joker-rule-note">Poin ini adalah skor permainan Joker saat ini.</div>',"Tutup",closeModal,true)}
+function setJokerPointsVisible(show){const b=$("jokerPointsBtn");if(b)b.style.display=show?"flex":"none"}
 function closeJokerMenu(){$("jokerMenuOverlay").classList.remove("show")}
 function updateJokerMusicUI(){const m=localStorage.getItem("minamiMusicMuted")==="1";$("jokerMusicOnBtn").classList.toggle("active",!m);$("jokerMusicOffBtn").classList.toggle("active",m)}
 function startMinamiMusic(){if(localStorage.getItem("minamiMusicMuted")==="1")return;if(window.minamiMusic?.audio){window.minamiMusic.audio.play().catch(()=>{});return}try{const a=new Audio("./casino-vip-music-classy-lounge-casino-1-469300.mp3");a.loop=true;a.volume=.36;a.style.display="none";document.body.appendChild(a);window.minamiMusic={audio:a};a.play().catch(()=>{})}catch(e){}}
@@ -2780,6 +2793,7 @@ $("jokerResetBtn").onclick=async()=>{
           sel=-1;
           $("game").style.display="none";
           $("setup").style.display="block";
+          setJokerPointsVisible(false);
           window.scrollTo(0,0);
         };
         $("jokerRulesBtn").onclick=()=>{
@@ -2794,6 +2808,7 @@ $("jokerResetBtn").onclick=async()=>{
             }
             $("setup").style.display = "none";
             $("game").style.display = "block";
+            setJokerPointsVisible(true);
           } catch (e) {
             console.error(e);
             clearSavedGame();
@@ -2808,11 +2823,13 @@ $("jokerResetBtn").onclick=async()=>{
         };
         $("setup").style.display = "block";
         $("game").style.display = "none";
+        setJokerPointsVisible(false);
         try {
           if (localStorage.getItem("minami_joker_state")) {
             if (loadGame()) {
               $("setup").style.display = "none";
               $("game").style.display = "block";
+              setJokerPointsVisible(true);
             } else clearSavedGame();
           }
         } catch (e) {
