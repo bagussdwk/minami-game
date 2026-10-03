@@ -997,8 +997,7 @@
         }
         .move-history-modal-box {
           width: calc(100% - 12px);
-          padding: 11px;        }
-        .move-history-list {
+          padding: 11px;        }        .move-history-list {
           max-height: 68vh;
         }
       }
@@ -1997,8 +1996,7 @@
         padding: 20px;
         box-shadow: 0 30px 80px #000;
       }
-      /* Modal khusus Saran Bantuan - tidak mengubah tampilan game lain */
-      .help-modal-box {
+      /* Modal khusus Saran Bantuan - tidak mengubah tampilan game lain */      .help-modal-box {
         width: min(620px, calc(100% - 24px));
         max-height: 78vh;
         padding: 14px;
@@ -2997,8 +2995,7 @@
 
       /* =========================================         MOBILE PLAYER EDGE LAYOUT
          ========================================= */
-      @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {
-        /* Beri jarak dari navbar supaya bagian atas meja/player tidak bertabrakan. */
+      @media (max-width: 700px), (hover: none) and (pointer: coarse) and (orientation: landscape) {        /* Beri jarak dari navbar supaya bagian atas meja/player tidak bertabrakan. */
         .game {
           margin-top: 42px;
         }
@@ -3997,8 +3994,7 @@
   .player-reaction-bubble.victory::after{
     background:rgba(35,25,5,.98);
     border-color:rgba(255,220,108,.6);
-  }
-  .victory-points-pop{
+  }  .victory-points-pop{
     position:fixed;
     left:50%;
     top:43%;
@@ -4997,8 +4993,7 @@
           if (game.lastResult) {
             showResult(
               game.lastResult.winner,
-              game.lastResult.reason,
-              game.lastResult.delta,
+              game.lastResult.reason,              game.lastResult.delta,
             );
           }
           return;
@@ -5997,8 +5992,7 @@
         const stack = document.createElement("div");
         stack.className =
           "dead-card-stack" + (deadCards.length === 4 ? " four-cards" : "");
-        deadCards.forEach((card, index) => {
-          let el;
+        deadCards.forEach((card, index) => {          let el;
           if (revealJoker && index === jokerIndex) {
             el = createCard(card, true);
             el.classList.add("joker-revealed");
@@ -6997,8 +6991,7 @@
             const remaining = arr.filter(c => !used.has(c.id));
             if (rec(remaining)) {
               memo.set(key, true);
-              return true;
-            }
+              return true;            }
           }
 
           memo.set(key, false);
@@ -7997,8 +7990,7 @@
         window.minamiMatchAIProfiles=null;
       }
 
-      function refreshPlayerTitles(){
-        const t=document.getElementById("playerTitle1");
+      function refreshPlayerTitles(){        const t=document.getElementById("playerTitle1");
         if(t)t.textContent=minamiRankTitle(featureStats().rank1);
         if(game?.aiProfilesData){
           for(let i=1;i<playerCount;i++){
@@ -8619,7 +8611,7 @@
         try{
           const r=await fetch(MINAMI_API_URL+"?action=game-result",{
             method:"POST",
-            headers:{"Content-Type":"application/json"},
+            headers:{"Content-Type":"text/plain;charset=UTF-8"},
             body:JSON.stringify({
               token,
               event_id:String(resultId),
@@ -8655,7 +8647,7 @@
       async function minamiApiPost(action,payload={}){
         const body={...(payload||{})};
         const r=await fetch(MINAMI_API_URL+"?action="+encodeURIComponent(action),{
-          method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)
+          method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify(body)
         });
         let d=null;
         try{d=await r.json()}catch(e){throw new Error("Respons API tidak valid.")}
@@ -8997,8 +8989,7 @@
         document.body.appendChild(projectile);
         requestAnimationFrame(()=>{
           const mx=(sx+ex)/2, my=(sy+ey)/2-Math.min(90,Math.max(35,Math.abs(ex-sx)*.16));
-          projectile.style.left=mx+"px"; projectile.style.top=my+"px";
-          projectile.style.transform="translate(-50%,-50%) scale(1.18) rotate("+(ex>=sx?8:-8)+"deg)";
+          projectile.style.left=mx+"px"; projectile.style.top=my+"px";          projectile.style.transform="translate(-50%,-50%) scale(1.18) rotate("+(ex>=sx?8:-8)+"deg)";
         });
         setTimeout(()=>{
           projectile.style.left=ex+"px"; projectile.style.top=ey+"px";
