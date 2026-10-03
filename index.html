@@ -9169,7 +9169,7 @@ async function loadAccountAchievements(){
         minamiAccountAchievements.filter(x=>x&&x.unlocked).map(x=>x.code)
       );
       minamiFeaturedAchievementCodes=Array.isArray(d.featured_achievements)
-        ?d.featured_achievements.map(x=>x.code):[];
+        ?d.featured_achievements.map(x=>typeof x==="string"?x:x?.code).filter(Boolean):[];
       return true;
     }
   }catch(e){
