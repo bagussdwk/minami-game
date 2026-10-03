@@ -4862,50 +4862,34 @@
           .join("");
       }
 
+      function buildMinamiSavePayload(){
+        if(!game)return null;
+        return {
+          game:{
+            ...game,
+            potRanks:Array.from(game.potRanks||[])
+          },
+          nextOrder:Array.isArray(window.minamiNextOrder)?window.minamiNextOrder:null,
+          direction:window.minamiDirection??game.direction??1,
+          mode:game.mode||minamiMode,
+          scoreHistory:Array.isArray(window.minamiScoreHistory)?window.minamiScoreHistory:[]
+        };
+      }
       function saveGameState() {
         if (!game) return;
+        let payload=null;
         try {
-          const payload = JSON.stringify({
-            game: {
-              ...game,
-              potRanks: Array.from(game.potRanks || []),
-            },
-            nextOrder: Array.isArray(window.minamiNextOrder)
-              ? window.minamiNextOrder
-              : null,
-            direction: window.minamiDirection ?? game.direction ?? 1,
-            mode: game.mode || minamiMode,
-            scoreHistory: Array.isArray(window.minamiScoreHistory)
-              ? window.minamiScoreHistory
-              : [],
-          });
-
-          // Simpan di dua tempat. sessionStorage menjadi cadangan jika
-          // localStorage gagal/terhapus saat browser melakukan refresh.
-          localStorage.setItem(MINAMI_SAVE_KEY, payload);
-          try {
-            sessionStorage.setItem(MINAMI_SAVE_KEY, payload);
-          } catch (e) {}
-        } catch (e) {
-          // Jika localStorage gagal, tetap coba sessionStorage.
-          try {
-            sessionStorage.setItem(
-              MINAMI_SAVE_KEY,
-              JSON.stringify({
-                game: {
-                  ...game,
-                  potRanks: Array.from(game.potRanks || []),
-                },
-                nextOrder: Array.isArray(window.minamiNextOrder)
-                  ? window.minamiNextOrder
-                  : null,
-                direction: window.minamiDirection ?? game.direction ?? 1,
-                scoreHistory: Array.isArray(window.minamiScoreHistory)
-                  ? window.minamiScoreHistory
-                  : [],
-              }),
-            );
-          } catch (e2) {}
+          payload=JSON.stringify(buildMinamiSavePayload());
+          localStorage.setItem(MINAMI_SAVE_KEY,payload);
+          try{sessionStorage.setItem(MINAMI_SAVE_KEY,payload)}catch(e){}
+        } catch(e) {
+          try{
+            payload=JSON.stringify(buildMinamiSavePayload());
+            sessionStorage.setItem(MINAMI_SAVE_KEY,payload);
+          }catch(e2){}
+        }
+        if(payload&&typeof queueMinamiCloudSave==="function"){
+          queueMinamiCloudSave(payload,Number(game.mode)===2?"minami2":"minami1",!game.over);
         }
       }
 
@@ -4932,13 +4916,13 @@
         } catch (e) {}
       });
 
-      function clearSavedGame() {
-        try {
-          localStorage.removeItem(MINAMI_SAVE_KEY);
-        } catch (e) {}
-        try {
-          sessionStorage.removeItem(MINAMI_SAVE_KEY);
-        } catch (e) {}
+      function clearSavedGame(removeCloud=false) {
+        try{localStorage.removeItem(MINAMI_SAVE_KEY)}catch(e){}
+        try{sessionStorage.removeItem(MINAMI_SAVE_KEY)}catch(e){}
+        if(removeCloud&&typeof deleteMinamiCloudGame==="function"){
+          const modeKey=Number(game?.mode??minamiMode)===2?"minami2":"minami1";
+          deleteMinamiCloudGame(modeKey);
+        }
       }
 
       function setYourHandOverlayHidden(hidden) {
@@ -8350,7 +8334,7 @@
         if (game) game.over = true;
         game = null;
 
-        clearSavedGame();
+        clearSavedGame(true);
         window.minamiScores = null;
         window.minamiScoreHistory = [];
         window.minamiAISpeed = 1;
@@ -8565,7 +8549,7 @@
         if (reachedTarget) {
           // Game sampai 25 sudah selesai. Lanjut langsung membuat Game baru
           // dari awal, tanpa kembali ke halaman pilih pemain.
-          clearSavedGame();
+          clearSavedGame(true);
           window.minamiScores = null;
           window.minamiScoreHistory = [];
           window.minamiAISpeed = 1;
@@ -8654,6 +8638,105 @@
         if(!r.ok||!d?.ok)throw new Error(d?.error||"Permintaan akun gagal.");
         return d;
       }
+      let minamiCloudTimers={};
+      let minamiCloudPending={};
+      function minamiCloudMeta(){
+        try{
+          const x=JSON.parse(localStorage.getItem("minamiCloudMetaV1")||"{}");
+          return x&&typeof x==="object"?x:{};
+        }catch(e){return {}}
+      }
+      function saveMinamiCloudMeta(meta){
+        try{localStorage.setItem("minamiCloudMetaV1",JSON.stringify(meta||{}))}catch(e){}
+      }
+      async function flushMinamiCloudSave(modeKey){
+        const pending=minamiCloudPending[modeKey];
+        delete minamiCloudPending[modeKey];
+        delete minamiCloudTimers[modeKey];
+        if(!pending)return;
+        const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
+        if(!token)return;
+        try{
+          const d=await minamiApiPost("game-save",{
+            token,
+            mode:modeKey,
+            active:pending.active,
+            state:JSON.parse(pending.payload)
+          });
+          const meta=minamiCloudMeta();
+          meta[modeKey]={revision:Number(d?.save?.revision)||0,updated_at:d?.save?.updated_at||null};
+          saveMinamiCloudMeta(meta);
+        }catch(e){
+          // Cloud gagal tidak menghentikan permainan lokal.
+        }
+      }
+      function queueMinamiCloudSave(payload,modeKey="minami1",active=true){
+        const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
+        if(!token||!payload)return;
+        minamiCloudPending[modeKey]={payload,active:!!active};
+        clearTimeout(minamiCloudTimers[modeKey]);
+        minamiCloudTimers[modeKey]=setTimeout(()=>flushMinamiCloudSave(modeKey),650);
+      }
+      async function saveMinamiCloudImmediately(){
+        if(!game||game.over)return;
+        const payload=JSON.stringify(buildMinamiSavePayload());
+        const modeKey=Number(game.mode)===2?"minami2":"minami1";
+        minamiCloudPending[modeKey]={payload,active:true};
+        clearTimeout(minamiCloudTimers[modeKey]);
+        await flushMinamiCloudSave(modeKey);
+      }
+      async function deleteMinamiCloudGame(modeKey){
+        const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
+        if(!token)return;
+        try{await minamiApiPost("game-delete",{token,mode:modeKey})}catch(e){}
+        const meta=minamiCloudMeta();delete meta[modeKey];saveMinamiCloudMeta(meta);
+      }
+      function installMinamiCloudState(save){
+        if(!save?.state)return false;
+        try{
+          const payload=JSON.stringify(save.state);
+          localStorage.setItem(MINAMI_SAVE_KEY,payload);
+          sessionStorage.setItem(MINAMI_SAVE_KEY,payload);
+          const meta=minamiCloudMeta();
+          meta[save.mode]={revision:Number(save.revision)||0,updated_at:save.updated_at||null};
+          saveMinamiCloudMeta(meta);
+          return true;
+        }catch(e){return false}
+      }
+      async function restoreMinamiCloudAfterAccountReady(){
+        const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
+        if(!token)return;
+        try{
+          const d=await minamiApiPost("game-load",{token});
+          const saves=Array.isArray(d.saves)?d.saves:[];
+          if(!saves.length){
+            if(game&&!game.over) await saveMinamiCloudImmediately();
+            return;
+          }
+          let save=null;
+          if(game&&!game.over){
+            const currentMode=Number(game.mode)===2?"minami2":"minami1";
+            save=saves.find(x=>x.mode===currentMode)||null;
+            if(!save)return;
+            const meta=minamiCloudMeta();
+            if(Number(meta[currentMode]?.revision)===Number(save.revision))return;
+            const useCloud=window.confirm(
+              "Ditemukan permainan "+(save.mode==="minami2"?"MINAMI 2":"MINAMI 1")+" yang tersimpan di akun.\n\nOK = lanjutkan dari Cloud.\nBatal = pertahankan permainan di perangkat ini."
+            );
+            if(useCloud){
+              if(installMinamiCloudState(save)) restoreSavedGame();
+              return;
+            }
+            await saveMinamiCloudImmediately();
+            return;
+          }
+          save=saves[0];
+          if(installMinamiCloudState(save)) restoreSavedGame();
+        }catch(e){
+          // Login tetap normal jika cloud sedang tidak tersedia.
+        }
+      }
+
       function setAccountMessage(message,kind=""){
         const a=document.getElementById("accountMessage"),b=document.getElementById("accountMessageLoggedIn");
         if(a){a.textContent=message||"";a.className="menu-account-message"+(kind?" "+kind:"")}
@@ -8708,7 +8791,7 @@
           localStorage.setItem(MINAMI_API_TOKEN_KEY,d.token);saveAccountUser(d.user||{username:u,display_name:u});
           const dn=(d.user?.display_name||u).trim();
           if(dn)try{localStorage.setItem(MINAMI_PROFILE_KEY,JSON.stringify({name:dn.slice(0,18)}))}catch(e){}
-          await refreshAccountStats();document.getElementById("accountPasswordInput").value="";
+          await refreshAccountStats();await restoreMinamiCloudAfterAccountReady();document.getElementById("accountPasswordInput").value="";
           renderAccountUI();applyPlayerProfile();setAccountMessage("Login berhasil.","ok");
         }catch(e){setAccountMessage(String(e.message||"Login gagal."),"error")}
         finally{if(btn)btn.disabled=false}
@@ -8726,7 +8809,7 @@
           localStorage.setItem(MINAMI_API_TOKEN_KEY,d.token);saveAccountUser(d.user||{username:u,display_name:dn||u});
           const display=(d.user?.display_name||dn||u).trim();
           if(display)try{localStorage.setItem(MINAMI_PROFILE_KEY,JSON.stringify({name:display.slice(0,18)}))}catch(e){}
-          await refreshAccountStats();document.getElementById("accountPasswordInput").value="";
+          await refreshAccountStats();await restoreMinamiCloudAfterAccountReady();document.getElementById("accountPasswordInput").value="";
           renderAccountUI();applyPlayerProfile();setAccountMessage("Akun berhasil dibuat dan sudah login.","ok");
         }catch(e){setAccountMessage(String(e.message||"Pendaftaran gagal."),"error")}
         finally{if(btn)btn.disabled=false}
