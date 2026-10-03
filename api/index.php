@@ -138,6 +138,7 @@ function stats(PDO $db):never{
   ok(['stats'=>$global,'mode_stats'=>$modeStats]);
 }
 function leaderboard(PDO $db):never{
+  ensureAchievementTables($db);
   // Leaderboard publik hanya memakai statistik global Rank 1 + Win Game,
   // sedangkan rincian match/statistik lain dikirim per mode.
   $q=$db->query('
