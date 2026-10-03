@@ -23,6 +23,9 @@ try {
 } catch(Throwable $e) { fail('Database tidak dapat dihubungkan.',500); }
 
 $path=trim(parse_url($_SERVER['REQUEST_URI']??'/',PHP_URL_PATH)??'/','/');
+// Some shared hosts do not support PATH_INFO/rewrite for /api/me. Allow ?action=me too.
+$queryAction=trim((string)($_GET['action']??''));
+if($queryAction!=='') $path=$queryAction;
 $prefix=trim($c['api_prefix']??'api','/');
 if($prefix && str_starts_with($path,$prefix.'/')) $path=substr($path,strlen($prefix)+1);
 $body=json_decode(file_get_contents('php://input')?:'{}',true); if(!is_array($body))$body=[];
