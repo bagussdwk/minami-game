@@ -378,6 +378,7 @@ function ensureAchievementTables(PDO $db):void{
     ['triple-champion','Triple Champion','Menang 3 Game sampai target','🏆','minami',100],
     ['veteran','Veteran','Menyelesaikan 25 match','🎖️','minami',110],
     ['streak-3','Winning Streak','Menang 3 match berturut-turut','⚡','minami',120],
+    ['minami2-clean-5','Clean Five','Menyelesaikan 5 Game Minami 2 berturut-turut tanpa mati tangan','🛡️','minami2',125],
     ['first-joker','First Joker','Menggunakan Joker pertama dalam kombinasi','🃏','joker',130],
     ['set-master','Set Master','Membuat set pertama','🎯','joker',140],
     ['joker-collector','Joker Collector','Menggunakan 10 Joker','🔥','joker',150],
