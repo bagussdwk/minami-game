@@ -1230,16 +1230,21 @@
             });
             let a = [...bySuit.values()];
             for (let k = 3; k <= 4; k++) {
-              let need = k - a.length;
-              if (need < 0 || need > j.length) continue;
-              for (let take of combos(a, Math.min(k, a.length))) {
-                if (take.length + need !== k) continue;
-                for (let js of combos(j, need)) {
-                  let ids = take.map((c) => c.id).concat(js.map((c) => c.id)),
-                    values = {};
-                  take.forEach((c) => (values[c.id] = rv(c.rank)));
-                  js.forEach((c) => (values[c.id] = rv(r)));
-                  addMeld("set", r, ids, values, k * rv(r));
+              // Pot sah dengan 3 atau 4 kartu. Pilih sejumlah kartu
+              // natural dari bunga yang berbeda, lalu lengkapi dengan Joker
+              // bila diperlukan. Jangan memaksa memakai semua bunga yang ada:
+              // contoh 5♥ + 5♣ + 5♦ tetap harus menjadi pot 5.
+              for (let takeCount = 0; takeCount <= Math.min(k, a.length); takeCount++) {
+                let need = k - takeCount;
+                if (need < 0 || need > j.length) continue;
+                for (let take of combos(a, takeCount)) {
+                  for (let js of combos(j, need)) {
+                    let ids = take.map((c) => c.id).concat(js.map((c) => c.id)),
+                      values = {};
+                    take.forEach((c) => (values[c.id] = rv(c.rank)));
+                    js.forEach((c) => (values[c.id] = rv(r)));
+                    addMeld("set", r, ids, values, k * rv(r));
+                  }
                 }
               }
             }
