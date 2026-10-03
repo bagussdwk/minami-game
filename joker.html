@@ -997,8 +997,7 @@
         <div class="actions"><button class="btn" id="close">Tutup</button></div>
       </div>
     </section>
-    <div class="modal" id="modal">
-      <div class="modalbox">
+    <div class="modal" id="modal">      <div class="modalbox">
         <h2 id="mt"></h2>
         <div id="mb"></div>
         <div class="actions" style="margin-top: 12px">
@@ -1157,7 +1156,7 @@
           try{
             const r=await fetch(JOKER_API_URL+"?action=game-result",{
               method:"POST",
-              headers:{"Content-Type":"application/json"},
+              headers:{"Content-Type":"text/plain;charset=UTF-8"},
               body:JSON.stringify({
                 token,
                 event_id:String(resultId),
@@ -1997,8 +1996,7 @@
           // Joker hanya boleh dibuang setelah kartu terakhir tumpukan
           // sudah diambil. Selama tumpukan masih berisi kartu, AI wajib
           // memilih buangan non-Joker.
-          if (g.draw.length > 0) {
-            let safe = choices.filter((x) => !x.c.joker);
+          if (g.draw.length > 0) {            let safe = choices.filter((x) => !x.c.joker);
             if (safe.length) choices = safe;
           }
 
