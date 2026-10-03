@@ -102,32 +102,83 @@ function logoutUser(PDO $db):never{
   ok();
 }
 function me(PDO $db):never{$u=auth($db);ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name']]]);}
-function stats(PDO $db):never{$u=auth($db);$q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');$q->execute([$u['id']]);ok(['stats'=>$q->fetch()?:[]]);}
+function stats(PDO $db):never{
+  $u=auth($db);
+  $q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');
+  $q->execute([$u['id']]);
+  $global=$q->fetch()?:[];
+
+  $q2=$db->prepare('SELECT * FROM player_mode_stats WHERE user_id=? ORDER BY FIELD(mode,"minami1","minami2","joker")');
+  $q2->execute([$u['id']]);
+  $modeStats=[];
+  foreach($q2->fetchAll() as $row){
+    $mode=(string)$row['mode'];
+    $modeStats[$mode]=[
+      'games_finished'=>(int)$row['games_finished'],
+      'game_wins'=>(int)$row['game_wins'],
+      'rank1'=>(int)$row['rank1'],
+      'match_finished'=>(int)$row['match_finished'],
+      'match_wins'=>(int)$row['match_wins'],
+      'tenho'=>(int)$row['tenho'],
+      'pots'=>(int)$row['pots'],
+      'cards'=>(int)$row['cards'],
+      'jokers'=>(int)$row['jokers'],
+      'best_combo'=>(int)$row['best_combo'],
+      'dead'=>(int)$row['dead'],
+      'mvp'=>(int)$row['mvp'],
+      'best_streak'=>(int)$row['best_streak']
+    ];
+  }
+  ok(['stats'=>$global,'mode_stats'=>$modeStats]);
+}
 function leaderboard(PDO $db):never{
-  // Leaderboard publik: hanya data statistik yang memang ditampilkan di profil.
-  // Tidak mengembalikan username, password, token, atau data sensitif akun.
+  // Leaderboard publik hanya memakai statistik global Rank 1 + Win Game,
+  // sedangkan rincian match/statistik lain dikirim per mode.
   $q=$db->query('
     SELECT
+      u.id AS user_id,
       u.display_name,
-      s.games_finished,
-      s.game_wins,
-      s.rank1,
-      s.match_finished,
-      s.match_wins
+      COALESCE(s.games_finished,0) AS games_finished,
+      COALESCE(s.game_wins,0) AS game_wins,
+      COALESCE(s.rank1,0) AS rank1
     FROM users u
-    INNER JOIN player_global_stats s ON s.user_id=u.id
-    ORDER BY s.rank1 DESC, s.games_finished DESC, s.game_wins DESC, s.match_finished DESC, s.match_wins DESC, u.display_name ASC
+    LEFT JOIN player_global_stats s ON s.user_id=u.id
+    ORDER BY rank1 DESC, games_finished DESC, game_wins DESC, u.display_name ASC
   ');
   $rows=$q->fetchAll();
+  $modeQ=$db->query('
+    SELECT user_id,mode,games_finished,game_wins,rank1,match_finished,match_wins,tenho,pots,cards,jokers,best_combo,dead,mvp,best_streak
+    FROM player_mode_stats
+    ORDER BY user_id, FIELD(mode,"minami1","minami2","joker")
+  ');
+  $byUser=[];
+  foreach($modeQ->fetchAll() as $row){
+    $uid=(int)$row['user_id'];
+    $byUser[$uid][(string)$row['mode']]=[
+      'games_finished'=>(int)$row['games_finished'],
+      'game_wins'=>(int)$row['game_wins'],
+      'rank1'=>(int)$row['rank1'],
+      'match_finished'=>(int)$row['match_finished'],
+      'match_wins'=>(int)$row['match_wins'],
+      'tenho'=>(int)$row['tenho'],
+      'pots'=>(int)$row['pots'],
+      'cards'=>(int)$row['cards'],
+      'jokers'=>(int)$row['jokers'],
+      'best_combo'=>(int)$row['best_combo'],
+      'dead'=>(int)$row['dead'],
+      'mvp'=>(int)$row['mvp'],
+      'best_streak'=>(int)$row['best_streak']
+    ];
+  }
   $players=[];
   foreach($rows as $row){
+    $uid=(int)$row['user_id'];
     $players[]=[
       'name'=>mb_substr((string)$row['display_name'],0,40),
       'games_finished'=>(int)$row['games_finished'],
       'game_wins'=>(int)$row['game_wins'],
       'rank1'=>(int)$row['rank1'],
-      'match_finished'=>(int)$row['match_finished'],
-      'match_wins'=>(int)$row['match_wins']
+      'mode_stats'=>$byUser[$uid]??[]
     ];
   }
   ok(['players'=>$players]);
