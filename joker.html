@@ -1093,7 +1093,9 @@
           ];
         let n = 4,
           g = null,
-          sel = -1;
+          sel = -1,
+          gameOverTimer = null,
+          gameOverCountdown = null;
         const $ = (x) => document.getElementById(x),
           rv = (r) =>
             r === "A" ? 15 : ["J", "Q", "K"].includes(r) ? 10 : 5,
@@ -2659,6 +2661,17 @@ function advance() {
           );
         }
         function gameOver() {
+          clearTimeout(gameOverTimer);
+          clearInterval(gameOverCountdown);
+
+          let left = 5;
+          const startNewGame = () => {
+            clearTimeout(gameOverTimer);
+            clearInterval(gameOverCountdown);
+            closeModal();
+            newMatch();
+          };
+
           modal(
             "GAME SELESAI",
             g.p
@@ -2672,13 +2685,24 @@ function advance() {
                   (x.score >= 1500 ? "TARGET" : "") +
                   "</b></div>",
               )
-              .join(""),
-            "Main Lagi",
-            () => {
-              closeModal();
-              newMatch();
-            },
+              .join("") +
+              '<div class="note">🏆 Target 1.500 tercapai. Match berikutnya akan dimulai otomatis dalam <b id="gameOverCountdown">5</b> detik.</div>',
+            "Main Lagi (5)",
+            startNewGame,
           );
+
+          gameOverCountdown = setInterval(() => {
+            left--;
+            const el = $("gameOverCountdown");
+            if (el) el.textContent = Math.max(0, left);
+            $("mp").textContent = "Main Lagi (" + Math.max(0, left) + ")";
+            if (left <= 0) {
+              clearInterval(gameOverCountdown);
+              startNewGame();
+            }
+          }, 1000);
+
+          gameOverTimer = setTimeout(startNewGame, 5000);
         }
         function modal(t, b, ok, fn, singleButton = false) {
           $("mt").textContent = t;
@@ -2694,11 +2718,14 @@ function advance() {
         }
         function closeJokerMenu(){ $("jokerMenuOverlay").classList.remove("show"); }
         function openJokerMenu(){ 
-          if(g?.p?.[0]){
-            $("jokerMenuName").textContent=g.p[0].name||"Anda";
-            $("jokerMenuScore").textContent=(g.p[0].score>=0?"+":"")+g.p[0].score+" poin";
-            $("jokerMenuAvatar").innerHTML=g.p[0].photo?'<img src="'+g.p[0].photo+'">':"🃏";
-          }
+          const inGame = $("game").style.display !== "none" && !!g?.p?.[0];
+          $("jokerMenuName").textContent = inGame ? (g.p[0].name || "Anda") : "Anda";
+          $("jokerMenuScore").textContent = inGame
+            ? ((g.p[0].score >= 0 ? "+" : "") + g.p[0].score + " poin")
+            : "Belum masuk permainan";
+          $("jokerMenuAvatar").innerHTML = inGame && g.p[0].photo
+            ? '<img src="' + g.p[0].photo + '">'
+            : "🃏";
           $("jokerMenuOverlay").classList.add("show");
         }
         $("jokerMenuBtn").onclick=openJokerMenu;
