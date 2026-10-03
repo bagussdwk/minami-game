@@ -9058,7 +9058,10 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
           best_streak:Number(localStorage.getItem("minamiWinStreak"))||0
         };
       }
-      function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAMI_ACH_KEY)||"[]")}catch(e){return[]}}
+      let minamiServerAchievementCodes=new Set();
+async function loadAccountAchievements(){const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);if(!token)return false;try{const r=await fetch(MINAMI_API_URL+"?action=achievement",{headers:{Authorization:"Bearer "+token}});const d=await r.json();if(r.ok&&d?.ok){minamiServerAchievementCodes=new Set((d.achievements||[]).filter(x=>x.unlocked).map(x=>x.code));return true}}catch(e){}return false}
+async function syncAccountAchievements(ids){const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);if(!token||!Array.isArray(ids)||!ids.length)return false;try{const r=await fetch(MINAMI_API_URL+"?action=achievement",{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({token,achievement_ids:[...new Set(ids)]})});const d=await r.json();if(r.ok&&d?.ok){for(const id of ids)minamiServerAchievementCodes.add(id);return true}}catch(e){}return false}
+function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAMI_ACH_KEY)||"[]")}catch(e){return[]}}
       function updateAchievements(){
         const s=featureStats(),u=new Set(unlockedAchievements());
         const a=[
@@ -9078,6 +9081,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         let ch=false;
         a.forEach(x=>{if(x[4]&&!u.has(x[0])){u.add(x[0]);ch=true;showPlayFeedback(x[1]+" ACHIEVEMENT: "+x[2],false)}});
         if(ch)localStorage.setItem(MINAMI_ACH_KEY,JSON.stringify([...u]));
+        if(ch)syncAccountAchievements([...u]);
       }
       function getGameMVP(){if(!game?.stats)return null;let best=null;for(let i=0;i<playerCount;i++){const st=game.stats,v=(st.cardsPlayed[i]||0)+(st.pots[i]||0)*3+(st.jokers[i]||0)*2+(st.bases[i]||0)+(game.lastResult?.winner===i?10:0),x={i,value:v,name:getPlayerName(i)};if(!best||v>best.value)best=x}return best}
       function getMinamiRankInfo(){
@@ -9228,7 +9232,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
           };
         });
       }
-      function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set(unlockedAchievements()),a=[["first-win","🏆","First Win","Menangkan match untuk pertama kali."],["first-champion","👑","First Champion","Menang Game pertama sampai 25 poin."],["tenho","🃏","TENHO!","Keluar dengan TENHO dan dapatkan bonus."],["pot-master","♟️","POT Hunter","Buat 5 POT dalam permainan."],["joker-master","🃏","Joker Master","Mainkan Joker 5 kali."],["combo-master","🔥","Combo Master","Turunkan 5 kartu atau lebih sekaligus."],["mvp","⭐","MVP","Menjadi MVP dalam 1 match."],["rank-climber","📈","Rank Climber","Kumpulkan 10 Rank 1."],["marathon","🎴","Marathon","Selesaikan 10 Game sampai 25 poin."],["triple-champion","🏆","Triple Champion","Menang 3 Game sampai 25 poin."],["veteran","🎖️","Veteran","Selesaikan 25 match."],["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut."]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div class="achievement-info"><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
+      function renderAchievements(){const b=document.getElementById("featureAchievementsPanel");if(!b)return;const u=new Set([...unlockedAchievements(),...minamiServerAchievementCodes]),a=[["first-win","🏆","First Win","Menangkan match untuk pertama kali."],["first-champion","👑","First Champion","Menang Game pertama sampai 25 poin."],["tenho","🃏","TENHO!","Keluar dengan TENHO dan dapatkan bonus."],["pot-master","♟️","POT Hunter","Buat 5 POT dalam permainan."],["joker-master","🃏","Joker Master","Mainkan Joker 5 kali."],["combo-master","🔥","Combo Master","Turunkan 5 kartu atau lebih sekaligus."],["mvp","⭐","MVP","Menjadi MVP dalam 1 match."],["rank-climber","📈","Rank Climber","Kumpulkan 10 Rank 1."],["marathon","🎴","Marathon","Selesaikan 10 Game sampai 25 poin."],["triple-champion","🏆","Triple Champion","Menang 3 Game sampai 25 poin."],["veteran","🎖️","Veteran","Selesaikan 25 match."],["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut."]];b.innerHTML='<div class="achievement-grid">'+a.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div class="achievement-info"><b>'+x[2]+'</b><span>'+x[3]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>'}
       function renderFeaturePanels(){
         renderFeatureStats();
         renderAchievements();
