@@ -483,7 +483,12 @@ function achievement(PDO $db,array $b):never{
       foreach($ids as $i=>$id)$ins->execute([$u['id'],$id,$i+1]);
       $db->commit();
     }catch(Throwable $e){if($db->inTransaction())$db->rollBack();fail('Achievement pilihan gagal disimpan.',500);}
-    ok(['saved'=>count($ids),'featured_codes'=>array_slice($codes,0,3)]);
+    $savedCodes=[];
+    if($ids){
+      $sq=$db->prepare('SELECT code FROM achievements WHERE id=? LIMIT 1');
+      foreach($ids as $id){$sq->execute([$id]);$rr=$sq->fetch();if($rr)$savedCodes[]=(string)$rr['code'];}
+    }
+    ok(['saved'=>count($savedCodes),'featured_codes'=>$savedCodes]);
   }
   $ids=$b['achievement_ids']??[$b['achievement_id']??''];
   if(!is_array($ids))$ids=[$ids];
