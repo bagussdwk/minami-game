@@ -2017,12 +2017,9 @@ function advance() {
         // saat tumpukan habis: misalnya J-Q-K tetap +30, sementara kartu
         // lain yang tidak masuk susunan menjadi kartu mati/minus.
         function analyzePartial(cs) {
-          // Saat tumpukan habis, kartu hanya boleh dianggap hidup jika
-          // pemain mempunyai minimal 1 dasar murni (tanpa Joker).
-          // Jika tidak ada dasar murni, seluruh kartu menjadi mati.
-          if (!hasPureBase(cs))
-            return { ids: [], values: {}, v: 0, melds: [] };
-
+          // Saat tumpukan habis, setiap meld yang sah tetap dihitung hidup,
+          // termasuk pot 3-4 kartu dengan rank sama dan bunga berbeda.
+          // Syarat dasar murni tanpa Joker tetap hanya berlaku untuk MENUTUP.
           let ms = melds(cs),
             best = { ids: [], values: {}, v: 0, melds: [] };
 
@@ -2130,7 +2127,7 @@ function advance() {
             }
             if (!(arranged.melds || []).length) {
               arrangedHtml =
-                '<div class="note" style="margin:5px 0 0">Tidak ada dasar murni. <b>Semua kartu mati.</b></div>' +
+                '<div class="note" style="margin:5px 0 0">Tidak ada dasar atau pot yang sah. <b>Semua kartu mati.</b></div>' +
                 resultCards(dead);
             }
           } else {
