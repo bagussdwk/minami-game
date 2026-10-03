@@ -434,7 +434,8 @@ function ensureAchievementTables(PDO $db):void{
     ['gotcha','Gotcha!','Mengambil buangan lalu langsung menutup','🪤','joker',190],
     ['payback','Payback','Buanganmu diambil lawan lalu lawan menutup','😈','joker',200],
     ['hot-streak','Hot Streak','Rank 1 dalam 3 match berturut-turut','🔥','joker',210],
-    ['unstoppable','Unstoppable','Rank 1 dalam 5 match berturut-turut','👑','joker',220]
+    ['unstoppable','Unstoppable','Rank 1 dalam 5 match berturut-turut','👑','joker',220],
+    ['dead-hand','Dead Hand','Mati tangan karena tidak memiliki Dasar legal pada putaran pertama','💀','minami',230]
   ];
 
   if($legacy){
@@ -444,7 +445,7 @@ function ensureAchievementTables(PDO $db):void{
     $q=$db->prepare('INSERT IGNORE INTO achievements(code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?)');
     foreach($items as $x)$q->execute($x);
   }
-  $db->exec("UPDATE achievements SET mode='minami' WHERE code IN ('tenho','pot-master','joker-master','combo-master','mvp','rank-climber','marathon','triple-champion','veteran','streak-3')");
+  $db->exec("UPDATE achievements SET mode='minami' WHERE code IN ('tenho','pot-master','joker-master','combo-master','mvp','rank-climber','marathon','triple-champion','veteran','streak-3','dead-hand')");
   $db->exec("UPDATE achievements SET name='Clean Five',description='5 Game Minami 2 berturut-turut tanpa mati tangan awal karena tidak memiliki Dasar legal di putaran pertama',mode='minami2' WHERE code='minami2-clean-5'");
 }
 
