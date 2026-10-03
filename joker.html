@@ -1367,16 +1367,28 @@
           return true;
         }
         function takeOut(p) {
-          let pi = prev(),
-            s = g.p[pi];
+          const pi = prev(), s = g.p[pi];
           if (!s.out.length) return false;
-          let card = s.out.pop();
-          p.hand.push(card);
-          let ev = [...g.history]
+
+          // Buangan yang boleh diambil selalu kartu TERAKHIR yang
+          // benar-benar dibuang oleh pemain sebelumnya. Jangan hanya
+          // mengandalkan urutan array out, karena save lama/layout
+          // dapat membuat urutan visual berbeda.
+          const ev = [...g.history]
             .reverse()
             .find(
-              (x) => x.player === pi && x.card.id === card.id && !x.takenBy,
+              (x) =>
+                x.player === pi &&
+                !x.takenBy &&
+                s.out.some((c) => c.id === x.card.id),
             );
+          const card = ev
+            ? s.out.splice(s.out.findIndex((c) => c.id === ev.card.id), 1)[0]
+            : s.out.pop();
+
+          if (!card) return false;
+          p.hand.push(card);
+
           if (ev) ev.takenBy = p.name;
           return true;
         }  function melds(cs) {
@@ -1772,7 +1784,8 @@
               " • Buangan " +
               x.out.length +
               '</h4><div class="smallcards">' +
-              x.out
+              [...x.out]
+                .reverse()
                 .map(
                   (c) =>
                     '<span class="smallcard ' +
