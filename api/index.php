@@ -442,8 +442,10 @@ function ensureAchievementTables(PDO $db):void{
   ];
 
   if($legacy){
-    $q=$db->prepare('INSERT IGNORE INTO achievements(code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?)');
-    foreach($items as $x)$q->execute($x);
+    // Schema lama memakai achievements.id sebagai PK VARCHAR tanpa auto-increment.
+    // Isi id=code agar setiap achievement mendapat PK unik dan seluruh seed masuk.
+    $q=$db->prepare('INSERT IGNORE INTO achievements(id,code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?,?)');
+    foreach($items as $x)$q->execute([$x[0],$x[0],$x[1],$x[2],$x[3],$x[4],$x[5]]);
   }else{
     $q=$db->prepare('INSERT IGNORE INTO achievements(code,name,description,icon,mode,sort_order) VALUES(?,?,?,?,?,?)');
     foreach($items as $x)$q->execute($x);
