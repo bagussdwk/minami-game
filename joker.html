@@ -1041,6 +1041,7 @@
           <button class="joker-menu-item" id="jokerStatsBtn" type="button"><span class="joker-menu-icon">📊</span><span><b>Statistik</b><small>Ringkasan permainan Joker</small></span></button>
           <button class="joker-menu-item" id="jokerAchievementBtn" type="button"><span class="joker-menu-icon">🏆</span><span><b>Achievement</b><small>Perjalanan pencapaian Anda</small></span></button>
           <button class="joker-menu-item" id="jokerRulesBtn" type="button"><span class="joker-menu-icon">📖</span><span><b>Aturan Joker</b><small>Lihat aturan lengkap permainan</small></span></button>
+          <button class="joker-menu-item" id="jokerResetBtn" type="button"><span class="joker-menu-icon">🔄</span><span><b>Reset Permainan</b><small>Hapus game ini dan mulai dari awal</small></span></button>
         </div>
         <button class="joker-menu-footer" id="jokerBackBtn" type="button">← Kembali ke Menu Utama</button>
       </div>
@@ -2738,6 +2739,25 @@ function advance() {
         $("jokerProfileBtn").onclick=()=>{closeJokerMenu();modal("👤 PROFIL JOKER",'<div class="row"><b>Pemain</b><span>'+((g?.p?.[0]?.name)||"Anda")+'</span></div><div class="row"><b>Skor saat ini</b><span>'+((g?.p?.[0]?.score)||0)+'</span></div>',"Tutup",closeModal,true);};
         $("jokerStatsBtn").onclick=()=>{closeJokerMenu();modal("📊 STATISTIK JOKER",'<div class="row"><b>Match selesai</b><span>Data tersimpan di akun</span></div><div class="row"><b>Rank 1</b><span>Data tersimpan di akun</span></div><div class="row"><b>Win Game</b><span>Target 1.500 poin</span></div>',"Tutup",closeModal,true);};
         $("jokerAchievementBtn").onclick=()=>{closeJokerMenu();modal("🏆 ACHIEVEMENT",'<div class="joker-rule-note">Achievement Joker tersimpan bersama akun. Statistik detail dapat dilihat dari menu utama MINAMI.</div>',"Tutup",closeModal,true);};
+        $("jokerResetBtn").onclick=async()=>{
+          if(!confirm("Reset permainan Joker ini?\n\nSkor dan posisi permainan saat ini akan dihapus. Statistik akun yang sudah tercatat tetap aman."))return;
+          closeJokerMenu();
+          clearTimeout(gameOverTimer);
+          clearInterval(gameOverCountdown);
+          clearTimeout(jokerCloudTimer);
+          jokerCloudTimer=null;
+          jokerCloudPending=null;
+          await deleteJokerCloudSave();
+          try{
+            localStorage.removeItem("minami_joker_state");
+            sessionStorage.removeItem("minami_joker_state");
+          }catch(e){}
+          g=null;
+          sel=-1;
+          $("game").style.display="none";
+          $("setup").style.display="block";
+          window.scrollTo(0,0);
+        };
         $("jokerRulesBtn").onclick=()=>{
           closeJokerMenu();
           modal("📖 ATURAN JOKER",'<div class="joker-rules-wrap"><div class="joker-rules-head"><div><h2>JOKER</h2><div class="joker-menu-sub">Panduan bermain</div></div></div><div class="joker-rule-grid"><div class="joker-rule-card"><div class="joker-rule-icon">🃏</div><div><h3>Joker</h3><p>Satu kartu penentu menentukan rank Joker. Kartu dengan rank sama dan warna berlawanan menjadi Joker.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🎴</div><div><h3>Awal Giliran</h3><p>Pilih mengambil kartu buangan pemain sebelumnya atau mengambil satu kartu dari tumpukan tengah.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🧩</div><div><h3>Dasar & Set</h3><p>Buat dasar berurutan satu bunga atau set dengan rank yang sama. Joker dapat membantu kombinasi.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">♻️</div><div><h3>Buang</h3><p>Setelah mengambil kartu, buang satu kartu. Buangan terbaru selalu berada di sisi kanan.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🏁</div><div><h3>Tutup</h3><p>Tutup dengan A atau Joker setelah memiliki minimal satu dasar yang sah dan kartu lain sudah tersusun.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🏆</div><div><h3>Target Game</h3><p>Game berakhir ketika pemain mencapai 1.500 poin. Rank 1/Win Match dicatat berdasarkan hasil match.</p></div></div></div><div class="joker-rule-note">💡 Gunakan tombol ◷ pada kotak buangan untuk melihat riwayat kartu yang pernah dibuang.</div></div>',"Tutup",closeModal,true);
