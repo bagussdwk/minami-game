@@ -1860,6 +1860,14 @@
             .map((c, i) => ({ c, i }))
             .filter((x) => x.c.id !== sourceId);
 
+          // Joker hanya boleh dibuang setelah kartu terakhir tumpukan
+          // sudah diambil. Selama tumpukan masih berisi kartu, AI wajib
+          // memilih buangan non-Joker.
+          if (g.draw.length > 0) {
+            let safe = choices.filter((x) => !x.c.joker);
+            if (safe.length) choices = safe;
+          }
+
           if (!choices.length) return null;
 
           let best = null;
@@ -1880,8 +1888,10 @@
               danger * 2 +
               valuePenalty * 0.7;
 
-            // Jangan mengorbankan A/Joker yang masih bisa menjadi kartu penutup.
-            if (x.c.rank === "A" || x.c.joker) discardScore -= 22;
+            // A tetap dijaga. Joker juga tidak boleh dibuang sebelum
+            // tumpukan benar-benar habis.
+            if (x.c.rank === "A") discardScore -= 22;
+            if (x.c.joker && g.draw.length > 0) discardScore -= 100000;
 
             // Jika belum punya dasar, lebih keras menjaga kartu yang berpotensi
             // membentuk urutan/pot.
