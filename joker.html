@@ -777,40 +777,42 @@
         .discards.reverse .d2:hover {
           transform: translateX(-50%) translateY(-1px);
         }
-        /* Posisi normal mobile: satu kotak buangan untuk setiap sisi pemain. */
+        /* Posisi normal mobile mengikuti sisi pemain berikutnya,
+           sama seperti layout desktop, tetapi diberi jarak dari avatar. */
         .d1 {
+          right: 6px;
+          left: auto;
+          bottom: 100px;
+          top: auto;
+          transform: none;
+        }
+        .d2 {
+          right: 6px;
+          left: auto;
+          top: 82px;
+          bottom: auto;
+        }
+        .d3 {
+          left: 6px;
+          right: auto;
+          top: 82px;
+          bottom: auto;
+          transform: none;
+        }
+        .d4 {
+          left: 6px;
+          right: auto;
+          bottom: 100px;
+          top: auto;
+        }
+        .d5 {
           left: 50%;
           right: auto;
           bottom: 88px;
           top: auto;
           transform: translateX(-50%);
         }
-        .d2 {
-          right: 6px;
-          left: auto;
-          bottom: 100px;
-          top: auto;
-        }
-        .d3 {
-          right: 6px;
-          left: auto;
-          top: 82px;
-          bottom: auto;
-        }
-        .d4 {
-          left: 6px;
-          right: auto;
-          top: 82px;
-          bottom: auto;
-        }
-        .d5 {
-          left: 6px;
-          right: auto;
-          bottom: 100px;
-          top: auto;
-          transform: none;
-        }
-        .d1:hover {
+        .d5:hover {
           transform: translateX(-50%) translateY(-1px);
         }
         .discard {
