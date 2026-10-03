@@ -1953,19 +1953,11 @@
             return alert(
               "Tidak bisa langsung tutup dari kartu cabutan tengah. Untuk menutup, ambil kartu dari buangan pemain sebelumnya.",
             );
-          if (
-            close &&
-            p.hand[sel].id === g.sourceCard &&
-            (p.hand[sel].rank === "A" || p.hand[sel].joker)
-          )
-            return alert(
-              "Kartu A/Joker yang baru diambil dari buangan tidak boleh langsung menjadi kartu penutup. Ambil kartu itu boleh, tetapi tunggu putaran berikutnya.",
-            );
           if (close && !canClose(p, sel))
             return alert(
               "Tutup harus A/Joker, seluruh kartu lain harus membentuk dasar/pot, dan wajib memiliki minimal 1 dasar murni tanpa Joker.",
             );
-          if (c.joker && g.draw.length > 0)
+          if (!close && c.joker && g.draw.length > 0)
             return alert(
               "Joker hanya boleh dibuang pada buangan terakhir saat kartu tengah habis.",
             );
