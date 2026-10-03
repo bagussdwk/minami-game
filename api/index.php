@@ -384,15 +384,6 @@ function ensureAchievementTables(PDO $db):void{
     CONSTRAINT fk_user_featured_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_user_featured_achievement FOREIGN KEY(achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-  $db->exec('CREATE TABLE IF NOT EXISTS user_featured_achievements (
-    user_id BIGINT UNSIGNED NOT NULL,
-    slot TINYINT UNSIGNED NOT NULL,
-    achievement_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY(user_id,slot),
-    UNIQUE KEY uq_user_featured_achievement(user_id,achievement_id),
-    CONSTRAINT fk_user_featured_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_user_featured_achievement FOREIGN KEY(achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
   $items=[
     ['first-win','First Win','Menang 1 match','🏆','global',10],
     ['first-champion','First Champion','Menang 1 Game sampai target poin','👑','global',20],
@@ -422,6 +413,7 @@ function ensureAchievementTables(PDO $db):void{
   foreach($items as $x)$q->execute($x);
   // Achievement mekanik Minami berlaku untuk Minami 1 dan Minami 2.
   $db->exec("UPDATE achievements SET mode='minami' WHERE code IN ('tenho','pot-master','joker-master','combo-master','mvp','rank-climber','marathon','triple-champion','veteran','streak-3')");
+  $db->exec("UPDATE achievements SET name='Clean Five',description='5 Game Minami 2 berturut-turut tanpa mati tangan awal karena tidak memiliki Dasar legal di putaran pertama',mode='minami2' WHERE code='minami2-clean-5'");
 }
 function achievementList(PDO $db):never{
   ensureAchievementTables($db);
