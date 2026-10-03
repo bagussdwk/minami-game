@@ -6258,7 +6258,7 @@
           "</div>"
         );
       }
-      function endGame(winner = null, reason = "NORMAL") {
+      async function endGame(winner = null, reason = "NORMAL") {
         if (game.over) return;
         game.over = true;
         // Jangan biarkan efek suara mengganggu proses skor/akhir game.
@@ -6379,7 +6379,11 @@
         window.minamiWinStreak=winner===0?(Number(localStorage.getItem("minamiWinStreak"))||0)+1:0;localStorage.setItem("minamiWinStreak",String(window.minamiWinStreak));
         const featureDelta=updateLifetimeStatsFromGame();
         updateAchievements();renderFeatureStats();renderAchievements();
-        if(featureDelta)syncMinamiGameResult(resultId,featureDelta);
+        if(featureDelta){
+          // Tunggu sinkronisasi statistik match ini selesai sebelum alur hasil dilanjutkan.
+          // Dengan begitu Rank 1/match selesai sudah tercatat di database sebelum pemain masuk match berikutnya.
+          await syncMinamiGameResult(resultId,featureDelta);
+        }
         playMinamiSfx(reason==="TENHO"?"tenho":winner!==null?"win":"dead");
         saveGameState();
 
@@ -8589,9 +8593,9 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
       }
       async function syncMinamiGameResult(resultId, values){
         const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
-        if(!token||!resultId)return;
+        if(!token||!resultId)return false;
         const ledger=minamiApiSyncLedger();
-        if(ledger.includes(resultId))return;
+        if(ledger.includes(resultId))return true;
         try{
           const r=await fetch(MINAMI_API_URL+"?action=game-result",{
             method:"POST",
@@ -8620,10 +8624,12 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
             ledger.push(resultId);
             saveMinamiApiSyncLedger(ledger);
             if(typeof refreshAccountStats==="function") await refreshAccountStats();
+            return true;
           }
         }catch(e){
           // Game tetap berjalan normal jika API sedang offline.
         }
+        return false;
       }
 
       function saveAccountUser(user){
