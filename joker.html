@@ -1727,31 +1727,211 @@
               (c) =>
                 !c.joker &&
                 c.suit === top.suit &&
-                Math.abs(ranks.indexOf(c.rank) - ranks.indexOf(top.rank)) <= 2,
+                Math.abs(
+                  ranks.indexOf(c.rank) - ranks.indexOf(top.rank),
+                ) <= 2,
             ).length,
             sameSuit = hand.filter(
               (c) => !c.joker && c.suit === top.suit,
             ).length;
-          if (top.joker) return hand.some((c) => c.rank === g.rank) ? 4 : 0;
-          if (rankSame >= 2) score += 6;
-          else if (rankSame === 1) score += 3;
-          if (suitNear >= 2) score += 5;
-          else if (suitNear === 1) score += 2;
-          if (sameSuit >= 3) score += 1;
+          if (top.joker)
+            return hand.some((c) => !c.joker && c.rank === g.rank) ? 10 : 0;
+          if (rankSame >= 2) score += 8;
+          else if (rankSame === 1) score += 4;
+          if (suitNear >= 2) score += 7;
+          else if (suitNear === 1) score += 3;
+          if (sameSuit >= 3) score += 2;
           return score;
         }
+
+        function aiCardSupport(c, hand) {
+          if (!c || c.joker) return 0;
+          let sameRank = hand.filter(
+              (x) => !x.joker && x.id !== c.id && x.rank === c.rank,
+            ).length,
+            nearSuit = hand.filter(
+              (x) =>
+                !x.joker &&
+                x.id !== c.id &&
+                x.suit === c.suit &&
+                Math.abs(
+                  ranks.indexOf(x.rank) - ranks.indexOf(c.rank),
+                ) <= 2,
+            ).length;
+          return sameRank * 7 + nearSuit * 5;
+        }
+
+        function aiHasMeldSupport(c, hand) {
+          if (!c) return false;
+          let ms = melds(hand);
+          return ms.some((m) => m.ids.includes(c.id));
+        }
+
+        function aiStructureScore(hand) {
+          if (!hand || !hand.length) return 0;
+
+          let score = 0,
+            ms = melds(hand).slice().sort((a, b) => b.v - a.v),
+            used = new Set();
+
+          // Utamakan kombinasi yang sudah benar-benar jadi.
+          for (let m of ms) {
+            if (m.ids.some((id) => used.has(id))) continue;
+            m.ids.forEach((id) => used.add(id));
+            score += 24 + m.v * 0.55;
+          }
+
+          // Dasar murni sangat penting agar AI tidak mati saat tumpukan habis.
+          if (hasPureBase(hand)) score += 55;
+
+          // Kartu yang berpasangan/berdekatan masih punya prospek.
+          for (let c of hand) {
+            let support = aiCardSupport(c, hand);
+            if (support >= 12) score += 9;
+            else if (support >= 7) score += 5;
+            else if (support >= 4) score += 2;
+          }
+
+          // Joker bernilai tinggi sebagai penyelamat kombinasi.
+          score += hand.filter((c) => c.joker).length * 10;
+
+          return score;
+        }
+
+        function aiOpponentDanger(c, receiver) {
+          if (!c || !g || receiver == null) return 0;
+          let target = g.p[receiver];
+          if (!target) return 0;
+
+          let danger = 0;
+
+          // Kalau target pernah mengambil kartu seperti ini dari buangan,
+          // itu petunjuk kuat bahwa kartu tersebut sedang dibutuhkan.
+          for (let e of g.history || []) {
+            if (!e.takenBy || e.takenBy !== target.name) continue;
+            let t = e.card;
+            if (!t) continue;
+
+            if (
+              !c.joker &&
+              !t.joker &&
+              c.rank === t.rank &&
+              c.suit === t.suit
+            )
+              danger += 28;
+            else if (!c.joker && !t.joker && c.rank === t.rank)
+              danger += 13;
+            else if (
+              !c.joker &&
+              !t.joker &&
+              c.suit === t.suit &&
+              Math.abs(
+                ranks.indexOf(c.rank) - ranks.indexOf(t.rank),
+              ) <= 2
+            )
+              danger += 10;
+            else if (c.joker && t.joker) danger += 22;
+          }
+
+          // Kartu yang target sendiri sering buang biasanya relatif aman.
+          let ownDiscardRank = 0,
+            ownDiscardExact = 0;
+          for (let e of g.history || []) {
+            if (e.player !== receiver || !e.card) continue;
+            let t = e.card;
+            if (
+              !c.joker &&
+              !t.joker &&
+              c.rank === t.rank &&
+              c.suit === t.suit
+            )
+              ownDiscardExact++;
+            else if (!c.joker && !t.joker && c.rank === t.rank)
+              ownDiscardRank++;
+          }
+          danger -= ownDiscardExact * 7;
+          danger -= ownDiscardRank * 2;
+
+          return Math.max(0, danger);
+        }
+
+        function aiBestDiscard(hand, sourceId, receiver) {
+          let choices = hand
+            .map((c, i) => ({ c, i }))
+            .filter((x) => x.c.id !== sourceId);
+
+          if (!choices.length) return null;
+
+          let best = null;
+          for (let x of choices) {
+            let rest = hand.filter((_, i) => i !== x.i),
+              support = aiCardSupport(x.c, rest),
+              breaksMeld = aiHasMeldSupport(x.c, hand),
+              structure = aiStructureScore(rest),
+              danger = aiOpponentDanger(x.c, receiver),
+              valuePenalty = x.c.joker ? 100 : rv(x.c.rank);
+
+            // Semakin besar score, semakin baik kartu ini dibuang.
+            // Kartu pembentuk kombinasi mendapat penalti besar.
+            let discardScore =
+              structure * 3 -
+              support * 4 -
+              (breaksMeld ? 32 : 0) -
+              danger * 2 +
+              valuePenalty * 0.7;
+
+            // Jangan mengorbankan A/Joker yang masih bisa menjadi kartu penutup.
+            if (x.c.rank === "A" || x.c.joker) discardScore -= 22;
+
+            // Jika belum punya dasar, lebih keras menjaga kartu yang berpotensi
+            // membentuk urutan/pot.
+            if (!hasPureBase(hand) && support >= 4) discardScore -= 20;
+
+            if (!best || discardScore > best.score)
+              best = { ...x, score: discardScore };
+          }
+          return best;
+        }
+
+        function aiTakeScore(hand, receiver) {
+          let plan = aiBestDiscard(hand, -1, receiver);
+          if (!plan) return aiStructureScore(hand);
+          return aiStructureScore(
+            hand.filter((c) => c.id !== plan.c.id),
+          );
+        }
+
         function aiWait() {
           if (g.turn === 0 || g.over) return;
           let p = g.p[g.turn];
+
           if (g.phase === "take") {
             if (!g.draw.length) return empty();
+
             let top = g.p[prev()].out.at(-1),
-              fit = discardFit(p.hand, top),
               closeNow =
                 top &&
                 (top.rank === "A" || top.joker) &&
-                closeReady(p.hand.concat(top));
-            let takeDiscard = !!top && (closeNow || fit >= 9);
+                closeReady(p.hand.concat(top)),
+              takeDiscard = false;
+
+            if (top) {
+              let before = aiTakeScore(p.hand, next()),
+                after = aiTakeScore(p.hand.concat(top), next()),
+                fit = discardFit(p.hand, top);
+
+              // Ambil buangan jika benar-benar meningkatkan struktur,
+              // atau langsung membuat tangan siap close.
+              takeDiscard =
+                closeNow ||
+                fit >= 10 ||
+                after >= before + 10;
+
+              // Joker yang bisa membantu kombinasi mendapat prioritas tinggi.
+              if (top.joker && p.hand.some((c) => !c.joker))
+                takeDiscard = true;
+            }
+
             if (takeDiscard) {
               takeOut(p);
               g.source = "discard";
@@ -1761,22 +1941,19 @@
               g.source = "draw";
               g.sourceCard = p.hand.at(-1).id;
             }
+
             g.phase = "discard";
             render();
             saveGame();
             setTimeout(aiWait, 2000 + Math.random() * 2000);
             return;
           }
-          let cand = p.hand.map((c, i) => ({ c, i })),
-            allowed = cand.filter(
-              (x) => !(g.source === "discard" && x.c.id === g.sourceCard),
-            ),
-            a = allowed.filter((x) => !x.c.joker),
-            pool = a.length ? a : allowed;
-          pool.sort((x, y) => rv(y.c.rank) - rv(x.c.rank));
-          let pick =
-            pool.find((x) => !x.c.joker && x.c.rank !== "A") || pool[0];
+
+          let receiver = next(),
+            pick = aiBestDiscard(p.hand, g.source === "discard" ? g.sourceCard : -1, receiver);
+
           if (!pick) return empty();
+
           let c = pick.c,
             i = pick.i,
             rest = p.hand.filter((_, k) => k !== i),
@@ -1786,7 +1963,9 @@
               (c.rank === "A" || c.joker) &&
               hasPureBase(rest) &&
               !!analyze(rest);
+
           if (c.joker && g.draw.length > 0) close = false;
+
           p.hand.splice(i, 1);
           p.out.push(c);
           g.history.push({
@@ -1795,8 +1974,10 @@
             card: c,
             takenBy: null,
           });
+
           render();
           saveGame();
+
           setTimeout(
             () => {
               if (close) finish(g.turn, prev(), c);
@@ -1806,13 +1987,11 @@
             2000 + Math.random() * 2000,
           );
         }
+
         function waitAI(t) {
           setTimeout(aiWait, t);
         }
-        function waitAI(t) {
-          setTimeout(aiWait, t);
-        }
-        function advance() {
+function advance() {
           g.turn = next();
           g.phase = "take";
           g.source = null;
