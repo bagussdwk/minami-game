@@ -9196,7 +9196,7 @@ async function saveFeaturedAchievements(codes){
     return false;
   }
 }
-async async function syncAccountAchievements(ids){
+async function syncAccountAchievements(ids){
   const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
   if(!token||!Array.isArray(ids)||!ids.length)return false;
   try{
