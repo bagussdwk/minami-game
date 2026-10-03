@@ -1199,6 +1199,7 @@
           try{
             const a=JSON.parse(localStorage.getItem("minamiJokerAchievementsV1")||"{}")||{};
             a[key]=true;
+            syncJokerAchievements([key]);
             localStorage.setItem("minamiJokerAchievementsV1",JSON.stringify(a));
           }catch(e){}
         }
@@ -1207,18 +1208,18 @@
           let u={};
           try{u=JSON.parse(localStorage.getItem("minamiJokerAchievementsV1")||"{}")||{}}catch(e){}
           return {
-            firstJoker:Number(s.jokers||0)>=1,
-            firstWin:Number(s.rank1||0)>=1,
-            firstChampion:Number(s.game_wins||0)>=1,
-            setMaster:Number(s.joker_sets||0)>=1,
-            collector:Number(s.jokers||0)>=10,
-            hoarder:Number(s.jokers||0)>=25,
-            tripleSet:!!u.tripleSet,
-            perfectClose:!!u.perfectClose,
-            gotcha:Number(s.caught||0)>=1,
-            payback:Number(s.caught_by||0)>=1,
-            hotStreak:Number(s.best_streak||0)>=3,
-            unstoppable:Number(s.best_streak||0)>=5
+            firstJoker:Number(s.jokers||0)>=1||jokerServerAchievementCodes.has("first-joker"),
+            firstWin:Number(jokerAccountStats.global?.rank1||0)>=1||jokerServerAchievementCodes.has("first-win"),
+            firstChampion:Number(jokerAccountStats.global?.game_wins||0)>=1||jokerServerAchievementCodes.has("first-champion"),
+            setMaster:Number(s.joker_sets||0)>=1||jokerServerAchievementCodes.has("set-master"),
+            collector:Number(s.jokers||0)>=10||jokerServerAchievementCodes.has("joker-collector"),
+            hoarder:Number(s.jokers||0)>=25||jokerServerAchievementCodes.has("joker-hoarder"),
+            tripleSet:!!u.tripleSet||jokerServerAchievementCodes.has("triple-set"),
+            perfectClose:!!u.perfectClose||jokerServerAchievementCodes.has("perfect-close"),
+            gotcha:Number(s.caught||0)>=1||jokerServerAchievementCodes.has("gotcha"),
+            payback:Number(s.caught_by||0)>=1||jokerServerAchievementCodes.has("payback"),
+            hotStreak:Number(s.best_streak||0)>=3||jokerServerAchievementCodes.has("hot-streak"),
+            unstoppable:Number(s.best_streak||0)>=5||jokerServerAchievementCodes.has("unstoppable")
           };
         }
 
@@ -2795,7 +2796,11 @@ function advance() {
         }
         function jokerRankInfo(s){const r=Math.max(0,Number(s?.rank1)||0),g0=Math.max(0,Number(s?.games_finished)||0),w=Math.max(0,Number(s?.game_wins)||0),t=[{name:"PEMULA",icon:"🌱",min:0,next:5},{name:"NOVICE",icon:"🃏",min:5,next:15},{name:"PLAYER",icon:"⚔️",min:15,next:30},{name:"EXPERT",icon:"🔥",min:30,next:60},{name:"MASTER",icon:"💎",min:60,next:100}];if(r>=100&&g0>=25&&w>=10){const l=Math.floor((r-100)/50)+1,m=100+(l-1)*50,n=m+50;return{name:"GRANDMASTER",icon:"👑",sub:r+" Rank 1 • "+g0+" Game selesai • "+w+" Win Game",progress:Math.min(100,Math.round((r-m)/(n-m)*100))}}let x=t[0];for(let i=t.length-1;i>=0;i--)if(r>=t[i].min){x=t[i];break}return{name:x.name,icon:x.icon,sub:r+" Rank 1 • "+g0+" Game selesai • "+w+" Win Game",progress:Math.min(100,Math.round((r-x.min)/(x.next-x.min)*100))}}
 let jokerAccountStats={global:{},mode:{}};
-async function loadJokerAccountStats(){const token=localStorage.getItem(JOKER_API_TOKEN_KEY);if(!token)return false;try{const d=await jokerApiPost("stats",{token});jokerAccountStats.global=d?.stats||{};jokerAccountStats.mode=d?.mode_stats?.joker||{};return true}catch(e){return false}}
+let jokerServerAchievementCodes=new Set();
+const JOKER_ACH_CODE_MAP={firstJoker:"first-joker",firstWin:"first-win",firstChampion:"first-champion",setMaster:"set-master",collector:"joker-collector",hoarder:"joker-hoarder",tripleSet:"triple-set",perfectClose:"perfect-close",gotcha:"gotcha",payback:"payback",hotStreak:"hot-streak",unstoppable:"unstoppable"};
+async function loadJokerAchievements(){const token=localStorage.getItem(JOKER_API_TOKEN_KEY);if(!token)return false;try{const r=await fetch(JOKER_API_URL+"?action=achievement",{headers:{Authorization:"Bearer "+token}});const d=await r.json();if(r.ok&&d?.ok){jokerServerAchievementCodes=new Set((d.achievements||[]).filter(x=>x.unlocked).map(x=>x.code));return true}}catch(e){}return false}
+async function syncJokerAchievements(keys){const token=localStorage.getItem(JOKER_API_TOKEN_KEY);if(!token||!Array.isArray(keys)||!keys.length)return false;const ids=keys.map(x=>JOKER_ACH_CODE_MAP[x]||x);try{const r=await fetch(JOKER_API_URL+"?action=achievement",{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({token,achievement_ids:[...new Set(ids)]})});const d=await r.json();if(r.ok&&d?.ok){ids.forEach(x=>jokerServerAchievementCodes.add(x));return true}}catch(e){}return false}
+async function loadJokerAccountStats(){const token=localStorage.getItem(JOKER_API_TOKEN_KEY);if(!token)return false;try{const d=await jokerApiPost("stats",{token});jokerAccountStats.global=d?.stats||{};jokerAccountStats.mode=d?.mode_stats?.joker||{};await loadJokerAchievements();return true}catch(e){return false}}
 function getJokerPlayerProfile(){try{const s=JSON.parse(localStorage.getItem("minamiProfileV1")||"null");return{name:typeof s?.name==="string"&&s.name.trim()?s.name.trim():"Anda"}}catch(e){return{name:"Anda"}}}
 function updateJokerProfileUI(){const r=jokerRankInfo(jokerAccountStats.global),p=getJokerPlayerProfile();$("jokerMenuName").textContent=p.name;$("jokerRankIcon").textContent=r.icon;$("jokerRankName").textContent=r.name;$("jokerRankSub").textContent=r.sub;$("jokerRankProgress").style.width=r.progress+"%";$("jokerRankPercent").textContent=Math.round(r.progress)+"%";$("jokerRankNext").textContent=r.next||"Gelar tertinggi";$("jokerMenuAvatar").innerHTML=g?.p?.[0]?.photo?'<img src="'+g.p[0].photo+'">':"👤";const i=$("jokerProfileNameInput");if(i&&document.activeElement!==i)i.value=p.name==="Anda"?"":p.name}
 function openJokerFeature(tab){const g0=jokerAccountStats.global||{},s=jokerAccountStats.mode||{},global=[["rank1","Rank 1"],["game_wins","Win Game"],["match_finished","Match Selesai"]],jok=[["match_finished","Match Selesai"],["rank1","Rank 1"],["game_wins","Win Game"],["jokers","Joker Digunakan"],["joker_sets","Set"],["caught","Menangkap"],["caught_by","Ditangkap"],["best_streak","Best Streak"]];let body;if(tab==="global")body='<div class="joker-feature-grid">'+global.map(x=>'<div class="joker-feature-stat"><b>'+Number(g0[x[0]]||0)+'</b><span>'+x[1]+'</span></div>').join("")+'</div>';else if(tab==="joker")body='<div class="joker-feature-grid">'+jok.map(x=>'<div class="joker-feature-stat"><b>'+Number(s[x[0]]||0)+'</b><span>'+x[1]+'</span></div>').join("")+'</div>';else {
