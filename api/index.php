@@ -37,6 +37,7 @@ switch($path){
   case 'logout': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); logoutUser($db); break;
   case 'me': me($db); break;
   case 'stats': stats($db); break;
+  case 'leaderboard': leaderboard($db); break;
   case 'game-save': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameSave($db,$body); break;
   case 'game-load': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameLoad($db,$body); break;
   case 'game-delete': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameDelete($db,$body); break;
@@ -102,6 +103,35 @@ function logoutUser(PDO $db):never{
 }
 function me(PDO $db):never{$u=auth($db);ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name']]]);}
 function stats(PDO $db):never{$u=auth($db);$q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');$q->execute([$u['id']]);ok(['stats'=>$q->fetch()?:[]]);}
+function leaderboard(PDO $db):never{
+  // Leaderboard publik: hanya data statistik yang memang ditampilkan di profil.
+  // Tidak mengembalikan username, password, token, atau data sensitif akun.
+  $q=$db->query('
+    SELECT
+      u.display_name,
+      s.games_finished,
+      s.game_wins,
+      s.rank1,
+      s.match_finished,
+      s.match_wins
+    FROM users u
+    INNER JOIN player_global_stats s ON s.user_id=u.id
+    ORDER BY s.rank1 DESC, s.games_finished DESC, s.game_wins DESC, s.match_finished DESC, s.match_wins DESC, u.display_name ASC
+  ');
+  $rows=$q->fetchAll();
+  $players=[];
+  foreach($rows as $row){
+    $players[]=[
+      'name'=>mb_substr((string)$row['display_name'],0,40),
+      'games_finished'=>(int)$row['games_finished'],
+      'game_wins'=>(int)$row['game_wins'],
+      'rank1'=>(int)$row['rank1'],
+      'match_finished'=>(int)$row['match_finished'],
+      'match_wins'=>(int)$row['match_wins']
+    ];
+  }
+  ok(['players'=>$players]);
+}
 function ensureGameSavesTable(PDO $db):void{
   $db->exec('CREATE TABLE IF NOT EXISTS player_game_saves (
     user_id BIGINT UNSIGNED NOT NULL,
