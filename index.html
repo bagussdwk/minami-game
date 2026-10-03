@@ -551,6 +551,9 @@
         }
       }
 
+      #setup > .menu-account-card{width:min(460px,100%);margin:18px auto 18px;text-align:left}
+      #setup > .menu-account-card .menu-account-label{font-size:9px}
+      @media(max-width:700px){#setup > .menu-account-card{margin:12px auto 14px}}
       .setup {
         position: relative;
         width: min(820px, calc(100% - 32px));
@@ -4113,6 +4116,43 @@
         <div class="setup-card">9♠</div>
       </div>
 
+              <div class="menu-account-card" id="accountBox">
+                      <div class="menu-account-head">
+                        <div class="menu-account-label">AKUN ONLINE</div>
+                        <div class="menu-account-status" id="accountStatus">Belum login</div>
+                      </div>
+                      <div id="accountLoggedOut">
+                        <div class="menu-account-fields">
+                          <input type="text" id="accountUsernameInput" maxlength="32" autocomplete="username" placeholder="Username (3–32 karakter)" />
+                          <input type="password" id="accountPasswordInput" maxlength="100" autocomplete="current-password" placeholder="Password (minimal 8 karakter)" />
+                        </div>
+                        <div class="menu-account-actions">
+                          <button type="button" class="menu-account-btn primary" id="accountLoginBtn">Masuk</button>
+                          <button type="button" class="menu-account-btn" id="accountRegisterBtn">Daftar</button>
+                        </div>
+                        <div class="menu-account-message" id="accountMessage">Login akun membuat statistik dapat tersimpan lintas perangkat.</div>
+                      </div>
+                      <div id="accountLoggedIn" style="display:none">
+                        <div class="menu-account-user">
+                          <div class="menu-account-avatar">🌐</div>
+                          <div class="menu-account-user-main">
+                            <div class="menu-account-display" id="accountDisplayName">—</div>
+                            <div class="menu-account-username" id="accountUsernameLabel">@—</div>
+                          </div>
+                        </div>
+                        <div class="menu-account-stats">
+                          <div class="menu-account-stat"><b id="accountGameWins">0</b><span>Win Game</span></div>
+                          <div class="menu-account-stat"><b id="accountRank1">0</b><span>Rank 1</span></div>
+                          <div class="menu-account-stat"><b id="accountGames">0</b><span>Game selesai</span></div>
+                        </div>
+                        <div class="menu-account-user-actions">
+                          <button type="button" class="menu-account-btn danger" id="accountLogoutBtn">Keluar Akun</button>
+                        </div>
+                        <div class="menu-account-message" id="accountMessageLoggedIn">Statistik global dipakai untuk gelar akun ini.</div>
+                      </div>
+                    </div>
+      
+
       <div class="setup-section-label">Pilih jumlah pemain</div>
       <div class="player-buttons">
         <button class="player-btn active" data-player="4">
@@ -4389,41 +4429,6 @@
                 <button type="button" class="menu-profile-save" id="profileNameSave">Simpan</button>
               </div>
               <div class="menu-profile-note" id="profileNameNote">Nama ini akan tampil sebagai nama P1 di meja.</div>
-              <div class="menu-account-card" id="accountBox">
-                <div class="menu-account-head">
-                  <div class="menu-account-label">AKUN ONLINE</div>
-                  <div class="menu-account-status" id="accountStatus">Belum login</div>
-                </div>
-                <div id="accountLoggedOut">
-                  <div class="menu-account-fields">
-                    <input type="text" id="accountUsernameInput" maxlength="32" autocomplete="username" placeholder="Username (3–32 karakter)" />
-                    <input type="password" id="accountPasswordInput" maxlength="100" autocomplete="current-password" placeholder="Password (minimal 8 karakter)" />
-                  </div>
-                  <div class="menu-account-actions">
-                    <button type="button" class="menu-account-btn primary" id="accountLoginBtn">Masuk</button>
-                    <button type="button" class="menu-account-btn" id="accountRegisterBtn">Daftar</button>
-                  </div>
-                  <div class="menu-account-message" id="accountMessage">Login akun membuat statistik dapat tersimpan lintas perangkat.</div>
-                </div>
-                <div id="accountLoggedIn" style="display:none">
-                  <div class="menu-account-user">
-                    <div class="menu-account-avatar">🌐</div>
-                    <div class="menu-account-user-main">
-                      <div class="menu-account-display" id="accountDisplayName">—</div>
-                      <div class="menu-account-username" id="accountUsernameLabel">@—</div>
-                    </div>
-                  </div>
-                  <div class="menu-account-stats">
-                    <div class="menu-account-stat"><b id="accountGameWins">0</b><span>Win Game</span></div>
-                    <div class="menu-account-stat"><b id="accountRank1">0</b><span>Rank 1</span></div>
-                    <div class="menu-account-stat"><b id="accountGames">0</b><span>Game selesai</span></div>
-                  </div>
-                  <div class="menu-account-user-actions">
-                    <button type="button" class="menu-account-btn danger" id="accountLogoutBtn">Keluar Akun</button>
-                  </div>
-                  <div class="menu-account-message" id="accountMessageLoggedIn">Statistik global dipakai untuk gelar akun ini.</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
