@@ -23,7 +23,6 @@ try {
     [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC]
   );
 } catch(Throwable $e) { fail('Database tidak dapat dihubungkan.',500); }
-ensureStatsSchema($db);
 
 $path=trim(parse_url($_SERVER['REQUEST_URI']??'/',PHP_URL_PATH)??'/','/');
 // Some shared hosts do not support PATH_INFO/rewrite for /api/me. Allow ?action=me too.
@@ -102,37 +101,7 @@ function logoutUser(PDO $db):never{
   ok();
 }
 function me(PDO $db):never{$u=auth($db);ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name']]]);}
-function stats(PDO $db):never{$u=auth($db);ensureStatsSchema($db);$q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');$q->execute([$u['id']]);ok(['stats'=>$q->fetch()?:[]]);}
-function ensureStatsSchema(PDO $db):void{
-  $global=[
-    'tenho'=>'INT UNSIGNED NOT NULL DEFAULT 0',
-    'pots'=>'INT UNSIGNED NOT NULL DEFAULT 0',
-    'cards'=>'INT UNSIGNED NOT NULL DEFAULT 0',
-    'jokers'=>'INT UNSIGNED NOT NULL DEFAULT 0',
-    'best_combo'=>'INT UNSIGNED NOT NULL DEFAULT 0',
-    'dead'=>'INT UNSIGNED NOT NULL DEFAULT 0',
-    'mvp'=>'INT UNSIGNED NOT NULL DEFAULT 0',
-    'best_streak'=>'INT UNSIGNED NOT NULL DEFAULT 0'
-  ];
-  foreach($global as $col=>$def){
-    $q=$db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='player_global_stats' AND COLUMN_NAME=?");
-    $q->execute([$col]);
-    if(!(int)$q->fetchColumn()) $db->exec("ALTER TABLE player_global_stats ADD COLUMN $col $def");
-  }
-  foreach($global as $col=>$def){
-    $q=$db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='player_mode_stats' AND COLUMN_NAME=?");
-    $q->execute([$col]);
-    if(!(int)$q->fetchColumn()) $db->exec("ALTER TABLE player_mode_stats ADD COLUMN $col $def");
-  }
-  $db->exec("CREATE TABLE IF NOT EXISTS player_stat_events (
-    user_id BIGINT UNSIGNED NOT NULL,
-    event_id VARCHAR(128) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id,event_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-}
-
+function stats(PDO $db):never{$u=auth($db);$q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');$q->execute([$u['id']]);ok(['stats'=>$q->fetch()?:[]]);}
 function ensureGameSavesTable(PDO $db):void{
   $db->exec('CREATE TABLE IF NOT EXISTS player_game_saves (
     user_id BIGINT UNSIGNED NOT NULL,
@@ -216,7 +185,7 @@ function gameDelete(PDO $db,array $b):never{
   ok();
 }
 function gameResult(PDO $db,array $b):never{
-  $u=auth($db);ensureStatsSchema($db);
+  $u=auth($db);
   $mode=trim((string)($b['mode']??''));
   if(!in_array($mode,['minami1','minami2','joker'],true))fail('Mode tidak valid.');
 
