@@ -126,7 +126,10 @@ function stats(PDO $db):never{
       'best_combo'=>(int)$row['best_combo'],
       'dead'=>(int)$row['dead'],
       'mvp'=>(int)$row['mvp'],
-      'best_streak'=>(int)$row['best_streak']
+      'best_streak'=>(int)$row['best_streak'],
+      'joker_sets'=>(int)($row['joker_sets']??0),
+      'caught'=>(int)($row['caught']??0),
+      'caught_by'=>(int)($row['caught_by']??0)
     ];
   }
   ok(['stats'=>$global,'mode_stats'=>$modeStats]);
@@ -147,7 +150,7 @@ function leaderboard(PDO $db):never{
   ');
   $rows=$q->fetchAll();
   $modeQ=$db->query('
-    SELECT user_id,mode,games_finished,game_wins,rank1,match_finished,match_wins,tenho,pots,cards,jokers,best_combo,dead,mvp,best_streak
+    SELECT user_id,mode,games_finished,game_wins,rank1,match_finished,match_wins,tenho,pots,cards,jokers,best_combo,dead,mvp,best_streak,joker_sets,caught,caught_by
     FROM player_mode_stats
     ORDER BY user_id, FIELD(mode,"minami1","minami2","joker")
   ');
@@ -167,7 +170,10 @@ function leaderboard(PDO $db):never{
       'best_combo'=>(int)$row['best_combo'],
       'dead'=>(int)$row['dead'],
       'mvp'=>(int)$row['mvp'],
-      'best_streak'=>(int)$row['best_streak']
+      'best_streak'=>(int)$row['best_streak'],
+      'joker_sets'=>(int)($row['joker_sets']??0),
+      'caught'=>(int)($row['caught']??0),
+      'caught_by'=>(int)($row['caught_by']??0)
     ];
   }
   $players=[];
@@ -275,7 +281,7 @@ function gameResult(PDO $db,array $b):never{
 
   $keys=[
     'games_finished','game_wins','rank1','match_finished','match_wins',
-    'tenho','pots','cards','jokers','dead','mvp'
+    'tenho','pots','cards','jokers','dead','mvp','joker_sets','caught','caught_by'
   ];
   $vals=[];
   foreach($keys as $k){
@@ -295,8 +301,8 @@ function gameResult(PDO $db,array $b):never{
       ok(['duplicate'=>true]);
     }
 
-    $cols='games_finished,game_wins,rank1,match_finished,match_wins,tenho,pots,cards,jokers,best_combo,dead,mvp,best_streak';
-    $params=[$u['id'],$mode,$vals['games_finished'],$vals['game_wins'],$vals['rank1'],$vals['match_finished'],$vals['match_wins'],$vals['tenho'],$vals['pots'],$vals['cards'],$vals['jokers'],$vals['best_combo'],$vals['dead'],$vals['mvp'],$vals['best_streak']];
+    $cols='games_finished,game_wins,rank1,match_finished,match_wins,tenho,pots,cards,jokers,best_combo,dead,mvp,best_streak,joker_sets,caught,caught_by';
+    $params=[$u['id'],$mode,$vals['games_finished'],$vals['game_wins'],$vals['rank1'],$vals['match_finished'],$vals['match_wins'],$vals['tenho'],$vals['pots'],$vals['cards'],$vals['jokers'],$vals['best_combo'],$vals['dead'],$vals['mvp'],$vals['best_streak'],$vals['joker_sets'],$vals['caught'],$vals['caught_by']];
     $sql='INSERT INTO player_mode_stats(user_id,mode,'.$cols.') VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
       ON DUPLICATE KEY UPDATE
       games_finished=games_finished+VALUES(games_finished),
@@ -311,7 +317,10 @@ function gameResult(PDO $db,array $b):never{
       best_combo=GREATEST(best_combo,VALUES(best_combo)),
       dead=dead+VALUES(dead),
       mvp=mvp+VALUES(mvp),
-      best_streak=GREATEST(best_streak,VALUES(best_streak))';
+      best_streak=GREATEST(best_streak,VALUES(best_streak)),
+      joker_sets=joker_sets+VALUES(joker_sets),
+      caught=caught+VALUES(caught),
+      caught_by=caught_by+VALUES(caught_by)';
     $db->prepare($sql)->execute($params);
 
     $sql2='UPDATE player_global_stats SET
