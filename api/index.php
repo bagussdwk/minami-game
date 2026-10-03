@@ -25,6 +25,7 @@ try {
   // Selalu sinkronkan tabel dan master achievement setiap API dijalankan.
   // Aman dijalankan berulang karena seed memakai INSERT IGNORE.
   ensureAchievementTables($db);
+  ensurePresenceTable($db);
 } catch(Throwable $e) { fail('Database tidak dapat dihubungkan.',500); }
 
 $path=trim(parse_url($_SERVER['REQUEST_URI']??'/',PHP_URL_PATH)??'/','/');
@@ -40,6 +41,7 @@ switch($path){
   case 'logout': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); logoutUser($db); break;
   case 'me': me($db); break;
   case 'stats': stats($db); break;
+  case 'presence': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); presence($db,$body); break;
   case 'leaderboard': leaderboard($db); break;
   case 'game-save': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameSave($db,$body); break;
   case 'game-load': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); gameLoad($db,$body); break;
@@ -102,13 +104,26 @@ function loginUser(PDO $db,array $b):never{
   $db->prepare('INSERT INTO login_sessions(token_hash,user_id,expires_at) VALUES(?,?,?)')->execute([hash('sha256',$token),$row['id'],$exp]);
   ok(['token'=>$token,'user'=>['username'=>$row['username'],'display_name'=>$row['display_name']]]);
 }
+function presence(PDO $db,array $b):never{
+  $u=auth($db);
+  ensurePresenceTable($db);
+  $db->prepare('INSERT INTO user_presence(user_id,last_seen) VALUES(?,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE last_seen=CURRENT_TIMESTAMP')->execute([$u['id']]);
+  ok(['online'=>true]);
+}
 function logoutUser(PDO $db):never{
   global $body;
   $token='';
   $h=(string)($_SERVER['HTTP_AUTHORIZATION']??'');
   if(preg_match('/^Bearer\s+(.+)$/i',trim($h),$m))$token=trim($m[1]);
   if($token==='')$token=trim((string)($body['token']??''));
-  if($token!=='')$db->prepare('DELETE FROM login_sessions WHERE token_hash=?')->execute([hash('sha256',$token)]);
+  if($token!==''){
+    $hash=hash('sha256',$token);
+    $q=$db->prepare('SELECT user_id FROM login_sessions WHERE token_hash=? LIMIT 1');
+    $q->execute([$hash]);
+    $uid=$q->fetchColumn();
+    if($uid)$db->prepare('DELETE FROM user_presence WHERE user_id=?')->execute([(int)$uid]);
+    $db->prepare('DELETE FROM login_sessions WHERE token_hash=?')->execute([$hash]);
+  }
   ok();
 }
 function me(PDO $db):never{$u=auth($db);ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name']]]);}
@@ -152,11 +167,13 @@ function leaderboard(PDO $db):never{
     SELECT
       u.id AS user_id,
       u.display_name,
+      CASE WHEN up.last_seen >= (CURRENT_TIMESTAMP - INTERVAL 120 SECOND) THEN 1 ELSE 0 END AS online,
       COALESCE(s.games_finished,0) AS games_finished,
       COALESCE(s.game_wins,0) AS game_wins,
       COALESCE(s.rank1,0) AS rank1
     FROM users u
     LEFT JOIN player_global_stats s ON s.user_id=u.id
+    LEFT JOIN user_presence up ON up.user_id=u.id
     ORDER BY rank1 DESC, games_finished DESC, game_wins DESC, u.display_name ASC
   ');
   $rows=$q->fetchAll();
@@ -201,6 +218,7 @@ function leaderboard(PDO $db):never{
     $uid=(int)$row['user_id'];
     $players[]=[
       'name'=>mb_substr((string)$row['display_name'],0,40),
+      'online'=>(bool)$row['online'],
       'games_finished'=>(int)$row['games_finished'],
       'game_wins'=>(int)$row['game_wins'],
       'rank1'=>(int)$row['rank1'],
@@ -209,6 +227,14 @@ function leaderboard(PDO $db):never{
     ];
   }
   ok(['players'=>$players]);
+}
+function ensurePresenceTable(PDO $db):void{
+  $db->exec('CREATE TABLE IF NOT EXISTS user_presence (
+    user_id BIGINT UNSIGNED NOT NULL,
+    last_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id),
+    CONSTRAINT fk_user_presence_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
 }
 function ensureGameSavesTable(PDO $db):void{
   $db->exec('CREATE TABLE IF NOT EXISTS player_game_saves (
