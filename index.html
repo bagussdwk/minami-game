@@ -4934,7 +4934,7 @@
           }catch(e2){}
         }
         if(payload&&typeof queueMinamiCloudSave==="function"){
-          queueMinamiCloudSave(payload,Number(game.mode)===2?"minami2":"minami1",!game.over);
+          queueMinamiCloudSave(payload,minamiModeKey(game?.mode),!game.over);
         }
       }
 
@@ -4965,7 +4965,7 @@
         try{localStorage.removeItem(MINAMI_SAVE_KEY)}catch(e){}
         try{sessionStorage.removeItem(MINAMI_SAVE_KEY)}catch(e){}
         if(removeCloud&&typeof deleteMinamiCloudGame==="function"){
-          const modeKey=Number(game?.mode??minamiMode)===2?"minami2":"minami1";
+          const modeKey=minamiModeKey(game?.mode??minamiMode);
           deleteMinamiCloudGame(modeKey);
         }
       }
@@ -8627,6 +8627,10 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
       const MINAMI_API_URL="/api/index.php";
       const MINAMI_API_TOKEN_KEY="minamiApiToken";
       const MINAMI_API_SYNC_KEY="minamiApiSyncLedgerV1";
+      function minamiModeKey(mode){
+        const m=Number(mode);
+        return m===3?"joker":(m===2?"minami2":"minami1");
+      }
       let minamiModeStats={};
       let minamiStatsModeView="global";
       function minamiApiSyncLedger(){
@@ -8650,7 +8654,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
             body:JSON.stringify({
               token,
               event_id:String(resultId),
-              mode:Number(game?.mode??minamiMode)===3?"joker":(Number(game?.mode??minamiMode)===2?"minami2":"minami1"),
+              mode:Number(game?.mode??minamiMode)===3?"joker":(minamiModeKey(game?.mode??minamiMode)),
               games_finished:Number(values.games_finished)||0,
               game_wins:Number(values.game_wins)||0,
               rank1:Number(values.rank1)||0,
@@ -8741,7 +8745,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
       async function saveMinamiCloudImmediately(){
         if(!game||game.over)return;
         const payload=JSON.stringify(buildMinamiSavePayload());
-        const modeKey=Number(game.mode)===2?"minami2":"minami1";
+        const modeKey=minamiModeKey(game?.mode);
         minamiCloudPending[modeKey]={payload,active:true};
         clearTimeout(minamiCloudTimers[modeKey]);
         await flushMinamiCloudSave(modeKey);
@@ -8776,7 +8780,7 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
           }
           let save=null;
           if(game&&!game.over){
-            const currentMode=Number(game.mode)===2?"minami2":"minami1";
+            const currentMode=minamiModeKey(game?.mode);
             save=saves.find(x=>x.mode===currentMode)||null;
             if(!save)return;
             const meta=minamiCloudMeta();
