@@ -9445,6 +9445,11 @@ function renderFeaturePanels(){
             '<div class="leaderboard-detail-title">'+rank.name+(rank.level?" "+rank.level:"")+'</div>'+
             '<div class="leaderboard-detail-rank">Rank #'+(minamiLeaderboardCache.indexOf(p)+1)+' • '+Number(p.rank1||0)+' Rank 1</div></div>'+
           '</div>'+
+          '<div class="leaderboard-featured-achievements"><div class="leaderboard-featured-title">🏅 ACHIEVEMENT PILIHAN</div>'+
+            ((Array.isArray(p.featured_achievements)&&p.featured_achievements.length)
+              ? '<div class="leaderboard-featured-grid">'+p.featured_achievements.slice(0,3).map(a=>'<div class="leaderboard-featured-card"><div class="leaderboard-featured-icon">'+leaderboardEscape(a.icon||"🏆")+'</div><div><b>'+leaderboardEscape(a.name||"Achievement")+'</b><span>'+leaderboardEscape(a.mode||"GLOBAL")+'</span></div></div>').join('')+'</div>'
+              : '<div class="leaderboard-featured-empty">Belum memilih achievement untuk dipajang.</div>')+
+          '</div>'+
           '<div class="leaderboard-detail-global-title">🌐 GLOBAL • 3 GAME</div>'+
           '<div class="leaderboard-detail-grid">'+
             '<div class="leaderboard-detail-stat"><b>'+games+'</b><span>GAME FINISHED</span></div>'+
