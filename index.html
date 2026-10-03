@@ -9067,7 +9067,20 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         };
       }
       let minamiServerAchievementCodes=new Set();
-async function loadAccountAchievements(){const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);if(!token)return false;try{const r=await fetch(MINAMI_API_URL+"?action=achievement",{headers:{Authorization:"Bearer "+token}});const d=await r.json();if(r.ok&&d?.ok){minamiServerAchievementCodes=new Set((d.achievements||[]).filter(x=>x.unlocked).map(x=>x.code));return true}}catch(e){}return false}
+let minamiAccountAchievements=[];
+let minamiFeaturedAchievementCodes=[];
+async function loadAccountAchievements(){const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);if(!token)return false;try{const r=await fetch(MINAMI_API_URL+"?action=achievement",{headers:{Authorization:"Bearer "+token}});const d=await r.json();if(r.ok&&d?.ok){
+  minamiAccountAchievements=Array.isArray(d.achievements)?d.achievements:[];
+  minamiServerAchievementCodes=new Set(minamiAccountAchievements.filter(x=>x.unlocked).map(x=>x.code));
+  minamiFeaturedAchievementCodes=Array.isArray(d.featured_achievements)?d.featured_achievements.map(x=>x.code):[];
+  return true}}catch(e){}return false}
+async function saveFeaturedAchievements(codes){
+  const token=localStorage.getItem(MINAMI_API_TOKEN_KEY); if(!token)return false;
+  try{
+    const r=await fetch(MINAMI_API_URL+"?action=achievement",{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({token,featured_codes:[...new Set(codes)].slice(0,3)})});
+    const d=await r.json(); if(r.ok&&d?.ok){minamiFeaturedAchievementCodes=[...new Set(codes)].slice(0,3);renderAchievements();return true}
+  }catch(e){} return false
+}
 async function syncAccountAchievements(ids){const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);if(!token||!Array.isArray(ids)||!ids.length)return false;try{const r=await fetch(MINAMI_API_URL+"?action=achievement",{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({token,achievement_ids:[...new Set(ids)]})});const d=await r.json();if(r.ok&&d?.ok){for(const id of ids)minamiServerAchievementCodes.add(id);return true}}catch(e){}return false}
 function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAMI_ACH_KEY)||"[]")}catch(e){return[]}}
       function updateAchievements(){
@@ -9257,7 +9270,7 @@ function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAM
     ["triple-champion","🏆","Triple Champion","Menang 3 Game sampai target.","MINAMI"],
     ["veteran","🎖️","Veteran","Menyelesaikan 25 match.","MINAMI"],
     ["streak-3","⚡","Winning Streak","Menang 3 match berturut-turut.","MINAMI"],
-    ["minami2-clean-5","🛡️","Clean Five","Menyelesaikan 5 Game Minami 2 berturut-turut tanpa mati tangan.","MINAMI 2"],
+    ["minami2-clean-5","🛡️","Clean Five","5 Game Minami 2 berturut-turut tanpa mati tangan awal.","MINAMI 2"],
     ["first-joker","🃏","First Joker","Menggunakan Joker pertama dalam kombinasi.","JOKER"],
     ["set-master","🎯","Set Master","Membuat set pertama.","JOKER"],
     ["joker-collector","🔥","Joker Collector","Menggunakan 10 Joker.","JOKER"],
@@ -9269,7 +9282,33 @@ function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAM
     ["hot-streak","🔥","Hot Streak","Rank 1 dalam 3 match berturut-turut.","JOKER"],
     ["unstoppable","👑","Unstoppable","Rank 1 dalam 5 match berturut-turut.","JOKER"]
   ];
-  b.innerHTML='<div class="achievement-grid">'+defs.map(x=>'<div class="achievement-card '+(u.has(x[0])?"unlocked":"locked")+'"><div class="achievement-icon">'+x[1]+'</div><div class="achievement-info"><b>'+x[2]+'</b><span>'+x[3]+' • '+x[4]+'</span></div><em>'+(u.has(x[0])?"✓":"🔒")+'</em></div>').join('')+'</div>';
+  const chosen=new Set(minamiFeaturedAchievementCodes);
+  const unlockedDefs=defs.filter(x=>u.has(x[0]));
+  const featured=unlockedDefs.filter(x=>chosen.has(x[0]));
+  const featuredHtml=featured.length
+    ? '<div class="featured-achievement-grid">'+featured.map(x=>'<div class="featured-achievement-card"><div class="featured-achievement-icon">'+x[1]+'</div><div><b>'+x[2]+'</b><span>'+x[4]+'</span></div></div>').join('')+'</div>'
+    : '<div class="achievement-empty-featured">Belum ada achievement yang dipajang. Buka achievement lalu pilih sampai 3.</div>';
+  b.innerHTML='<div class="achievement-featured-head"><div><b>🏅 Achievement Profil</b><span>Pilih maksimal 3 achievement yang akan terlihat di profil dan leaderboard.</span></div></div>'+
+    featuredHtml+
+    '<div class="achievement-grid">'+defs.map(x=>{
+      const unlocked=u.has(x[0]),selected=chosen.has(x[0]);
+      return '<div class="achievement-card '+(unlocked?"unlocked":"locked")+' '+(selected?"featured":"")+'">'+
+        '<div class="achievement-icon">'+x[1]+'</div><div class="achievement-info"><b>'+x[2]+'</b><span>'+x[3]+' • '+x[4]+'</span></div>'+
+        '<em>'+(selected?"★":unlocked?"✓":"🔒")+'</em>'+
+        (unlocked?'<button type="button" class="achievement-feature-btn" data-feature-ach="'+x[0]+'">'+(selected?"Lepas":"Pajang")+'</button>':'')+
+      '</div>';
+    }).join('')+'</div>';
+  b.querySelectorAll("[data-feature-ach]").forEach(btn=>{
+    btn.onclick=async()=>{
+      const code=btn.dataset.featureAch;
+      const next=[...minamiFeaturedAchievementCodes].filter(x=>x!==code);
+      if(!chosen.has(code)){
+        if(next.length>=3){showPlayFeedback("Maksimal 3 achievement.",false);return}
+        next.push(code);
+      }
+      await saveFeaturedAchievements(next);
+    };
+  });
 }
 function renderFeaturePanels(){
         renderFeatureStats();
