@@ -2486,10 +2486,18 @@ function advance() {
           const resultId="joker-"+Date.now()+"-"+Math.random().toString(36).slice(2);
           const gameFinished=g.p.some((x)=>Number(x.score)>=1500);
           const userGameWin=Number(g.p[0]?.score)>=1500;
+          ensureJokerActionStats();
+          saveJokerCurrentStreak(0);
           syncJokerResult(resultId,{
             games_finished:gameFinished?1:0,
             game_wins:userGameWin?1:0,
-            match_wins:0
+            rank1:0,
+            match_wins:0,
+            jokers:g.jokerStats.jokers,
+            joker_sets:g.jokerStats.sets,
+            caught:g.jokerStats.caught,
+            caught_by:g.jokerStats.caughtBy,
+            best_streak:0
           });
           let order = g.p
               .map((p, i) => ({ i, score: p.score }))
