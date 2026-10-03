@@ -1826,28 +1826,56 @@
         // saat tumpukan habis: misalnya J-Q-K tetap +30, sementara kartu
         // lain yang tidak masuk susunan menjadi kartu mati/minus.
         function analyzePartial(cs) {
+          // Saat tumpukan habis, kartu hanya boleh dianggap hidup jika
+          // pemain mempunyai minimal 1 dasar murni (tanpa Joker).
+          // Jika tidak ada dasar murni, seluruh kartu menjadi mati.
+          if (!hasPureBase(cs))
+            return { ids: [], values: {}, v: 0, melds: [] };
+
           let ms = melds(cs),
-            best = { ids: [], values: {}, v: 0 };
+            best = { ids: [], values: {}, v: 0, melds: [] };
 
           function disjoint(ids, used) {
             return ids.every((id) => !used.has(id));
           }
 
-          function rec(start, used, vals, v) {
-            if (v > best.v) {
-              best = { ids: [...used], values: { ...vals }, v };
+          function isPureBase(m) {
+            if (m.ids.some((id) => {
+              let c = cs.find((x) => x.id === id);
+              return c && c.joker;
+            })) return false;
+            if (m.type === "seq") return true;
+            return m.type === "set" && m.rank === "A" && m.ids.length === 4;
+          }
+
+          function rec(start, used, vals, v, chosen, hasBase) {
+            if (hasBase && v > best.v) {
+              best = {
+                ids: [...used],
+                values: { ...vals },
+                v,
+                melds: chosen.slice(),
+              };
             }
+
             for (let i = start; i < ms.length; i++) {
               let m = ms[i];
               if (!disjoint(m.ids, used)) continue;
               let nextUsed = new Set(used);
               m.ids.forEach((id) => nextUsed.add(id));
               let nextVals = { ...vals, ...m.values };
-              rec(i + 1, nextUsed, nextVals, v + m.v);
+              rec(
+                i + 1,
+                nextUsed,
+                nextVals,
+                v + m.v,
+                chosen.concat([m]),
+                hasBase || isPureBase(m),
+              );
             }
           }
 
-          rec(0, new Set(), {}, 0);
+          rec(0, new Set(), {}, 0, [], false);
           return best;
         }
 
@@ -1864,7 +1892,12 @@
                 z + (live.has(c.id) ? 0 : c.joker ? 25 : rv(c.rank)),
               0,
             );
-          return { liveValue, deadValue, total: liveValue - deadValue };
+          return {
+            liveValue,
+            deadValue,
+            total: liveValue - deadValue,
+            analysis: a,
+          };
         }
         function resultCards(cards) {
           return '<div class="result-cards">' +
@@ -1876,12 +1909,46 @@
             ).join("") +
             "</div>";
         }
-        function resultPlayer(p, extraCards) {
+        function resultMeld(m, cs) {
+          let cards = m.ids
+            .map(id => cs.find(c => c.id === id))
+            .filter(Boolean);
+          let title = m.type === "seq"
+            ? "Dasar" + (cards.some(c => c.joker) ? " + Joker" : " Murni")
+            : "Pot" + (m.rank === "A" && cards.length === 4 ? " / Dasar Murni" : "");
+          return '<div style="margin:6px 0;padding:6px 7px;border-radius:7px;background:#ffffff08;border:1px solid #ffffff10">' +
+            '<div style="font-size:8px;font-weight:900;color:#f3cf70;margin-bottom:4px">' +
+            title + ' • +' + m.v + '</div>' +
+            resultCards(cards) +
+            '</div>';
+        }
+        function resultPlayer(p, extraCards, arranged) {
           let cards = p.hand.slice();
           if (extraCards && extraCards.length) cards = cards.concat(extraCards);
+
+          let arrangedHtml = "";
+          if (arranged) {
+            let used = new Set(arranged.ids || []);
+            arrangedHtml = (arranged.melds || []).map(m => resultMeld(m, cards)).join("");
+            let dead = cards.filter(c => !used.has(c.id));
+            if (dead.length) {
+              arrangedHtml +=
+                '<div style="margin-top:6px"><div style="font-size:8px;font-weight:900;color:#e9a9a9;margin-bottom:4px">Kartu Mati • -' +
+                dead.reduce((z, c) => z + (c.joker ? 25 : rv(c.rank)), 0) +
+                '</div>' + resultCards(dead) + '</div>';
+            }
+            if (!(arranged.melds || []).length) {
+              arrangedHtml =
+                '<div class="note" style="margin:5px 0 0">Tidak ada dasar murni. <b>Semua kartu mati.</b></div>' +
+                resultCards(dead);
+            }
+          } else {
+            arrangedHtml = resultCards(cards);
+          }
+
           return '<div class="result-player"><div class="result-head"><b>' +
             p.name + '</b><span>Skor akumulasi: ' + p.score + '</span></div>' +
-            resultCards(cards) + '</div>';
+            arrangedHtml + '</div>';
         }
         function finish(w, t, c) {
           let wp = g.p[w],
@@ -1948,9 +2015,7 @@
               (-bonus + ta.liveValue - ta.deadValue) +
               '</b></div><div class="note"><b>' +
               wp.name +
-              "</b> memenangkan match dengan menutup. Arah dibalik dan match berikutnya dimulai dari pemain yang tertangkap: <b>" +
-              tp.name +
-              "</b>.</div>" +
+              "</b> memenangkan match dengan menutup. Arah dibalik. Match berikutnya dimulai dari pemain dengan akumulasi poin terendah.</div>" +
             otherRows,
             "Lanjut Match",
             () => {
@@ -1993,7 +2058,7 @@
                 "</b></div>",
             )
             .join("");
-          let playersHtml = g.p.map(p => resultPlayer(p)).join("");
+          let playersHtml = g.p.map(p => resultPlayer(p, [], analyzePartial(p.hand))).join("");
           modal(
             "TUMPUKAN HABIS",
             '<div class="note">Tidak ada yang menutup. Semua kartu yang tersisa di tangan setiap pemain ditampilkan. Kartu hidup menambah poin, kartu mati mengurangi poin.</div>' +
@@ -2065,7 +2130,7 @@
         $("rules").onclick = () =>
           modal(
             "Aturan JOKER",
-            '<div class="note"><b>104 kartu</b>. 4/5 pemain. 13 kartu/orang, pemain pertama 14. Satu kartu sisa jadi penentu; semua kartu dengan warna berlawanan dari penentu dan rank sama menjadi Joker (4 kartu). Giliran: ambil satu dari buangan pemain sebelumnya atau satu dari tengah, lalu buang satu. Semua buangan terlihat. Pot harus rank sama dengan bunga berbeda, maksimal 4 kartu (♠♥♦♣); pot A dengan bunga berbeda juga dihitung sebagai dasar. A-2-3 tidak sah sebagai dasar; jika memakai A sebagai kartu awal, minimal A-2-3-4. Untuk menutup, wajib ada minimal 1 dasar murni tanpa Joker. Joker tidak boleh dibuang sebelum kartu tengah habis; pada buangan terakhir Joker boleh dibuang. Tutup: minimal satu dasar/urutan 3+, penutup hanya A atau Joker. A = +150/-150, Joker = +250/-250. Nilai 2-9 sesuai angka, A=15, J/Q/K=10, Joker hidup mengikuti kartu pengganti, Joker mati=25. Target 1.500.</div>',
+            '<div class="note"><b>104 kartu</b>. 4/5 pemain. 13 kartu/orang, pemain pertama 14. Satu kartu sisa jadi penentu; semua kartu dengan warna berlawanan dari penentu dan rank sama menjadi Joker (4 kartu). Giliran: ambil satu dari buangan pemain sebelumnya atau satu dari tengah, lalu buang satu. Semua buangan terlihat. Pot harus rank sama dengan bunga berbeda, maksimal 4 kartu (♠♥♦♣); pot A dengan bunga berbeda juga dihitung sebagai dasar. A-2-3 sah sebagai dasar. A-A-A adalah pot; A-A-A-A (4 bunga) dapat menjadi dasar murni. Untuk menutup, wajib ada minimal 1 dasar murni tanpa Joker. Joker tidak boleh dibuang sebelum kartu tengah habis; pada buangan terakhir Joker boleh dibuang. Tutup: minimal satu dasar/urutan 3+, penutup hanya A atau Joker. A = +150/-150, Joker = +250/-250. Nilai 2-9 sesuai angka, A=15, J/Q/K=10, Joker hidup mengikuti kartu pengganti, Joker mati=25. Target 1.500.</div>',
             "Tutup",
             closeModal,
             true,
@@ -2092,7 +2157,7 @@
         $("rules").onclick = () =>
           modal(
             "Aturan JOKER",
-            '<div class="note"><b>104 kartu</b>. 4/5 pemain. 13 kartu/orang, pemain pertama 14. Satu kartu sisa jadi penentu; semua kartu dengan warna berlawanan dari penentu dan rank sama menjadi Joker (4 kartu). Giliran: ambil satu dari buangan pemain sebelumnya atau satu dari tengah, lalu buang satu. Semua buangan terlihat. Pot harus rank sama dengan bunga berbeda, maksimal 4 kartu (♠♥♦♣); pot A dengan bunga berbeda juga dihitung sebagai dasar. A-2-3 tidak sah sebagai dasar; jika memakai A sebagai kartu awal, minimal A-2-3-4. Untuk menutup, wajib ada minimal 1 dasar murni tanpa Joker. Joker tidak boleh dibuang sebelum kartu tengah habis; pada buangan terakhir Joker boleh dibuang. Tutup: minimal satu dasar/urutan 3+, penutup hanya A atau Joker. A = +150/-150, Joker = +250/-250. Nilai 2-9 sesuai angka, A=15, J/Q/K=10, Joker hidup mengikuti kartu pengganti, Joker mati=25. Target 1.500.</div>',
+            '<div class="note"><b>104 kartu</b>. 4/5 pemain. 13 kartu/orang, pemain pertama 14. Satu kartu sisa jadi penentu; semua kartu dengan warna berlawanan dari penentu dan rank sama menjadi Joker (4 kartu). Giliran: ambil satu dari buangan pemain sebelumnya atau satu dari tengah, lalu buang satu. Semua buangan terlihat. Pot harus rank sama dengan bunga berbeda, maksimal 4 kartu (♠♥♦♣); pot A dengan bunga berbeda juga dihitung sebagai dasar. A-2-3 sah sebagai dasar. A-A-A adalah pot; A-A-A-A (4 bunga) dapat menjadi dasar murni. Untuk menutup, wajib ada minimal 1 dasar murni tanpa Joker. Joker tidak boleh dibuang sebelum kartu tengah habis; pada buangan terakhir Joker boleh dibuang. Tutup: minimal satu dasar/urutan 3+, penutup hanya A atau Joker. A = +150/-150, Joker = +250/-250. Nilai 2-9 sesuai angka, A=15, J/Q/K=10, Joker hidup mengikuti kartu pengganti, Joker mati=25. Target 1.500.</div>',
             "Tutup",
             closeModal,
             true,
