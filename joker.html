@@ -2399,10 +2399,20 @@ function advance() {
           const resultId="joker-"+Date.now()+"-"+Math.random().toString(36).slice(2);
           const gameFinished=g.p.some((x)=>Number(x.score)>=1500);
           const userGameWin=Number(g.p[0]?.score)>=1500;
+          ensureJokerActionStats();
+          const rank1=w===0?1:0;
+          const streak=rank1?jokerCurrentStreak()+1:0;
+          if(rank1)saveJokerCurrentStreak(streak); else saveJokerCurrentStreak(0);
           syncJokerResult(resultId,{
             games_finished:gameFinished?1:0,
             game_wins:userGameWin?1:0,
-            match_wins:w===0?1:0
+            rank1,
+            match_wins:rank1,
+            jokers:g.jokerStats.jokers,
+            joker_sets:g.jokerStats.sets,
+            caught:g.jokerStats.caught,
+            caught_by:g.jokerStats.caughtBy,
+            best_streak:streak
           });
           g.over = false;
           render();
