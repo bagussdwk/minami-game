@@ -944,7 +944,6 @@
     <header class="top">
       <b class="brand">🃏 JOKER</b>
       <div>
-        <button class="btn" id="rules">Aturan</button>
         <button class="btn" id="back">← Menu</button>
       </div>
     </header>
@@ -2593,16 +2592,8 @@ function advance() {
         }
         $("back").onclick = () => {
           clearSavedGame();
-          location.href = "v3.html";
+          location.href = "index.html";
         };
-        $("rules").onclick = () =>
-          modal(
-            "Aturan JOKER",
-            '<div class="note"><b>104 kartu</b>. 4/5 pemain. 13 kartu/orang, pemain pertama 14. Satu kartu sisa jadi penentu; semua kartu dengan warna berlawanan dari penentu dan rank sama menjadi Joker (4 kartu). Giliran: ambil satu dari buangan pemain sebelumnya atau satu dari tengah, lalu buang satu. Semua buangan terlihat. Pot harus rank sama dengan bunga berbeda, maksimal 4 kartu (♠♥♦♣); pot A dengan bunga berbeda juga dihitung sebagai dasar. A-2-3 sah sebagai dasar. A-A-A adalah pot; A-A-A-A (4 bunga) dapat menjadi dasar murni. Untuk menutup, wajib ada minimal 1 dasar murni tanpa Joker. Joker tidak boleh dibuang sebelum kartu tengah habis; pada buangan terakhir Joker boleh dibuang. Tutup: minimal satu dasar/urutan 3+, penutup hanya A atau Joker. A = +150/-150, Joker = +250/-250. Nilai 2-10 = 5, A=15, J/Q/K=10, Joker hidup mengikuti kartu pengganti, Joker mati=25. Target 1.500.</div>',
-            "Tutup",
-            closeModal,
-            true,
-          );
       setTimeout(restoreJokerCloudAfterLogin,0);
       })();
     </script>
