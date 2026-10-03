@@ -4097,7 +4097,40 @@
 .leaderboard-featured-card b{margin-top:0}
 @media(max-width:700px){.featured-achievement-grid,.leaderboard-featured-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.featured-achievement-card,.leaderboard-featured-card{padding:8px 4px;min-height:76px}.featured-achievement-icon,.leaderboard-featured-icon{font-size:20px}}
 </style></style>
-</head>
+<style id="account-ui-final-fix">
+/* Final profile / achievement / leaderboard layout fix */
+.achievement-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+.achievement-card{display:grid!important;grid-template-columns:34px minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;align-items:center!important;min-height:72px!important;height:auto!important;padding:9px!important;overflow:visible!important}
+.achievement-card .achievement-icon{grid-column:1;grid-row:1 / span 2}
+.achievement-card .achievement-info{grid-column:2;grid-row:1;min-width:0}
+.achievement-card>em{grid-column:3;grid-row:1;align-self:start}
+.achievement-card .achievement-feature-btn{grid-column:2 / 4;grid-row:2;width:100%;min-height:28px;margin:5px 0 0!important;padding:6px 8px!important;border-radius:7px!important;font-size:8px!important;cursor:pointer!important;touch-action:manipulation!important}
+.achievement-card.locked{min-height:64px!important}
+.achievement-card.locked .achievement-icon{grid-row:1}
+.achievement-featured-head{margin-bottom:9px!important}
+.featured-achievement-grid,.leaderboard-featured-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.featured-achievement-card,.leaderboard-featured-card{min-width:0!important;overflow:hidden!important}
+.leaderboard-error{display:flex!important;flex-direction:column!important;gap:6px!important;align-items:center!important;text-align:center!important}
+.leaderboard-error span{color:#9fb8ad;font-size:8px}
+.leaderboard-retry{min-height:32px;padding:7px 12px;border-radius:8px;border:1px solid rgba(243,207,112,.25);background:rgba(243,207,112,.09);color:#f3cf70;font-size:9px;font-weight:900;cursor:pointer}
+@media(max-width:700px),(hover:none) and (pointer:coarse){
+  .feature-modal-box{width:calc(100% - 12px)!important;max-height:88vh!important;padding:11px!important}
+  .feature-tabs{position:sticky!important;top:0!important;z-index:5!important;background:rgba(5,35,25,.97)!important;padding-bottom:6px!important}
+  .achievement-grid{grid-template-columns:1fr!important;gap:7px!important}
+  .achievement-card{min-height:76px!important}
+  .achievement-card .achievement-feature-btn{min-height:30px!important;font-size:9px!important}
+  .featured-achievement-grid,.leaderboard-featured-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important}
+  .featured-achievement-card,.leaderboard-featured-card{padding:7px 4px!important;min-height:70px!important}
+  .featured-achievement-icon,.leaderboard-featured-icon{font-size:20px!important}
+  .featured-achievement-card b,.leaderboard-featured-card b{font-size:7px!important}
+  .leaderboard-row{grid-template-columns:27px 34px minmax(0,1fr) auto!important;gap:6px!important;padding:8px 6px!important}
+  .leaderboard-icon{width:34px!important;height:34px!important;font-size:18px!important}
+  .leaderboard-name{font-size:10px!important}
+  .leaderboard-title{font-size:7px!important}
+  .leaderboard-rank1 b{font-size:12px!important}
+  .leaderboard-rank1 span{font-size:6px!important}
+}
+</style></head>
   <body>
     <div class="topbar">
       <div class="logo">CARDARENA</div>
@@ -9094,11 +9127,32 @@ async function loadAccountAchievements(){const token=localStorage.getItem(MINAMI
   minamiFeaturedAchievementCodes=Array.isArray(d.featured_achievements)?d.featured_achievements.map(x=>x.code):[];
   return true}}catch(e){}return false}
 async function saveFeaturedAchievements(codes){
-  const token=localStorage.getItem(MINAMI_API_TOKEN_KEY); if(!token)return false;
+  const next=[...new Set(Array.isArray(codes)?codes:[])].slice(0,3);
+  const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
+  if(!token){
+    showPlayFeedback("Login diperlukan untuk menyimpan achievement.",false);
+    return false;
+  }
   try{
-    const r=await fetch(MINAMI_API_URL+"?action=achievement",{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({token,featured_codes:[...new Set(codes)].slice(0,3)})});
-    const d=await r.json(); if(r.ok&&d?.ok){minamiFeaturedAchievementCodes=[...new Set(codes)].slice(0,3);renderAchievements();return true}
-  }catch(e){} return false
+    const r=await fetch(new URL("api/index.php?action=achievement",document.baseURI).href,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=UTF-8","Accept":"application/json"},
+      body:JSON.stringify({token,featured_codes:next})
+    });
+    const raw=await r.text();
+    let d=null; try{d=JSON.parse(raw)}catch(e){}
+    if(!r.ok||!d?.ok) throw new Error(d?.error||("HTTP "+r.status));
+    minamiFeaturedAchievementCodes=next;
+    renderAchievements();
+    const lp=document.getElementById("featureLeaderboardPanel");
+    if(lp){lp.dataset.loaded=""; if(lp.style.display!=="none") renderLeaderboard();}
+    showPlayFeedback("Achievement profil tersimpan.",false);
+    return true;
+  }catch(e){
+    console.error("saveFeaturedAchievements:",e);
+    showPlayFeedback("Gagal menyimpan achievement. Coba lagi.",false);
+    return false;
+  }
 }
 async function syncAccountAchievements(ids){const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);if(!token||!Array.isArray(ids)||!ids.length)return false;try{const r=await fetch(MINAMI_API_URL+"?action=achievement",{method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},body:JSON.stringify({token,achievement_ids:[...new Set(ids)]})});const d=await r.json();if(r.ok&&d?.ok){for(const id of ids)minamiServerAchievementCodes.add(id);return true}}catch(e){}return false}
 function unlockedAchievements(){try{return JSON.parse(localStorage.getItem(MINAMI_ACH_KEY)||"[]")}catch(e){return[]}}
@@ -9338,11 +9392,20 @@ function renderFeaturePanels(){
 
       let minamiLeaderboardCache=null;
       async function fetchMinamiLeaderboard(){
-        const r=await fetch(MINAMI_API_URL+"?action=leaderboard",{method:"GET",cache:"no-store"});
-        let d=null;
-        try{d=await r.json()}catch(e){throw new Error("Respons leaderboard tidak valid.")}
-        if(!r.ok||!d?.ok)throw new Error(d?.error||"Leaderboard gagal dimuat.");
-        return Array.isArray(d.players)?d.players:[];
+        const url=new URL("api/index.php?action=leaderboard",document.baseURI);
+        url.searchParams.set("_",String(Date.now()));
+        const controller=new AbortController();
+        const timer=setTimeout(()=>controller.abort(),10000);
+        try{
+          const r=await fetch(url.href,{method:"GET",cache:"no-store",headers:{"Accept":"application/json"},signal:controller.signal});
+          const raw=await r.text();
+          let d=null; try{d=JSON.parse(raw)}catch(e){}
+          if(!r.ok||!d?.ok) throw new Error(d?.error||("Leaderboard HTTP "+r.status));
+          return Array.isArray(d.players)?d.players:[];
+        }catch(e){
+          console.error("fetchMinamiLeaderboard:",e);
+          throw new Error(e?.name==="AbortError"?"Leaderboard timeout.":(e?.message||"Leaderboard gagal dimuat."));
+        }finally{clearTimeout(timer)}
       }
       function leaderboardRankIcon(title){
         const t=String(title||"PEMULA").trim().toUpperCase();
@@ -9402,8 +9465,10 @@ function renderFeaturePanels(){
               if(p)renderLeaderboardPlayer(p);
             };
           });
-        }).catch(()=>{
-          panel.innerHTML='<div class="leaderboard-empty">Leaderboard belum dapat dimuat. Coba buka lagi beberapa saat.</div>';
+        }).catch((err)=>{
+          panel.innerHTML='<div class="leaderboard-empty leaderboard-error"><b>⚠️ Leaderboard belum dapat dimuat.</b><span>'+leaderboardEscape(err?.message||"Coba lagi beberapa saat.")+'</span><button type="button" class="leaderboard-retry" id="leaderboardRetryBtn">↻ Coba Lagi</button></div>';
+          const retry=document.getElementById("leaderboardRetryBtn");
+          if(retry) retry.onclick=()=>{panel.dataset.loaded="";renderLeaderboard()};
         });
       }
       function renderLeaderboardPlayer(p){
