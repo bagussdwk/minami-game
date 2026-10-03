@@ -9759,7 +9759,7 @@ function renderFeaturePanels(){
       document.getElementById("quickChatBtn").onclick=showQuickChat;
       document.getElementById("quickChatClose").onclick=()=>document.getElementById("quickChatModal").classList.remove("show");
       document.getElementById("quickChatModal").onclick=e=>{if(e.target.id==="quickChatModal")e.currentTarget.classList.remove("show")};
-      document.getElementById("menuStatsBtn").onclick=()=>{closeMenu();setYourHandOverlayHidden(true);renderFeaturePanels();document.getElementById("featureModal").classList.add("show")};
+      document.getElementById("menuStatsBtn").onclick=async()=>{closeMenu();setYourHandOverlayHidden(true);document.getElementById("featureModal").classList.add("show");await loadAccountAchievements();renderFeaturePanels();};
       document.getElementById("featureModalClose").onclick=()=>{document.getElementById("featureModal").classList.remove("show");setYourHandOverlayHidden(false)};
       document.getElementById("featureModal").onclick=e=>{if(e.target.id==="featureModal"){e.currentTarget.classList.remove("show");setYourHandOverlayHidden(false)}};
       document.querySelectorAll(".feature-tab").forEach(b=>b.onclick=()=>{
