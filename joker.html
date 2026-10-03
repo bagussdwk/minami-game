@@ -2659,6 +2659,9 @@ function advance() {
               newMatch(starter, g.dir, true);
             },
           );
+          if (g.p.some((x) => x.score >= 1500)) {
+            setTimeout(gameOver, 100);
+          }
         }
         function gameOver() {
           clearTimeout(gameOverTimer);
