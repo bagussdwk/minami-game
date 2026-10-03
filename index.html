@@ -9003,7 +9003,9 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         s.rank1=Number(s.rank1)||0;
 
         s.matches++;
-        if(game.lastResult?.winner===0) s.matchWins++;
+        // Match Wins = Rank 1: pemenang match adalah pemain yang finis Rank 1.
+        // Keduanya sengaja memakai definisi yang sama agar statistik tidak berbeda.
+        if(game.lastResult?.reason!=="ALL_DEAD"&&game.lastResult?.winner===0) s.matchWins++;
 
         const finalGame=Array.isArray(game.scores)&&game.scores.some(x=>Number(x)>=25);
         if(finalGame){
@@ -9023,7 +9025,8 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
 
         return {
           match_finished:1,
-          match_wins:game.lastResult?.winner===0?1:0,
+          // Match Wins sengaja sama dengan Rank 1.
+          match_wins:(game.lastResult?.reason!=="ALL_DEAD"&&Number(game.lastResult?.winner)===0)?1:0,
           games_finished:finalGame?1:0,
           game_wins:finalGame&&game.scores.findIndex(x=>Number(x)>=25)===0?1:0,
           rank1:(game.lastResult?.reason!=="ALL_DEAD"&&Number(game.lastResult?.winner)===0)?1:0,
@@ -9154,7 +9157,23 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         return Array.isArray(d.players)?d.players:[];
       }
       function leaderboardRankForPlayer(p){
-        return minamiRankTitleFromStats(Number(p?.rank1)||0,Number(p?.games_finished)||0,Number(p?.game_wins)||0);
+        const rank1=Math.max(0,Number(p?.rank1)||0);
+        const games=Math.max(0,Number(p?.games_finished)||0);
+        const gameWins=Math.max(0,Number(p?.game_wins)||0);
+        const title=minamiRankTitleFromStats(rank1,games,gameWins);
+        const icons={
+          "PEMULA":"🌱",
+          "NOVICE":"🃏",
+          "PLAYER":"⚔️",
+          "EXPERT":"🔥",
+          "MASTER":"💎"
+        };
+        const isGrandmaster=title.indexOf("GRANDMASTER")===0;
+        return {
+          name:title,
+          icon:isGrandmaster?"👑":(icons[title]||"🌱"),
+          level:isGrandmaster?(title.split(" ")[1]||"1"):""
+        };
       }
       function leaderboardEscape(v){
         const el=document.createElement("div");
