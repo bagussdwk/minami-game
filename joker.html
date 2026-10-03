@@ -1224,20 +1224,43 @@
             out.push({ type, rank, ids, values, v });
           }
           for (let r of ranks) {
+            // Pot: dalam SATU pot, setiap bunga hanya boleh muncul sekali.
+            // Tetapi karena ada 2 deck, kartu fisik dengan rank+bunga yang
+            // sama boleh dipakai lagi di pot berikutnya.
             let bySuit = new Map();
             x.filter((c) => c.rank === r).forEach((c) => {
-              if (!bySuit.has(c.suit)) bySuit.set(c.suit, c);
+              if (!bySuit.has(c.suit)) bySuit.set(c.suit, []);
+              bySuit.get(c.suit).push(c);
             });
-            let a = [...bySuit.values()];
+            let suitKeys = [...bySuit.keys()];
+
+            function chooseDistinctSuits(start, need, picked, out) {
+              if (picked.length === need) {
+                out.push(picked.slice());
+                return;
+              }
+              for (let i = start; i <= suitKeys.length - (need - picked.length); i++) {
+                let suit = suitKeys[i];
+                for (let c of bySuit.get(suit)) {
+                  picked.push(c);
+                  chooseDistinctSuits(i + 1, need, picked, out);
+                  picked.pop();
+                }
+              }
+            }
+
             for (let k = 3; k <= 4; k++) {
-              // Pot sah dengan 3 atau 4 kartu. Pilih sejumlah kartu
-              // natural dari bunga yang berbeda, lalu lengkapi dengan Joker
-              // bila diperlukan. Jangan memaksa memakai semua bunga yang ada:
-              // contoh 5♥ + 5♣ + 5♦ tetap harus menjadi pot 5.
-              for (let takeCount = 0; takeCount <= Math.min(k, a.length); takeCount++) {
+              // Pilih kartu fisik dari bunga yang berbeda. Kartu kembar
+              // (misalnya dua 10♥ dari dua deck) tetap menghasilkan pilihan
+              // terpisah sehingga dapat dipakai pada pot berikutnya.
+              for (let takeCount = 0; takeCount <= Math.min(k, suitKeys.length); takeCount++) {
                 let need = k - takeCount;
                 if (need < 0 || need > j.length) continue;
-                for (let take of combos(a, takeCount)) {
+
+                let naturalChoices = [];
+                chooseDistinctSuits(0, takeCount, [], naturalChoices);
+
+                for (let take of naturalChoices) {
                   for (let js of combos(j, need)) {
                     let ids = take.map((c) => c.id).concat(js.map((c) => c.id)),
                       values = {};
