@@ -7048,131 +7048,128 @@
         return initialBaseCandidates(h).length > 0;
       }
       function canFullyArrange(h) {
-        // TENHO harus benar-benar bisa menghabiskan seluruh tangan menjadi
-        // DASAR/POT legal. Pencarian dibuat berbasis urutan DASAR, bukan
-        // kombinasi mentah, supaya DASAR panjang (6+ kartu) tetap terbaca
-        // tanpa meledakkan jumlah kombinasi.
+        // TENHO = seluruh tangan awal dapat dipartisi menjadi DASAR/POT legal.
+        // Gunakan exact-cover: ambil satu kartu nyata sebagai anchor, buat semua
+        // meld legal yang memuat anchor, lalu cari partisi yang menghabiskan semua kartu.
         const memo = new Map();
 
         function rec(arr) {
           if (!arr.length) return true;
 
-          const key = arr.map(c => c.id).sort().join("|");
+          const key = arr.map((c) => c.id).sort().join("|");
           if (memo.has(key)) return memo.get(key);
 
-          // Mulai dari kartu non-Joker agar setiap langkah punya anchor rank.
-          const firstIndex = arr.findIndex(c => !isJoker(c));
-          if (firstIndex < 0) {
+          const anchor = arr.find((c) => !isJoker(c));
+          if (!anchor) {
             memo.set(key, false);
             return false;
           }
 
-          const a = arr[firstIndex];
-          const rest = arr.filter((_, i) => i !== firstIndex);
-          const jokers = rest.filter(c => isJoker(c));
-          const sameSuit = rest.filter(c => !isJoker(c) && c.suit === a.suit);
-          const sameRank = rest.filter(c => !isJoker(c) && c.rank === a.rank);
+          const jokers = arr.filter((c) => isJoker(c));
+          const real = arr.filter((c) => !isJoker(c));
+          const sameSuit = real.filter((c) => c.suit === anchor.suit);
+          const sameRank = real.filter((c) => c.rank === anchor.rank);
           const candidates = [];
 
           // ---------------------------------------------------------
-          // DASAR
-          // Cari semua urutan 3..13 kartu yang mengandung kartu 'a'.
-          // Karena DASAR adalah urutan rank berurutan satu bunga, kita
-          // tidak perlu mencoba kombinasi kartu acak satu per satu.
+          // DASAR: buat urutan 3..13 yang mengandung anchor.
+          // A boleh rendah (A-2-3...) atau tinggi (...-Q-K-A).
+          // Joker 4+ tidak boleh berada di ujung.
           // ---------------------------------------------------------
-          const aPos = rankSeq(a.rank);
-
-          for (let size = 3; size <= 13; size++) {
-            for (let start = 1; start <= 15 - size; start++) {
+          for (let size = 3; size <= ranks.length; size++) {
+            for (let start = 1; start <= 14 - size + 1; start++) {
               const end = start + size - 1;
-              if (aPos < start || aPos > end) continue;
+              const wanted = Array.from({ length: size }, (_, i) => start + i);
+              if (!wanted.some((pos) => rankAtPosition(pos) === anchor.rank)) {
+                continue;
+              }
 
-              const cards = [a];
-              const usedIds = new Set([a.id]);
+              const used = new Set();
+              const ordered = [];
+              let possible = true;
               let missing = 0;
-              let valid = true;
 
-              for (let pos = start; pos <= end; pos++) {
+              for (const pos of wanted) {
                 const rank = rankAtPosition(pos);
-                if (rank === a.rank) continue;
 
-                const card = sameSuit.find(c => !usedIds.has(c.id) && c.rank === rank);
+                if (rank === anchor.rank) {
+                  if (used.has(anchor.id)) {
+                    possible = false;
+                    break;
+                  }
+                  ordered.push(anchor);
+                  used.add(anchor.id);
+                  continue;
+                }
+
+                const card = sameSuit.find(
+                  (c) => !used.has(c.id) && c.rank === rank,
+                );
+
                 if (card) {
-                  cards.push(card);
-                  usedIds.add(card.id);
+                  ordered.push(card);
+                  used.add(card.id);
                 } else {
+                  ordered.push(null);
                   missing++;
                 }
               }
 
-              if (missing > jokers.length) continue;
+              if (!possible || missing > jokers.length) continue;
               if (size === 3 && missing > 1) continue;
 
-              // Joker 4+ tidak boleh menjadi kartu ujung DASAR.
-              if (size >= 4) {
-                const firstRank = rankAtPosition(start);
-                const lastRank = rankAtPosition(end);
-                const firstMissing = !cards.some(c => !isJoker(c) && c.rank === firstRank);
-                const lastMissing = !cards.some(c => !isJoker(c) && c.rank === lastRank);
-
-                if (firstMissing || lastMissing) continue;
+              // Untuk 4+ kartu, slot ujung wajib kartu nyata.
+              if (size >= 4 && (ordered[0] === null || ordered[ordered.length - 1] === null)) {
+                continue;
               }
 
-              // Tambahkan Joker hanya untuk slot rank yang belum terisi.
-              const ordered = [];
               let ji = 0;
-              for (let pos = start; pos <= end; pos++) {
-                const rank = rankAtPosition(pos);
-                const real =
-                  rank === a.rank
-                    ? a
-                    : cards.find(c => !isJoker(c) && c.rank === rank && c.suit === a.suit && !ordered.includes(c));
-
-                if (real) {
-                  ordered.push(real);
-                } else {
-                  const j = jokers[ji++];
-                  if (!j) {
-                    valid = false;
-                    break;
-                  }
-                  ordered.push(j);
+              for (let i = 0; i < ordered.length; i++) {
+                if (ordered[i] === null) {
+                  ordered[i] = jokers[ji++];
                 }
               }
 
-              if (!valid) continue;
-              const m = makeBaseCards(ordered);
-              if (m) candidates.push(ordered);
+              const base = makeBaseCards(ordered);
+              if (base) candidates.push(ordered);
             }
           }
 
           // ---------------------------------------------------------
-          // POT
-          // Semua kartu nyata harus rank yang sama dengan 'a'.
-          // Joker boleh menjadi pengganti. Untuk kartu rank yang sama,
-          // memilih kartu nyata mana yang dipakai tidak mengubah legalitas,
-          // jadi cukup ambil kombinasi berdasarkan jumlah kartu.
+          // POT: semua kartu nyata harus rank anchor; Joker boleh mengganti
+          // kartu yang hilang. Coba semua ukuran yang tersedia.
           // ---------------------------------------------------------
-          const maxPotSize = sameRank.length + 1 + jokers.length;
-          for (let size = 3; size <= maxPotSize; size++) {
-            for (let jokerCount = 0; jokerCount <= Math.min(jokers.length, size - 3); jokerCount++) {
-              const realNeeded = size - jokerCount;
-              if (realNeeded < 1 || realNeeded > sameRank.length + 1) continue;
+          for (let size = 3; size <= sameRank.length + jokers.length; size++) {
+            const minJokers = Math.max(0, size - sameRank.length);
+            const maxJokers = Math.min(jokers.length, size - 1);
 
-              const group = [a, ...sameRank.slice(0, realNeeded - 1), ...jokers.slice(0, jokerCount)];
-              if (group.length !== size) continue;
+            for (let jokerCount = minJokers; jokerCount <= maxJokers; jokerCount++) {
+              const realCount = size - jokerCount;
+              if (realCount < 1 || realCount > sameRank.length) continue;
 
-              const p = potCards(group);
-              if (p) candidates.push(group);
+              const group = [
+                ...sameRank.slice(0, realCount),
+                ...jokers.slice(0, jokerCount),
+              ];
+
+              if (group.some((c) => c.id === anchor.id) === false) continue;
+              if (potCards(group)) candidates.push(group);
             }
           }
 
-          // Prioritaskan grup terbesar agar TENHO cepat ditemukan.
-          candidates.sort((x, y) => y.length - x.length);
+          // Coba meld terbesar lebih dulu, tetapi jangan bergantung pada urutan
+          // tertentu untuk menentukan hasil exact-cover.
+          candidates.sort((a, b) => b.length - a.length);
 
+          const seen = new Set();
           for (const group of candidates) {
-            const used = new Set(group.map(c => c.id));
-            const remaining = arr.filter(c => !used.has(c.id));
+            const ids = group.map((c) => c.id).sort().join("|");
+            if (seen.has(ids)) continue;
+            seen.add(ids);
+
+            const usedIds = new Set(group.map((c) => c.id));
+            const remaining = arr.filter((c) => !usedIds.has(c.id));
+
             if (rec(remaining)) {
               memo.set(key, true);
               return true;
