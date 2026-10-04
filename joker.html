@@ -2631,7 +2631,7 @@ function advance() {
             resultCards(cards) +
             '</div>';
         }
-        function resultPlayer(p, extraCards, arranged, closingCard, closingBonus) {
+        function resultPlayer(p, extraCards, arranged, closingCard, closingBonus, closingLabel) {
           let cards = p.hand.slice();
           if (extraCards && extraCards.length) cards = cards.concat(extraCards);
 
@@ -2656,10 +2656,12 @@ function advance() {
           }
 
           if (closingCard) {
+            const title = closingLabel || "Tutupan";
+            const sign = closingBonus < 0 ? "" : "+";
             arrangedHtml +=
               '<div style="margin:6px 0;padding:6px 7px;border-radius:7px;background:#f3cf7012;border:1px solid #f3cf7040">' +
-              '<div style="font-size:8px;font-weight:900;color:#f3cf70;margin-bottom:4px">Tutupan • +' +
-              closingBonus + '</div>' +
+              '<div style="font-size:8px;font-weight:900;color:#f3cf70;margin-bottom:4px">' +
+              title + ' • ' + sign + closingBonus + '</div>' +
               resultCards([closingCard]) +
               '</div>';
           }
@@ -2674,7 +2676,10 @@ function advance() {
           const playersHtml=g.p.map((p,i)=>{
             if(i===w){
               const normalCards=p.hand.filter(x=>x.id!==c.id);
-              return resultPlayer(p,[],analyzePartial(normalCards),c,bonus);
+              return resultPlayer(p,[],analyzePartial(normalCards),c,bonus,"Tutupan");
+            }
+            if(i===t){
+              return resultPlayer(p,[],analyzePartial(p.hand),c,-bonus,"Kartu Penutup Lawan");
             }
             return resultPlayer(p,[],analyzePartial(p.hand));
           }).join("");
