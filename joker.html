@@ -1886,18 +1886,80 @@
           return false;
         }
         function canClose(p, i) {
-          let c = p.hand[i],
-            rest = p.hand.filter((_, x) => x !== i);
+          const c = p.hand[i];
+          const rest = p.hand.filter((_, x) => x !== i);
 
-          // Untuk Tutup, kartu yang ditutup harus A/Joker. Semua kartu
-          // lainnya wajib habis terbagi ke dasar/pot, dan minimal satu
-          // dasar harus murni. Gunakan analyzer yang sama dengan perhitungan
-          // skor agar beberapa dasar dari dua deck bisa dipakai bersamaan.
-          if (c.rank !== "A" && !c.joker) return false;
-          if (!hasPureBase(rest)) return false;
+          // Kartu penutup wajib A/Joker dan harus berasal dari buangan.
+          // Untuk susunan kartu lainnya, jangan pakai analyzePartial():
+          // analyzer skor mencari kombinasi terbaik, sedangkan Tutup
+          // membutuhkan EXACT COVER — setiap kartu harus masuk tepat satu
+          // dasar/pot. Ini penting untuk 2 deck, karena dua kartu fisik
+          // dengan rank+bunga sama memang boleh dipakai di kelompok berbeda.
+          if (!c || (c.rank !== "A" && !c.joker)) return false;
+          if (rest.length < 3) return false;
 
-          const a = analyzePartial(rest);
-          return !!a && Array.isArray(a.ids) && a.ids.length === rest.length;
+          const ms = melds(rest).filter(
+            (m) => Array.isArray(m.ids) && m.ids.length >= 3,
+          );
+          if (!ms.length) return false;
+
+          // Hilangkan kandidat yang identik secara fisik.
+          const unique = new Map();
+          for (const m of ms) {
+            const key = m.ids.slice().sort().join("|");
+            if (!unique.has(key)) unique.set(key, m);
+          }
+          const all = [...unique.values()];
+
+          // Semua kandidat yang mungkin untuk tiap kartu.
+          const byId = new Map();
+          for (const m of all) {
+            for (const id of m.ids) {
+              if (!byId.has(id)) byId.set(id, []);
+              byId.get(id).push(m);
+            }
+          }
+
+          const pureIds = new Set();
+          for (const m of all) {
+            const pure = m.ids.every((id) => {
+              const card = rest.find((x) => x.id === id);
+              return card && !card.joker;
+            }) &&
+              (
+                (m.type === "seq" && m.ids.length >= 3) ||
+                (m.type === "set" && m.rank === "A" && m.ids.length === 4)
+              );
+            if (pure) pureIds.add(m.ids.slice().sort().join("|"));
+          }
+          if (!pureIds.size) return false;
+
+          // Exact-cover DFS: selalu ambil kartu pertama yang belum tertutup.
+          // Dengan begitu satu kartu fisik tidak bisa dipakai di dua meld,
+          // tetapi kartu kembar dari deck 1 dan deck 2 tetap independen.
+          function cover(left, hasPure) {
+            if (!left.size) return hasPure;
+
+            let first = null;
+            for (const id of left) {
+              first = id;
+              break;
+            }
+
+            const candidates = byId.get(first) || [];
+            for (const m of candidates) {
+              if (m.ids.some((id) => !left.has(id))) continue;
+
+              const key = m.ids.slice().sort().join("|");
+              const next = new Set(left);
+              for (const id of m.ids) next.delete(id);
+
+              if (cover(next, hasPure || pureIds.has(key))) return true;
+            }
+            return false;
+          }
+
+          return cover(new Set(rest.map((x) => x.id)), false);
         }
         function closeReady(cs) {
           for (let i = 0; i < cs.length; i++) {
