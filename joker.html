@@ -1328,6 +1328,14 @@
               if(!useCloud){await saveJokerCloudImmediately();return;}
             }
             if(!save.state)return;
+            if(loadJokerWinSnapshot()&&g?.resultPending?.type==="win"){
+              render();
+              $("setup").style.display="none";
+              $("game").style.display="block";
+              setJokerPointsVisible(true);
+              setTimeout(()=>showWinResult(g.resultPending.winner,g.resultPending.caught,g.resultPending.card),80);
+              return;
+            }
             localStorage.setItem("minami_joker_state",JSON.stringify(save.state));
             try{sessionStorage.setItem("minami_joker_state",JSON.stringify(save.state))}catch(e){}
             saveJokerCloudMeta({revision:Number(save.revision)||0,updated_at:save.updated_at||null});
