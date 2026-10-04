@@ -2586,15 +2586,17 @@ function advance() {
           return best;
         }
 
-        function cardTotals(p) {
-          let a = analyzePartial(p.hand),
+        function cardTotals(p, excludedIds) {
+          const excluded = new Set(excludedIds || []);
+          const hand = p.hand.filter(c => !excluded.has(c.id));
+          let a = analyzePartial(hand),
             live = new Set(a.ids || []),
-            liveValue = p.hand.reduce(
+            liveValue = hand.reduce(
               (z, c) =>
                 z + (live.has(c.id) ? a.values[c.id] || rv(c.rank) : 0),
               0,
             ),
-            deadValue = p.hand.reduce(
+            deadValue = hand.reduce(
               (z, c) =>
                 z + (live.has(c.id) ? 0 : c.joker ? 25 : rv(c.rank)),
               0,
@@ -2629,7 +2631,7 @@ function advance() {
             resultCards(cards) +
             '</div>';
         }
-        function resultPlayer(p, extraCards, arranged) {
+        function resultPlayer(p, extraCards, arranged, closingCard, closingBonus) {
           let cards = p.hand.slice();
           if (extraCards && extraCards.length) cards = cards.concat(extraCards);
 
@@ -2653,17 +2655,28 @@ function advance() {
             arrangedHtml = resultCards(cards);
           }
 
+          if (closingCard) {
+            arrangedHtml +=
+              '<div style="margin:6px 0;padding:6px 7px;border-radius:7px;background:#f3cf7012;border:1px solid #f3cf7040">' +
+              '<div style="font-size:8px;font-weight:900;color:#f3cf70;margin-bottom:4px">Tutupan • +' +
+              closingBonus + '</div>' +
+              resultCards([closingCard]) +
+              '</div>';
+          }
+
           return '<div class="result-player"><div class="result-head"><b>' +
             p.name + '</b><span>Skor akumulasi: ' + p.score + '</span></div>' +
             arrangedHtml + '</div>';
         }
         function showWinResult(w, t, c) {
           const wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150;
-          const wa=cardTotals(wp),ta=cardTotals(tp);
+          const wa=cardTotals(wp,[c.id]),ta=cardTotals(tp);
           const playersHtml=g.p.map((p,i)=>{
-            const extra=i===w?[c]:[];
-            const visibleCards=p.hand.slice().concat(extra);
-            return resultPlayer(p,extra,analyzePartial(visibleCards));
+            if(i===w){
+              const normalCards=p.hand.filter(x=>x.id!==c.id);
+              return resultPlayer(p,[],analyzePartial(normalCards),c,bonus);
+            }
+            return resultPlayer(p,[],analyzePartial(p.hand));
           }).join("");
           const otherRows=g.p.map((p,i)=>{
             if(i===w)return "";
@@ -2689,7 +2702,7 @@ function advance() {
         }
         function finish(w,t,c){
           if(g.resultPending || g.over || g.phase === "result")return;
-          let wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150,wa=cardTotals(wp),ta=cardTotals(tp);
+          let wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150,wa=cardTotals(wp,[c.id]),ta=cardTotals(tp);
           wp.score+=bonus+wa.liveValue;
           tp.score+=-bonus+ta.liveValue-ta.deadValue;
           g.p.forEach((p,i)=>{
