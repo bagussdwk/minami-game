@@ -4279,20 +4279,23 @@
     <section class="setup setup-mode-joker" id="setupJoker">
       <div class="setup-brand">🃏 2 DECK &nbsp;•&nbsp; JOKER</div>
       <h1 class="setup-logo">JOKER</h1>
-
       <div class="joker-menu-cards" aria-hidden="true">
         <div class="joker-menu-stack">
           <div class="joker-menu-card joker-menu-card-back"></div>
-          <div class="joker-menu-card joker-menu-card-open joker-menu-card-left">
-            <span>Q</span><b>♠</b>
-          </div>
-          <div class="joker-menu-card joker-menu-card-open joker-menu-card-right">
-            <span>3</span><b>♥</b>
-          </div>
+          <div class="joker-menu-card joker-menu-card-open joker-menu-card-left"><span>Q</span><b>♠</b></div>
+          <div class="joker-menu-card joker-menu-card-open joker-menu-card-right"><span>3</span><b>♥</b></div>
         </div>
       </div>
-
-      <button class="joker-coming-soon" id="jokerMenuBtn" type="button">🃏 MAIN JOKER</button>
+      <div class="setup-section-label">Pilih jumlah pemain</div>
+      <div class="player-buttons joker-player-buttons">
+        <button class="player-btn active" type="button" data-player-joker="4">
+          <span class="player-btn-main">4 Pemain</span><span class="player-btn-sub">Anda + 3 AI</span>
+        </button>
+        <button class="player-btn" type="button" data-player-joker="5">
+          <span class="player-btn-main">5 Pemain</span><span class="player-btn-sub">Anda + 4 AI</span>
+        </button>
+      </div>
+      <button class="start-btn setup-start" id="startJokerBtn" type="button">🃏 MULAI PERMAINAN</button>
     </section>
 
     <section class="setup setup-mode-jendral" id="setupJendral">
@@ -8407,7 +8410,18 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         if(await blockIfOtherActiveGame("minami2")) return;
         minamiMode = 2; startGame();
       };
-      document.getElementById("jokerMenuBtn").onclick = () => { window.location.href = "joker.html"; };
+      let jokerPlayerCount = 4;
+      document.querySelectorAll("#setupJoker .player-btn[data-player-joker]").forEach(
+        (b) => (b.onclick = () => {
+          document.querySelectorAll("#setupJoker .player-btn[data-player-joker]").forEach((x) => x.classList.remove("active"));
+          b.classList.add("active");
+          jokerPlayerCount = Number(b.dataset.playerJoker) === 5 ? 5 : 4;
+        }),
+      );
+      document.getElementById("startJokerBtn").onclick = async () => {
+        if(await blockIfOtherActiveGame("joker")) return;
+        window.location.href = "joker.html?n=" + jokerPlayerCount;
+      };
       document.getElementById("sortSuitBtn").onclick = () => {
         sortCards(game.hands[0], "suit");
         render();
