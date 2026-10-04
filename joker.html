@@ -2697,15 +2697,6 @@ function advance() {
         // saat tumpukan habis: misalnya J-Q-K tetap +30, sementara kartu
         // lain yang tidak masuk susunan menjadi kartu mati/minus.
         function analyzePartial(cs) {
-          // Saat tumpukan habis:
-          // - minimal ada 1 dasar murni tanpa Joker;
-          // - semua dasar murni lain yang memakai kartu fisik berbeda
-          //   juga boleh hidup;
-          // - semua pot/sequence valid yang tidak memakai kartu fisik
-          //   yang sama juga boleh hidup;
-          // - dalam satu pot, bunga tetap harus berbeda;
-          // - dua deck membuat kartu rank+bunga yang sama menjadi dua kartu fisik
-          //   berbeda dan keduanya boleh dipakai pada kelompok berbeda.
           let ms = melds(cs),
             best = { ids: [], values: {}, v: 0, melds: [] };
 
@@ -2720,6 +2711,71 @@ function advance() {
             })) return false;
             if (m.type === "seq" && m.ids.length >= 3) return true;
             return m.type === "set" && m.rank === "A" && m.ids.length === 4;
+          }
+
+          // Kalau seluruh kartu bisa tersusun, prioritaskan SUSUNAN PENUH.
+          // Ini wajib untuk 2 deck: dua 4♠ dengan ID fisik berbeda boleh
+          // dipakai bersamaan, misalnya satu di pot dan satu di dasar.
+          if (ms.length) {
+            const pure = ms.filter(isPureBase);
+            const byId = new Map();
+
+            for (const m of ms) {
+              for (const id of m.ids) {
+                if (!byId.has(id)) byId.set(id, []);
+                byId.get(id).push(m);
+              }
+            }
+
+            const memo = new Map();
+            function exactCover(left, hasPure) {
+              if (!left.size)
+                return hasPure ? { ids: [], values: {}, v: 0, melds: [] } : null;
+
+              const key = [...left].sort().join("|") + ":" + (hasPure ? 1 : 0);
+              if (memo.has(key)) return memo.get(key);
+
+              let first = null, fewest = Infinity;
+              for (const id of left) {
+                const choices = (byId.get(id) || []).filter((m) =>
+                  m.ids.every((x) => left.has(x)),
+                );
+                if (!choices.length) {
+                  memo.set(key, null);
+                  return null;
+                }
+                if (choices.length < fewest) {
+                  fewest = choices.length;
+                  first = id;
+                }
+              }
+
+              for (const m of byId.get(first) || []) {
+                if (m.ids.some((id) => !left.has(id))) continue;
+                const next = new Set(left);
+                m.ids.forEach((id) => next.delete(id));
+
+                const tail = exactCover(next, hasPure || isPureBase(m));
+                if (tail) {
+                  const result = {
+                    ids: m.ids.concat(tail.ids),
+                    values: Object.assign({}, m.values, tail.values),
+                    v: m.v + tail.v,
+                    melds: [m].concat(tail.melds),
+                  };
+                  memo.set(key, result);
+                  return result;
+                }
+              }
+
+              memo.set(key, null);
+              return null;
+            }
+
+            if (pure.length) {
+              const full = exactCover(new Set(cs.map((x) => x.id)), false);
+              if (full && full.ids.length === cs.length) return full;
+            }
           }
 
           function better(candidate) {
@@ -2754,12 +2810,9 @@ function advance() {
             }
           }
 
-          // Mulai dari SETIAP dasar murni yang mungkin. Penting:
-          // gunakan seluruh ms sebagai pool lanjutan, bukan hanya meld non-pure.
-          // Dengan ini dua dasar murni seperti 3-4-5 spade dan 5-6-7 club
-          // bisa hidup bersamaan jika 5-nya adalah kartu fisik berbeda.
+          // Jika belum bisa menutup semua kartu, pertahankan perilaku analyzer
+          // lama untuk menghitung kartu hidup/mati secara normal.
           let pure = ms.filter(isPureBase);
-
           for (let base of pure) {
             let used = new Set(base.ids);
             expand(0, used, { ...base.values }, base.v, [base]);
@@ -2767,7 +2820,6 @@ function advance() {
 
           return best;
         }
-
         function cardTotals(p, excludedIds) {
           const excluded = new Set(excludedIds || []);
           const hand = p.hand.filter(c => !excluded.has(c.id));
