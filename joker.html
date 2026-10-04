@@ -1888,9 +1888,16 @@
         function canClose(p, i) {
           let c = p.hand[i],
             rest = p.hand.filter((_, x) => x !== i);
-          return (
-            (c.rank === "A" || c.joker) && hasPureBase(rest) && !!analyze(rest)
-          );
+
+          // Untuk Tutup, kartu yang ditutup harus A/Joker. Semua kartu
+          // lainnya wajib habis terbagi ke dasar/pot, dan minimal satu
+          // dasar harus murni. Gunakan analyzer yang sama dengan perhitungan
+          // skor agar beberapa dasar dari dua deck bisa dipakai bersamaan.
+          if (c.rank !== "A" && !c.joker) return false;
+          if (!hasPureBase(rest)) return false;
+
+          const a = analyzePartial(rest);
+          return !!a && Array.isArray(a.ids) && a.ids.length === rest.length;
         }
         function closeReady(cs) {
           for (let i = 0; i < cs.length; i++) {
