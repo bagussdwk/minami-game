@@ -3023,11 +3023,12 @@ $("jokerResetBtn").onclick=async()=>{
           location.href = "index.html";
         };
         // STARTUP JOKER:
-        // Database player_game_saves adalah sumber utama.
-        // Startup async dibungkus IIFE agar tidak memblokir pemasangan event tombol.
+        // Database player_game_saves tetap menjadi sumber utama.
+        // PENTING: jangan sembunyikan setup saat menunggu API.
+        // Jika API lambat, tombol tetap bisa ditekan.
         (async function restoreJokerOnStartup(){
-          $("setup").style.display = "none";
           $("game").style.display = "none";
+          $("setup").style.display = "block";
           setJokerPointsVisible(false);
 
           let jokerRestored = false;
