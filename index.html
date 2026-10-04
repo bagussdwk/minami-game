@@ -8399,8 +8399,14 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         minamiMode = mode === 2 ? 2 : 1;
         document.getElementById("status").textContent = "";
       }
-      document.getElementById("startBtn").onclick = () => { minamiMode = 1; startGame(); };
-      document.getElementById("startMinami2Btn").onclick = () => { minamiMode = 2; startGame(); };
+      document.getElementById("startBtn").onclick = async () => {
+        if(await blockIfOtherActiveGame("minami1")) return;
+        minamiMode = 1; startGame();
+      };
+      document.getElementById("startMinami2Btn").onclick = async () => {
+        if(await blockIfOtherActiveGame("minami2")) return;
+        minamiMode = 2; startGame();
+      };
       document.getElementById("jokerMenuBtn").onclick = () => { window.location.href = "joker.html"; };
       document.getElementById("sortSuitBtn").onclick = () => {
         sortCards(game.hands[0], "suit");
@@ -8782,6 +8788,22 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
       const MINAMI_API_URL="/api/index.php";
       const MINAMI_API_TOKEN_KEY="minamiApiToken";
       const MINAMI_API_SYNC_KEY="minamiApiSyncLedgerV1";
+      async function getActiveAccountGameSave(){
+        const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
+        if(!token)return null;
+        try{
+          const d=await minamiApiPost("game-load",{token});
+          const saves=Array.isArray(d.saves)?d.saves:[];
+          return saves.find(x=>Number(x.active)===1)||null;
+        }catch(e){return null}
+      }
+      async function blockIfOtherActiveGame(targetMode){
+        const save=await getActiveAccountGameSave();
+        if(!save||save.mode===targetMode)return false;
+        const label=save.mode==="joker"?"JOKER":(save.mode==="minami2"?"MINAMI 2":"MINAMI 1");
+        alert("⚠️ Kamu masih dalam permainan "+label+" yang belum selesai.\n\nSelesaikan permainan tersebut terlebih dahulu sebelum memulai "+(targetMode==="minami2"?"MINAMI 2":"MINAMI 1")+".");
+        return true;
+      }
       function minamiModeKey(mode){
         const m=Number(mode);
         return m===3?"joker":(m===2?"minami2":"minami1");
