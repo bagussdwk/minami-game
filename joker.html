@@ -98,6 +98,7 @@
         margin: 25px auto;
       }
       #setup {
+        display: none;
         position: relative;
         z-index: 105;
       }
@@ -1315,67 +1316,58 @@
         }
         async function restoreJokerCloudAfterLogin(){
           const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
-          if(!token)return;
+          if(!token)return false;
 
-          // Jika perangkat ini sudah punya save lokal, jangan pernah
-          // menimpanya dengan Cloud secara otomatis setelah refresh.
-          // Cloud dipakai untuk melanjutkan di perangkat yang belum punya
-          // save lokal. Ini mencegah race restore lokal vs Cloud.
+          // BELANGRING: jangan menganggap keberadaan raw localStorage
+          // sebagai game yang valid. Coba benar-benar restore dulu.
+          // Kalau save lokal rusak/kosong, Cloud masih boleh menjadi
+          // sumber pemulihan.
           try{
             const localRaw =
               localStorage.getItem(JOKER_LOCAL_SAVE_V2) ||
               localStorage.getItem("minami_joker_state") ||
               sessionStorage.getItem("minami_joker_state");
             if(localRaw){
-              if(g&&!g.over) await saveJokerCloudImmediately();
-              return;
+              if(loadGame()){
+                if(g&&!g.over) await saveJokerCloudImmediately();
+                return true;
+              }
             }
           }catch(e){
             console.warn("local-first restore",e);
           }
 
           // WIN MATCH yang belum ditekan "Lanjut Match" adalah state final.
-          // Cloud tidak boleh menimpanya dengan state match lama.
           try {
-            if (restorePendingJokerWin && restorePendingJokerWin()) return;
+            if (restorePendingJokerWin && restorePendingJokerWin()) return true;
           } catch (e) {
             console.warn("restore pending win before cloud", e);
           }
+
           try{
             const d=await jokerApiPost("game-load",{token,mode:"joker"});
             const save=d?.save||null;
-            if(!save){
-              if(g&&!g.over)await saveJokerCloudImmediately();
-              return;
-            }
-            const meta=jokerCloudMeta();
-            if(g&&!g.over){
-              if(Number(meta?.revision)===Number(save.revision))return;
-              const useCloud=window.confirm(
-                "Ditemukan permainan JOKER yang tersimpan di akun.\n\nOK = lanjutkan dari Cloud.\nBatal = pertahankan permainan di perangkat ini."
-              );
-              if(!useCloud){await saveJokerCloudImmediately();return;}
-            }
-            if(!save.state)return;
-            if(loadJokerWinSnapshot()&&g?.resultPending?.type==="win"){
-              render();
-              $("setup").style.display="none";
-              $("game").style.display="block";
-              setJokerPointsVisible(true);
-              setTimeout(()=>showWinResult(g.resultPending.winner,g.resultPending.caught,g.resultPending.card),80);
-              return;
-            }
+            if(!save)return false;
+
+            // Saat belum ada game lokal, langsung gunakan Cloud.
+            // Tidak boleh menampilkan menu setup di tengah proses restore.
+            if(!save.state)return false;
+
+            localStorage.setItem(JOKER_LOCAL_SAVE_V2,JSON.stringify(save.state));
             localStorage.setItem("minami_joker_state",JSON.stringify(save.state));
             try{sessionStorage.setItem("minami_joker_state",JSON.stringify(save.state))}catch(e){}
             saveJokerCloudMeta({revision:Number(save.revision)||0,updated_at:save.updated_at||null});
+
             if(loadGame()){
               $("setup").style.display="none";
               $("game").style.display="block";
               setJokerPointsVisible(true);
+              return true;
             }
           }catch(e){
             console.warn("cloud resume",e);
           }
+          return false;
         }
 
         const JOKER_WIN_PENDING_KEY="minamiJokerWinPendingV1";
@@ -2974,53 +2966,47 @@ $("jokerResetBtn").onclick=async()=>{
           clearSavedGame();
           location.href = "index.html";
         };
-        // STARTUP JOKER: jangan pernah menampilkan menu awal lebih dulu.
-        // Tentukan dahulu apakah ada permainan yang sedang berlangsung.
-        // Jika ada save, halaman langsung kembali ke meja. Menu hanya muncul
-        // bila memang tidak ada permainan yang bisa dipulihkan.
+        // STARTUP JOKER:
+        // Selama proses restore, SETUP SAMA SEKALI TIDAK BOLEH DITAMPILKAN.
+        // Urutan: WIN snapshot -> local save -> Cloud save -> baru setup.
+        // Jadi refresh tidak akan pernah menjatuhkan pemain ke menu awal
+        // hanya karena restore Cloud membutuhkan waktu.
         $("setup").style.display = "none";
         $("game").style.display = "none";
         setJokerPointsVisible(false);
-        let jokerHasActiveLocalGame=false;
-        try {
-          if (restorePendingJokerWin()) {
-            jokerLocalRestoredThisLoad=true;
-            jokerHasActiveLocalGame=true;
-          } else {
-            const rawSaved =
-              localStorage.getItem(JOKER_LOCAL_SAVE_V2) ||
-              localStorage.getItem("minami_joker_state") ||
-              sessionStorage.getItem("minami_joker_state");
-            if (rawSaved && loadGame()) {
-              jokerLocalRestoredThisLoad=true;
-              jokerHasActiveLocalGame=true;
-              $("setup").style.display = "none";
-              $("game").style.display = "block";
-              setJokerPointsVisible(true);
+
+        (async function restoreJokerOnRefresh(){
+          let restored=false;
+          try{
+            if(restorePendingJokerWin()){
+              restored=true;
+            }else if(loadGame()){
+              restored=true;
+            }else{
+              restored=await restoreJokerCloudAfterLogin();
             }
+          }catch(e){
+            console.warn("auto-load",e);
           }
-        } catch (e) {
-          console.warn("auto-load", e);
-        }
 
-        if (!jokerHasActiveLocalGame) {
-          $("game").style.display = "none";
-          $("setup").style.display = "block";
-          setJokerPointsVisible(false);
-        }
+          if(restored && g?.p?.length===n){
+            jokerLocalRestoredThisLoad=true;
+            $("setup").style.display="none";
+            $("game").style.display="block";
+            setJokerPointsVisible(true);
+          }else{
+            $("game").style.display="none";
+            $("setup").style.display="block";
+            setJokerPointsVisible(false);
+          }
 
-        $("back").onclick = () => {
-          clearSavedGame();
-          location.href = "index.html";
-        };
+          $("back").onclick = () => {
+            clearSavedGame();
+            location.href = "index.html";
+          };
 
-        setTimeout(()=>{
-          // Kalau ada permainan lokal, Cloud TIDAK boleh mengganti atau
-          // mengembalikan halaman ke setup. Cloud hanya menjadi sumber
-          // cadangan ketika perangkat ini benar-benar tidak punya save.
-          restoreJokerCloudAfterLogin();
           loadJokerAccountStats().then(updateJokerProfileUI).catch(()=>{});
-        },0);
+        })();
       })();
     </script>
   </body>
