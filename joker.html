@@ -2696,86 +2696,206 @@ function advance() {
         // seluruh kartu di tangan ikut tersusun. Ini dipakai untuk penilaian
         // saat tumpukan habis: misalnya J-Q-K tetap +30, sementara kartu
         // lain yang tidak masuk susunan menjadi kartu mati/minus.
+        // Exact-cover analyzer untuk hasil Joker.
+        // Sengaja memakai ID fisik kartu, bukan rank+suit, sehingga dua
+        // kartu identik dari dua deck tetap bisa hidup di meld yang berbeda.
+        function exactJokerMeldCover(cs, requirePure = false) {
+          const jokers = cs.filter(c => c.joker);
+          const naturals = cs.filter(c => !c.joker);
+          const candidates = [];
+
+          function add(type, rank, cards) {
+            if (!cards || cards.length < 3) return;
+            const ids = cards.map(c => c.id);
+            if (new Set(ids).size !== ids.length) return;
+            const values = {};
+            cards.forEach(c => {
+              values[c.id] = rv(type === "set" ? rank : c.rank);
+            });
+            candidates.push({
+              type,
+              rank: rank ?? null,
+              ids,
+              values,
+              v: cards.reduce((z, c) => z + (type === "set" ? rv(rank) : rv(c.rank)), 0),
+              pure: cards.every(c => !c.joker),
+            });
+          }
+
+          function choose(arr, k, start = 0, picked = [], out = []) {
+            if (picked.length === k) {
+              out.push(picked.slice());
+              return out;
+            }
+            for (let i = start; i <= arr.length - (k - picked.length); i++)
+              choose(arr, k, i + 1, picked.concat(arr[i]), out);
+            return out;
+          }
+
+          // Pot/set: satu bunga hanya sekali dalam satu meld, tetapi
+          // kartu fisik identik dari deck berbeda tetap merupakan pilihan berbeda.
+          for (const r of ranks) {
+            const bySuit = new Map();
+            naturals.filter(c => c.rank === r).forEach(c => {
+              if (!bySuit.has(c.suit)) bySuit.set(c.suit, []);
+              bySuit.get(c.suit).push(c);
+            });
+            const suitsHere = [...bySuit.keys()];
+
+            const chooseDistinct = (pos, need, picked, out) => {
+              if (picked.length === need) {
+                out.push(picked.slice());
+                return;
+              }
+              for (let i = pos; i <= suitsHere.length - (need - picked.length); i++) {
+                const suit = suitsHere[i];
+                for (const c of bySuit.get(suit)) {
+                  picked.push(c);
+                  chooseDistinct(i + 1, need, picked, out);
+                  picked.pop();
+                }
+              }
+            };
+
+            for (let k = 3; k <= 4; k++) {
+              for (let naturalCount = Math.max(0, k - jokers.length);
+                   naturalCount <= Math.min(k, suitsHere.length);
+                   naturalCount++) {
+                const needJoker = k - naturalCount;
+                if (needJoker > jokers.length) continue;
+                const naturalChoices = [];
+                chooseDistinct(0, naturalCount, [], naturalChoices);
+                for (const take of naturalChoices)
+                  for (const js of choose(jokers, needJoker))
+                    add("set", r, take.concat(js));
+              }
+            }
+          }
+
+          // Sequence: setiap posisi rank harus diisi kartu bunga yang sama.
+          // Rank yang hilang diisi Joker. Semua kartu dipilih berdasarkan ID fisik.
+          const sequences = [];
+          for (const suit of suits.map(x => x[0])) {
+            for (let k = 3; k <= 13; k++)
+              for (let st = 0; st <= 13 - k; st++)
+                sequences.push({ suit, seq: ranks.slice(st, st + k) });
+            sequences.push({ suit, seq: ["Q", "K", "A"] });
+            sequences.push({ suit, seq: ["J", "Q", "K", "A"] });
+          }
+
+          for (const {suit, seq} of sequences) {
+            const options = seq.map(r =>
+              naturals.filter(c => c.suit === suit && c.rank === r)
+            );
+            const missing = options.filter(a => !a.length).length;
+            if (missing > jokers.length) continue;
+
+            for (const js of choose(jokers, missing)) {
+              const build = (pos, picked, ji) => {
+                if (pos === options.length) {
+                  add("seq", null, picked);
+                  return;
+                }
+                if (!options[pos].length) {
+                  build(pos + 1, picked.concat(js[ji]), ji + 1);
+                  return;
+                }
+                for (const c of options[pos]) {
+                  if (!picked.some(x => x.id === c.id))
+                    build(pos + 1, picked.concat(c), ji);
+                }
+              };
+              build(0, [], 0);
+            }
+          }
+
+          const unique = new Map();
+          for (const m of candidates) {
+            const key = m.ids.slice().sort().join("|");
+            if (!unique.has(key) || m.pure) unique.set(key, m);
+          }
+          const all = [...unique.values()];
+          if (!all.length) return null;
+
+          const byId = new Map();
+          for (const m of all)
+            for (const id of m.ids) {
+              if (!byId.has(id)) byId.set(id, []);
+              byId.get(id).push(m);
+            }
+
+          const memo = new Map();
+          function cover(left, hasPure) {
+            if (!left.size)
+              return (!requirePure || hasPure)
+                ? {ids: [], values: {}, v: 0, melds: []}
+                : null;
+
+            const key = [...left].sort().join("|") + ":" + (hasPure ? 1 : 0);
+            if (memo.has(key)) return memo.get(key);
+
+            let first = null, fewest = Infinity;
+            for (const id of left) {
+              const choices = (byId.get(id) || []).filter(m =>
+                m.ids.every(x => left.has(x))
+              );
+              if (!choices.length) {
+                memo.set(key, null);
+                return null;
+              }
+              if (choices.length < fewest) {
+                fewest = choices.length;
+                first = id;
+              }
+            }
+
+            for (const m of byId.get(first) || []) {
+              if (m.ids.some(id => !left.has(id))) continue;
+              const next = new Set(left);
+              m.ids.forEach(id => next.delete(id));
+              const tail = cover(next, hasPure || m.pure);
+              if (tail) {
+                const result = {
+                  ids: m.ids.concat(tail.ids),
+                  values: Object.assign({}, m.values, tail.values),
+                  v: m.v + tail.v,
+                  melds: [m].concat(tail.melds),
+                };
+                memo.set(key, result);
+                return result;
+              }
+            }
+
+            memo.set(key, null);
+            return null;
+          }
+
+          return cover(new Set(cs.map(c => c.id)), false);
+        }
+
         function analyzePartial(cs) {
+          // Prioritas pertama: cari susunan PENUH dengan solver yang sama
+          // untuk kartu 2-deck + Joker. Ini mencegah kartu identik seperti
+          // 4♠ copy #1 dan 4♠ copy #2 salah dianggap kartu mati.
+          const full = exactJokerMeldCover(cs, true);
+          if (full && full.ids.length === cs.length) return full;
+
+          // Fallback analyzer lama dipertahankan untuk kondisi ketika tangan
+          // memang belum bisa tersusun 100%.
           let ms = melds(cs),
             best = { ids: [], values: {}, v: 0, melds: [] };
 
           function disjoint(ids, used) {
-            return ids.every((id) => !used.has(id));
+            return ids.every(id => !used.has(id));
           }
 
           function isPureBase(m) {
-            if (m.ids.some((id) => {
-              let c = cs.find((x) => x.id === id);
+            if (m.ids.some(id => {
+              const c = cs.find(x => x.id === id);
               return c && c.joker;
             })) return false;
             if (m.type === "seq" && m.ids.length >= 3) return true;
             return m.type === "set" && m.rank === "A" && m.ids.length === 4;
-          }
-
-          // Kalau seluruh kartu bisa tersusun, prioritaskan SUSUNAN PENUH.
-          // Ini wajib untuk 2 deck: dua 4♠ dengan ID fisik berbeda boleh
-          // dipakai bersamaan, misalnya satu di pot dan satu di dasar.
-          if (ms.length) {
-            const pure = ms.filter(isPureBase);
-            const byId = new Map();
-
-            for (const m of ms) {
-              for (const id of m.ids) {
-                if (!byId.has(id)) byId.set(id, []);
-                byId.get(id).push(m);
-              }
-            }
-
-            const memo = new Map();
-            function exactCover(left, hasPure) {
-              if (!left.size)
-                return hasPure ? { ids: [], values: {}, v: 0, melds: [] } : null;
-
-              const key = [...left].sort().join("|") + ":" + (hasPure ? 1 : 0);
-              if (memo.has(key)) return memo.get(key);
-
-              let first = null, fewest = Infinity;
-              for (const id of left) {
-                const choices = (byId.get(id) || []).filter((m) =>
-                  m.ids.every((x) => left.has(x)),
-                );
-                if (!choices.length) {
-                  memo.set(key, null);
-                  return null;
-                }
-                if (choices.length < fewest) {
-                  fewest = choices.length;
-                  first = id;
-                }
-              }
-
-              for (const m of byId.get(first) || []) {
-                if (m.ids.some((id) => !left.has(id))) continue;
-                const next = new Set(left);
-                m.ids.forEach((id) => next.delete(id));
-
-                const tail = exactCover(next, hasPure || isPureBase(m));
-                if (tail) {
-                  const result = {
-                    ids: m.ids.concat(tail.ids),
-                    values: Object.assign({}, m.values, tail.values),
-                    v: m.v + tail.v,
-                    melds: [m].concat(tail.melds),
-                  };
-                  memo.set(key, result);
-                  return result;
-                }
-              }
-
-              memo.set(key, null);
-              return null;
-            }
-
-            if (pure.length) {
-              const full = exactCover(new Set(cs.map((x) => x.id)), false);
-              if (full && full.ids.length === cs.length) return full;
-            }
           }
 
           function better(candidate) {
@@ -2785,37 +2905,33 @@ function advance() {
           }
 
           function expand(start, used, vals, v, chosen) {
-            let candidate = {
+            const candidate = {
               ids: [...used],
-              values: { ...vals },
+              values: {...vals},
               v,
               melds: chosen.slice(),
             };
             if (better(candidate)) best = candidate;
 
             for (let i = start; i < ms.length; i++) {
-              let m = ms[i];
+              const m = ms[i];
               if (!disjoint(m.ids, used)) continue;
-
-              let nextUsed = new Set(used);
-              m.ids.forEach((id) => nextUsed.add(id));
-
+              const nextUsed = new Set(used);
+              m.ids.forEach(id => nextUsed.add(id));
               expand(
                 i + 1,
                 nextUsed,
-                { ...vals, ...m.values },
+                {...vals, ...m.values},
                 v + m.v,
                 chosen.concat([m]),
               );
             }
           }
 
-          // Jika belum bisa menutup semua kartu, pertahankan perilaku analyzer
-          // lama untuk menghitung kartu hidup/mati secara normal.
-          let pure = ms.filter(isPureBase);
-          for (let base of pure) {
-            let used = new Set(base.ids);
-            expand(0, used, { ...base.values }, base.v, [base]);
+          const pure = ms.filter(isPureBase);
+          for (const base of pure) {
+            const used = new Set(base.ids);
+            expand(0, used, {...base.values}, base.v, [base]);
           }
 
           return best;
