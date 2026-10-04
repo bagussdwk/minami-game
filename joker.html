@@ -2859,22 +2859,51 @@ $("jokerResetBtn").onclick=async()=>{
           modal("📖 ATURAN JOKER",'<div class="joker-rules-wrap"><div class="joker-rules-head"><div><h2>JOKER</h2><div class="joker-menu-sub">Panduan bermain</div></div></div><div class="joker-rule-grid"><div class="joker-rule-card"><div class="joker-rule-icon">🃏</div><div><h3>Joker</h3><p>Satu kartu penentu menentukan rank Joker. Kartu dengan rank sama dan warna berlawanan menjadi Joker.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🎴</div><div><h3>Awal Giliran</h3><p>Pilih mengambil kartu buangan pemain sebelumnya atau mengambil satu kartu dari tumpukan tengah.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🧩</div><div><h3>Dasar & Set</h3><p>Buat dasar berurutan satu bunga atau set dengan rank yang sama. Joker dapat membantu kombinasi.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">♻️</div><div><h3>Buang</h3><p>Setelah mengambil kartu, buang satu kartu. Buangan terbaru selalu berada di sisi kanan.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🏁</div><div><h3>Tutup</h3><p>Tutup dengan A atau Joker setelah memiliki minimal satu dasar yang sah dan kartu lain sudah tersusun.</p></div></div><div class="joker-rule-card"><div class="joker-rule-icon">🏆</div><div><h3>Target Game</h3><p>Game berakhir ketika pemain mencapai 1.500 poin. Rank 1/Win Match dicatat berdasarkan hasil match.</p></div></div></div><div class="joker-rule-note">💡 Gunakan tombol ◷ pada kotak buangan untuk melihat riwayat kartu yang pernah dibuang.</div></div>',"Tutup",closeModal,true);
         };
         $("jokerBackBtn").onclick=()=>{window.location.href="index.html";};
+        function restorePendingJokerWin() {
+          let restored = false;
+          try {
+            if (loadJokerWinSnapshot() && g?.resultPending?.type === "win") {
+              restored = true;
+            } else {
+              const pending = loadJokerWinPending();
+              if (pending?.type === "win") {
+                if (!g) loadGame();
+                if (g) g.resultPending = pending;
+                restored = !!g?.resultPending;
+              } else if (g?.resultPending?.type === "win") {
+                restored = true;
+              }
+            }
+          } catch (e) {
+            console.warn("restore pending win", e);
+          }
+          if (!restored) return false;
+          render();
+          $("setup").style.display = "none";
+          $("game").style.display = "block";
+          setJokerPointsVisible(true);
+          const pending = g.resultPending;
+          setTimeout(() => {
+            try {
+              if (g?.resultPending?.type === "win") {
+                showWinResult(pending.winner, pending.caught, pending.card);
+              }
+            } catch (e) {
+              console.error("restore WIN MATCH modal", e);
+            }
+          }, 80);
+          return true;
+        }
+
         $("start").onclick = () => {
           try {
-            if (!loadGame()) {
-              newMatch();
-            }
+            if (restorePendingJokerWin()) return;
+            if (!loadGame()) newMatch();
             $("setup").style.display = "none";
             $("game").style.display = "block";
             setJokerPointsVisible(true);
-            const pending=loadJokerWinPending();
-            if(pending){
-              g.resultPending=pending;
-              setTimeout(()=>showWinResult(pending.winner,pending.caught,pending.card),80);
-            }
           } catch (e) {
             console.error(e);
-            clearSavedGame();
             $("setup").style.display = "block";
             $("game").style.display = "none";
             alert("JOKER gagal dimulai: " + e.message);
