@@ -1889,29 +1889,141 @@
           const c = p.hand[i];
           const rest = p.hand.filter((_, x) => x !== i);
 
-          // Kartu penutup wajib A/Joker dan harus berasal dari buangan.
-          // Untuk susunan kartu lainnya, jangan pakai analyzePartial():
-          // analyzer skor mencari kombinasi terbaik, sedangkan Tutup
-          // membutuhkan EXACT COVER — setiap kartu harus masuk tepat satu
-          // dasar/pot. Ini penting untuk 2 deck, karena dua kartu fisik
-          // dengan rank+bunga sama memang boleh dipakai di kelompok berbeda.
+          // Kartu penutup wajib A/Joker. Kartu lainnya harus bisa
+          // dipartisi 100% menjadi dasar/pot, dengan minimal 1 dasar murni.
+          // Validator Tutup dibuat khusus di sini supaya tidak bergantung
+          // pada analyzer skor/heuristic dan aman untuk 2 deck.
           if (!c || (c.rank !== "A" && !c.joker)) return false;
           if (rest.length < 3) return false;
 
-          const ms = melds(rest).filter(
-            (m) => Array.isArray(m.ids) && m.ids.length >= 3,
-          );
-          if (!ms.length) return false;
+          const jokers = rest.filter((x) => x.joker);
+          const naturals = rest.filter((x) => !x.joker);
+          const candidates = [];
 
-          // Hilangkan kandidat yang identik secara fisik.
+          const combos = (arr, k, start = 0, picked = [], out = []) => {
+            if (picked.length === k) {
+              out.push(picked.slice());
+              return out;
+            }
+            for (let z = start; z <= arr.length - (k - picked.length); z++)
+              combos(arr, k, z + 1, picked.concat(arr[z]), out);
+            return out;
+          };
+
+          const add = (type, rank, cards, pure) => {
+            if (cards.length < 3) return;
+            const ids = cards.map((x) => x.id);
+            if (new Set(ids).size !== ids.length) return;
+            candidates.push({
+              ids,
+              pure: !!pure,
+            });
+          };
+
+          // Set/pot: rank sama, maksimal satu bunga per pot.
+          for (const r of ranks) {
+            const bySuit = new Map();
+            for (const card of naturals.filter((x) => x.rank === r)) {
+              if (!bySuit.has(card.suit)) bySuit.set(card.suit, []);
+              bySuit.get(card.suit).push(card);
+            }
+            const suitKeys = [...bySuit.keys()];
+
+            const chooseSuits = (pos, need, picked, out) => {
+              if (picked.length === need) {
+                out.push(picked.slice());
+                return;
+              }
+              for (
+                let z = pos;
+                z <= suitKeys.length - (need - picked.length);
+                z++
+              ) {
+                const suit = suitKeys[z];
+                for (const card of bySuit.get(suit)) {
+                  picked.push(card);
+                  chooseSuits(z + 1, need, picked, out);
+                  picked.pop();
+                }
+              }
+            };
+
+            for (let k = 3; k <= 4; k++) {
+              for (let naturalCount = Math.max(0, k - jokers.length);
+                   naturalCount <= Math.min(k, suitKeys.length);
+                   naturalCount++) {
+                const needJoker = k - naturalCount;
+                if (needJoker > jokers.length) continue;
+
+                const naturalChoices = [];
+                chooseSuits(0, naturalCount, [], naturalChoices);
+                for (const take of naturalChoices) {
+                  for (const js of combos(jokers, needJoker))
+                    add(
+                      "set",
+                      r,
+                      take.concat(js),
+                      k === 4 && needJoker === 0 && r === "A",
+                    );
+                }
+              }
+            }
+          }
+
+          // Sequence: setiap kartu harus satu bunga dan rank berurutan.
+          const sequences = [];
+          for (const s of suits.map((x) => x[0])) {
+            for (let k = 3; k <= 13; k++) {
+              for (let st = 0; st <= 13 - k; st++)
+                sequences.push({ suit: s, seq: ranks.slice(st, st + k) });
+            }
+            sequences.push({ suit: s, seq: ["Q", "K", "A"] });
+            sequences.push({ suit: s, seq: ["J", "Q", "K", "A"] });
+          }
+
+          for (const { suit, seq } of sequences) {
+            const options = seq.map((r) =>
+              naturals.filter((x) => x.suit === suit && x.rank === r),
+            );
+            const missing = options.filter((x) => !x.length).length;
+            if (missing > jokers.length) continue;
+
+            const jokerChoices = combos(jokers, missing);
+            for (const js of jokerChoices) {
+              const build = (pos, picked, usedJoker) => {
+                if (pos === options.length) {
+                  add("seq", null, picked, missing === 0);
+                  return;
+                }
+                if (!options[pos].length) {
+                  const jc = js[usedJoker];
+                  build(pos + 1, picked.concat(jc), usedJoker + 1);
+                  return;
+                }
+                for (const card of options[pos]) {
+                  if (!picked.some((x) => x.id === card.id))
+                    build(pos + 1, picked.concat(card), usedJoker);
+                }
+              };
+              build(0, [], 0);
+            }
+          }
+
+          // Buang kandidat duplikat berdasarkan kartu fisik.
           const unique = new Map();
-          for (const m of ms) {
+          for (const m of candidates) {
             const key = m.ids.slice().sort().join("|");
-            if (!unique.has(key)) unique.set(key, m);
+            if (!unique.has(key) || m.pure) {
+              unique.set(key, {
+                ids: m.ids.slice(),
+                pure: unique.get(key)?.pure || m.pure,
+              });
+            }
           }
           const all = [...unique.values()];
+          if (!all.length) return false;
 
-          // Semua kandidat yang mungkin untuk tiap kartu.
+          // Setiap kartu fisik harus punya minimal satu kandidat meld.
           const byId = new Map();
           for (const m of all) {
             for (const id of m.ids) {
@@ -1919,45 +2031,46 @@
               byId.get(id).push(m);
             }
           }
+          for (const card of rest)
+            if (!byId.has(card.id)) return false;
 
-          const pureIds = new Set();
-          for (const m of all) {
-            const pure = m.ids.every((id) => {
-              const card = rest.find((x) => x.id === id);
-              return card && !card.joker;
-            }) &&
-              (
-                (m.type === "seq" && m.ids.length >= 3) ||
-                (m.type === "set" && m.rank === "A" && m.ids.length === 4)
-              );
-            if (pure) pureIds.add(m.ids.slice().sort().join("|"));
-          }
-          if (!pureIds.size) return false;
-
-          // Exact-cover DFS: selalu ambil kartu pertama yang belum tertutup.
-          // Dengan begitu satu kartu fisik tidak bisa dipakai di dua meld,
-          // tetapi kartu kembar dari deck 1 dan deck 2 tetap independen.
-          function cover(left, hasPure) {
+          // Exact-cover DFS. Pilih kartu dengan kandidat paling sedikit
+          // agar cepat dan memastikan tidak ada kartu yang terpakai dua kali.
+          const memo = new Map();
+          const cover = (left, hasPure) => {
             if (!left.size) return hasPure;
+            const state = [...left].sort().join("|") + ":" + (hasPure ? 1 : 0);
+            if (memo.has(state)) return memo.get(state);
 
             let first = null;
+            let bestCount = Infinity;
             for (const id of left) {
-              first = id;
-              break;
+              const count = (byId.get(id) || []).filter((m) =>
+                m.ids.every((x) => left.has(x)),
+              ).length;
+              if (!count) {
+                memo.set(state, false);
+                return false;
+              }
+              if (count < bestCount) {
+                bestCount = count;
+                first = id;
+              }
             }
 
-            const candidates = byId.get(first) || [];
-            for (const m of candidates) {
+            for (const m of byId.get(first) || []) {
               if (m.ids.some((id) => !left.has(id))) continue;
-
-              const key = m.ids.slice().sort().join("|");
               const next = new Set(left);
-              for (const id of m.ids) next.delete(id);
-
-              if (cover(next, hasPure || pureIds.has(key))) return true;
+              m.ids.forEach((id) => next.delete(id));
+              if (cover(next, hasPure || m.pure)) {
+                memo.set(state, true);
+                return true;
+              }
             }
+
+            memo.set(state, false);
             return false;
-          }
+          };
 
           return cover(new Set(rest.map((x) => x.id)), false);
         }
