@@ -1267,6 +1267,9 @@
           return d;
         }
         const JOKER_LOCAL_SAVE_V2="minamiJokerLocalSaveV2";
+        // Penanda bahwa JOKER sedang memiliki pertandingan aktif.
+        // Ini khusus joker.html; tidak bergantung pada index.html.
+        const JOKER_ACTIVE_LOCAL_KEY="minamiJokerActiveV1";
         let jokerCloudTimer=null,jokerCloudPending=null;
         let jokerLocalRestoredThisLoad=false;
         function jokerCloudMeta(){
@@ -1461,9 +1464,11 @@
           try {
             if(!g)return;
             const payload=JSON.stringify({n,g,sel});
-            // V2 adalah save lokal utama. Ini ditulis sinkron setiap kali state berubah.
+            // JOKER menyimpan state secara sinkron setiap kali state berubah.
+            // Refresh TIDAK boleh bergantung pada Cloud/API.
             localStorage.setItem(JOKER_LOCAL_SAVE_V2,payload);
             localStorage.setItem("minami_joker_state",payload);
+            localStorage.setItem(JOKER_ACTIVE_LOCAL_KEY,"1");
             try{sessionStorage.setItem("minami_joker_state",payload)}catch(e){}
             queueJokerCloudSave(payload,true);
           }catch(e){console.warn("save",e)}
@@ -1486,40 +1491,54 @@
               localStorage.getItem("minami_joker_state") ||
               sessionStorage.getItem("minami_joker_state");
             if (!raw) return false;
-            let x = JSON.parse(raw);
-            if (!x || !x.g || !x.g.p || x.g.p.length !== x.n) return false;
-            n = x.n;
+
+            const x = JSON.parse(raw);
+            if (!x || !x.g || !Array.isArray(x.g.p)) return false;
+
+            // Save lama kadang tidak membawa n dengan benar. Ambil dari jumlah
+            // pemain yang tersimpan agar refresh tidak jatuh ke menu hanya karena
+            // validasi n gagal.
+            const savedN = Number(x.n) || x.g.p.length;
+            if (![4,5].includes(savedN) || x.g.p.length !== savedN) return false;
+
+            n = savedN;
             g = x.g;
             ensureJokerActionStats();
+            localStorage.setItem(JOKER_ACTIVE_LOCAL_KEY,"1");
 
-            // Migrasi save lama: kartu di draw pile mungkin belum memiliki
-            // flag Joker karena versi sebelumnya hanya menandai kartu di tangan.
-            // Tandai ulang seluruh kartu berdasarkan marker yang tersimpan.
+            // Migrasi save lama: tandai ulang seluruh kartu Joker berdasarkan marker.
             if (g.marker && g.draw && Array.isArray(g.p)) {
               const jokerColor = g.marker.color === "r" ? "b" : "r";
-              for (let p of g.p)
-                for (let c of p.hand || [])
-                  c.joker =
-                    c.rank === g.marker.rank && c.color === jokerColor;
-              for (let c of g.draw)
+              for (const p of g.p) {
+                for (const c of p.hand || [])
+                  c.joker = c.rank === g.marker.rank && c.color === jokerColor;
+              }
+              for (const c of g.draw)
                 c.joker = c.rank === g.marker.rank && c.color === jokerColor;
             }
 
             sel = typeof x.sel === "number" ? x.sel : -1;
+
+            // Render tetap dilakukan di sini seperti restoreSavedGame() Minami.
+            // Kalau ada state lama yang kurang satu field UI, normalisasi kecil
+            // di atas sudah dilakukan sebelum render.
             render();
-            const pending= g.resultPending?.type==="win" ? g.resultPending : loadJokerWinPending();
-            if(pending?.type==="win"){
-              g.resultPending=pending;
-              setTimeout(()=>showWinResult(pending.winner,pending.caught,pending.card),80);
-            }else if (
+
+            const pending =
+              g.resultPending?.type === "win" ? g.resultPending : loadJokerWinPending();
+            if (pending?.type === "win") {
+              g.resultPending = pending;
+              setTimeout(() => showWinResult(pending.winner,pending.caught,pending.card),80);
+            } else if (
               g.turn &&
               !g.over &&
               (g.phase === "take" || g.phase === "discard")
-            )
+            ) {
               waitAI(700);
+            }
             return true;
           } catch (e) {
-            console.warn("load", e);
+            console.warn("JOKER local restore failed:", e);
             return false;
           }
         }
@@ -1527,6 +1546,7 @@
           try{
             localStorage.removeItem(JOKER_LOCAL_SAVE_V2);
             localStorage.removeItem("minami_joker_state");
+            localStorage.removeItem(JOKER_ACTIVE_LOCAL_KEY);
             sessionStorage.removeItem("minami_joker_state");
           }catch(e){}
           if(removeCloud)deleteJokerCloudSave();
@@ -2966,46 +2986,50 @@ $("jokerResetBtn").onclick=async()=>{
           location.href = "index.html";
         };
         // STARTUP JOKER:
-        // Selama proses restore, SETUP SAMA SEKALI TIDAK BOLEH DITAMPILKAN.
-        // Urutan: WIN snapshot -> local save -> Cloud save -> baru setup.
-        // Jadi refresh tidak akan pernah menjatuhkan pemain ke menu awal
-        // hanya karena restore Cloud membutuhkan waktu.
+        // Sama seperti restoreSavedGame() di index.html, pemulihan lokal dilakukan
+        // SINKRON terlebih dahulu. Cloud/API hanya menjadi cadangan.
+        // Jadi refresh JOKER tidak pernah perlu masuk ke menu awal jika state lokal valid.
         $("setup").style.display = "none";
         $("game").style.display = "none";
         setJokerPointsVisible(false);
 
-        (async function restoreJokerOnRefresh(){
-          let restored=false;
-          try{
-            if(restorePendingJokerWin()){
-              restored=true;
-            }else if(loadGame()){
-              restored=true;
-            }else{
-              restored=await restoreJokerCloudAfterLogin();
+        let jokerRestored = false;
+        try {
+          // WIN snapshot adalah bagian dari pertandingan aktif sampai "Lanjut Match".
+          jokerRestored = restorePendingJokerWin();
+          if (!jokerRestored) jokerRestored = loadGame();
+        } catch (e) {
+          console.warn("JOKER local startup restore:", e);
+        }
+
+        if (jokerRestored && g?.p?.length === n) {
+          jokerLocalRestoredThisLoad = true;
+          $("setup").style.display = "none";
+          $("game").style.display = "block";
+          setJokerPointsVisible(true);
+        } else {
+          // Jangan menunggu Cloud untuk menampilkan menu.
+          // Jika lokal memang tidak ada, baru Cloud dicoba sebagai fallback.
+          $("game").style.display = "none";
+          $("setup").style.display = "block";
+          setJokerPointsVisible(false);
+
+          restoreJokerCloudAfterLogin().then((cloudRestored) => {
+            if (cloudRestored && g?.p?.length === n) {
+              jokerLocalRestoredThisLoad = true;
+              $("setup").style.display = "none";
+              $("game").style.display = "block";
+              setJokerPointsVisible(true);
             }
-          }catch(e){
-            console.warn("auto-load",e);
-          }
+          }).catch((e) => console.warn("JOKER cloud restore:", e));
+        }
 
-          if(restored && g?.p?.length===n){
-            jokerLocalRestoredThisLoad=true;
-            $("setup").style.display="none";
-            $("game").style.display="block";
-            setJokerPointsVisible(true);
-          }else{
-            $("game").style.display="none";
-            $("setup").style.display="block";
-            setJokerPointsVisible(false);
-          }
+        $("back").onclick = () => {
+          clearSavedGame();
+          location.href = "index.html";
+        };
 
-          $("back").onclick = () => {
-            clearSavedGame();
-            location.href = "index.html";
-          };
-
-          loadJokerAccountStats().then(updateJokerProfileUI).catch(()=>{});
-        })();
+        loadJokerAccountStats().then(updateJokerProfileUI).catch(()=>{});
       })();
     </script>
   </body>
