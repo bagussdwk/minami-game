@@ -3018,10 +3018,13 @@ $("jokerResetBtn").onclick=async()=>{
             }
           }
         }
-        $("back").onclick = () => {
-          clearSavedGame();
-          location.href = "index.html";
-        };
+        const jokerBackLegacy = $("back");
+        if (jokerBackLegacy) {
+          jokerBackLegacy.onclick = () => {
+            clearSavedGame();
+            location.href = "index.html";
+          };
+        }
         // STARTUP JOKER:
         // Database player_game_saves tetap menjadi sumber utama.
         // PENTING: jangan sembunyikan setup saat menunggu API.
