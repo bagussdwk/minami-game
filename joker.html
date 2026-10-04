@@ -1479,6 +1479,7 @@
             const payload=JSON.stringify({n,g,sel});
             localStorage.setItem(JOKER_LOCAL_SAVE_V2,payload);
             localStorage.setItem("minami_joker_state",payload);
+            localStorage.setItem(JOKER_ACTIVE_LOCAL_KEY,"1");
             try{sessionStorage.setItem("minami_joker_state",payload)}catch(e){}
           }catch(e){}
         }
@@ -2967,10 +2968,27 @@ $("jokerResetBtn").onclick=async()=>{
           return true;
         }
 
-        $("start").onclick = () => {
+        $("start").onclick = async () => {
           try {
+            // Jika ada save, tombol ini SELALU berarti LANJUTKAN.
             if (restorePendingJokerWin()) return;
-            if (!loadGame()) newMatch();
+            if (loadGame()) {
+              $("setup").style.display = "none";
+              $("game").style.display = "block";
+              setJokerPointsVisible(true);
+              return;
+            }
+
+            // Coba Cloud sebelum membuat permainan baru.
+            if (await restoreJokerCloudAfterLogin()) {
+              $("setup").style.display = "none";
+              $("game").style.display = "block";
+              setJokerPointsVisible(true);
+              return;
+            }
+
+            // Hanya kalau benar-benar tidak ada save, boleh membuat match baru.
+            newMatch();
             $("setup").style.display = "none";
             $("game").style.display = "block";
             setJokerPointsVisible(true);
@@ -2978,9 +2996,33 @@ $("jokerResetBtn").onclick=async()=>{
             console.error(e);
             $("setup").style.display = "block";
             $("game").style.display = "none";
-            alert("JOKER gagal dimulai: " + e.message);
+            alert("JOKER gagal dilanjutkan: " + e.message);
           }
         };
+
+        function updateJokerStartMenu(hasActive) {
+          const choices = document.querySelector(".choices");
+          const start = $("start");
+          const showcase = document.querySelector(".joker-start-showcase");
+          if (hasActive) {
+            if (choices) choices.style.display = "none";
+            if (start) {
+              start.textContent = "▶ LANJUTKAN PERMAINAN";
+              start.classList.add("gold");
+            }
+            if (showcase) {
+              const sub = showcase.querySelector(".joker-start-sub");
+              if (sub) sub.textContent = "Permainan yang sedang berlangsung ditemukan. Lanjutkan permainan terakhir Anda.";
+            }
+          } else {
+            if (choices) choices.style.display = "";
+            if (start) start.textContent = "🃏 MULAI PERMAINAN";
+            if (showcase) {
+              const sub = showcase.querySelector(".joker-start-sub");
+              if (sub) sub.textContent = "Siapkan strategi. Baca lawan. Tutup di waktu yang tepat.";
+            }
+          }
+        }
         $("back").onclick = () => {
           clearSavedGame();
           location.href = "index.html";
@@ -3044,6 +3086,7 @@ $("jokerResetBtn").onclick=async()=>{
           $("game").style.display = "none";
           $("setup").style.display = "block";
           setJokerPointsVisible(false);
+          updateJokerStartMenu(false);
 
           // Cloud tetap dicoba sebagai fallback untuk sesi login yang baru.
           restoreJokerCloudAfterLogin().then((cloudRestored) => {
@@ -3055,6 +3098,10 @@ $("jokerResetBtn").onclick=async()=>{
             }
           }).catch((e) => console.warn("JOKER cloud restore:", e));
         }
+
+        // Kalau save aktif ditemukan tetapi pemulihan sinkron gagal,
+        // jangan pernah tawarkan "Mulai Permainan".
+        if (jokerHasActiveSave) updateJokerStartMenu(true);
 
         $("back").onclick = () => {
           clearSavedGame();
