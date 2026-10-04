@@ -2866,23 +2866,26 @@ $("jokerResetBtn").onclick=async()=>{
         $("game").style.display = "none";
         setJokerPointsVisible(false);
         try {
-          if (localStorage.getItem("minami_joker_state")) {
-            if (loadGame()) {
-              $("setup").style.display = "none";
-              $("game").style.display = "block";
+          if(loadJokerWinSnapshot()){
+            render();
+            $("setup").style.display="none";
+            $("game").style.display="block";
+            setJokerPointsVisible(true);
+            setTimeout(()=>showWinResult(g.resultPending.winner,g.resultPending.caught,g.resultPending.card),80);
+          }else if(localStorage.getItem("minami_joker_state")){
+            if(loadGame()){
+              $("setup").style.display="none";
+              $("game").style.display="block";
               setJokerPointsVisible(true);
-              const pending=loadJokerWinPending();
-              if(pending){
-                g.resultPending=pending;
-                setTimeout(()=>showWinResult(pending.winner,pending.caught,pending.card),80);
-              }
-            } else clearSavedGame();
+            }else clearSavedGame();
           }
-        } catch (e) {
-          console.warn("auto-load", e);
-          clearSavedGame();
-          $("setup").style.display = "block";
-          $("game").style.display = "none";
+        } catch(e) {
+          console.warn("auto-load",e);
+          if(!loadJokerWinSnapshot()){
+            clearSavedGame();
+            $("setup").style.display="block";
+            $("game").style.display="none";
+          }
         }
         $("back").onclick = () => {
           clearSavedGame();
