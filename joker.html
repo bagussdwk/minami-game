@@ -1341,6 +1341,20 @@
           }
         }
 
+        const JOKER_WIN_PENDING_KEY="minamiJokerWinPendingV1";
+        function saveJokerWinPending(x){
+          try{localStorage.setItem(JOKER_WIN_PENDING_KEY,JSON.stringify(x||null));}catch(e){}
+        }
+        function loadJokerWinPending(){
+          try{
+            const x=JSON.parse(localStorage.getItem(JOKER_WIN_PENDING_KEY)||"null");
+            return x&&x.type==="win"?x:null;
+          }catch(e){return null}
+        }
+        function clearJokerWinPending(){
+          try{localStorage.removeItem(JOKER_WIN_PENDING_KEY);}catch(e){}
+        }
+
         const JOKER_PENDING_RESULTS_KEY="minamiJokerPendingResultsV1";
         function jokerPendingResults(){
           try{
@@ -1432,8 +1446,10 @@
 
             sel = typeof x.sel === "number" ? x.sel : -1;
             render();
-            if(g.resultPending?.type==="win"){
-              setTimeout(()=>showWinResult(g.resultPending.winner,g.resultPending.caught,g.resultPending.card),0);
+            const pending= g.resultPending?.type==="win" ? g.resultPending : loadJokerWinPending();
+            if(pending?.type==="win"){
+              g.resultPending=pending;
+              setTimeout(()=>showWinResult(pending.winner,pending.caught,pending.card),80);
             }else if (
               g.turn &&
               !g.over &&
@@ -2590,6 +2606,7 @@ function advance() {
             "Lanjut Match",()=>{
               closeModal();
               g.resultPending=null;
+              clearJokerWinPending();
               if(g.p.some(x=>x.score>=1500))return gameOver();
               const order=g.p.map((p,i)=>({i,score:p.score})).sort((a,b)=>a.score-b.score||a.i-b.i);
               newMatch(order[0].i,-g.dir,true);
@@ -2632,6 +2649,7 @@ function advance() {
           if(jokerUnlocks.length)syncJokerAchievements(jokerUnlocks);
           syncJokerResult(resultId,{games_finished:gameFinished?1:0,game_wins:userGameWin?1:0,rank1,match_wins:rank1,jokers:g.jokerStats.jokers,joker_sets:g.jokerStats.sets,caught:g.jokerStats.caught,caught_by:g.jokerStats.caughtBy,best_streak:streak});
           g.resultPending={type:"win",winner:w,caught:t,card:c};
+          saveJokerWinPending(g.resultPending);
           render();
           saveGame();
           showWinResult(w,t,c);
@@ -2827,6 +2845,11 @@ $("jokerResetBtn").onclick=async()=>{
             $("setup").style.display = "none";
             $("game").style.display = "block";
             setJokerPointsVisible(true);
+            const pending=loadJokerWinPending();
+            if(pending){
+              g.resultPending=pending;
+              setTimeout(()=>showWinResult(pending.winner,pending.caught,pending.card),80);
+            }
           } catch (e) {
             console.error(e);
             clearSavedGame();
@@ -2848,6 +2871,11 @@ $("jokerResetBtn").onclick=async()=>{
               $("setup").style.display = "none";
               $("game").style.display = "block";
               setJokerPointsVisible(true);
+              const pending=loadJokerWinPending();
+              if(pending){
+                g.resultPending=pending;
+                setTimeout(()=>showWinResult(pending.winner,pending.caught,pending.card),80);
+              }
             } else clearSavedGame();
           }
         } catch (e) {
