@@ -9902,9 +9902,85 @@ function renderFeaturePanels(){
         if(l)renderLeaderboard();
       });
       
+      // =============================================================
+      // ACTIVE GAME MENU
+      // Jika akun masih mempunyai permainan aktif, menu tidak meminta
+      // pilih 4/5 pemain lagi. Pemain cukup menekan LANJUTKAN PERMAINAN.
+      // =============================================================
+      function setActiveGameMenu(save){
+        const mode=String(save?.mode||"");
+        const configs={
+          minami1:{card:"setup", players:"#setup .player-buttons", label:"#setup .setup-section-label", button:"startBtn", title:"▶ LANJUTKAN PERMAINAN"},
+          minami2:{card:"setupMinami2", players:"#setupMinami2 .player-buttons", label:"#setupMinami2 .setup-section-label", button:"startMinami2Btn", title:"▶ LANJUTKAN PERMAINAN"},
+          joker:{card:"setupJoker", players:"#setupJoker .joker-player-buttons", label:"#setupJoker .setup-section-label", button:"startJokerBtn", title:"🃏 LANJUTKAN PERMAINAN"}
+        };
+        Object.values(configs).forEach(c=>{
+          const card=document.getElementById(c.card), players=document.querySelector(c.players), label=document.querySelector(c.label), btn=document.getElementById(c.button);
+          if(card) card.classList.remove("active-game-resume");
+          if(players) players.style.removeProperty("display");
+          if(label) label.style.removeProperty("display");
+          if(btn){btn.textContent=btn.dataset.defaultText||btn.textContent;btn.dataset.resume="0";}
+        });
+        const c=configs[mode];
+        if(!c)return;
+        const card=document.getElementById(c.card), players=document.querySelector(c.players), label=document.querySelector(c.label), btn=document.getElementById(c.button);
+        if(card) card.classList.add("active-game-resume");
+        if(players) players.style.display="none";
+        if(label) label.style.display="none";
+        if(btn){
+          if(!btn.dataset.defaultText)btn.dataset.defaultText=btn.textContent;
+          btn.textContent=c.title;
+          btn.dataset.resume="1";
+        }
+      }
+
+      async function refreshActiveGameMenu(){
+        try{
+          const save=await getActiveAccountGameSave();
+          setActiveGameMenu(save);
+          return save;
+        }catch(e){return null}
+      }
+
+      async function continueActiveMinami(save){
+        if(!save?.state)return false;
+        if(installMinamiCloudState(save)) return !!restoreSavedGame();
+        return false;
+      }
+
       // Saat pertama kali membuka halaman:
-      // jika ada game tersimpan, lanjutkan game tersebut.
+      // local save tetap diprioritaskan agar refresh di perangkat yang sama
+      // langsung kembali ke meja. Setelah itu menu diperbarui berdasarkan
+      // Cloud save aktif untuk akun tersebut.
       restoreSavedGame();
+      refreshActiveGameMenu();
+
+      // Tombol START juga berfungsi sebagai LANJUTKAN jika ada save aktif.
+      const _startBtnOriginal=document.getElementById("startBtn").onclick;
+      document.getElementById("startBtn").onclick=async()=>{
+        const active=await getActiveAccountGameSave();
+        if(active?.mode==="minami1"&&active.state){
+          if(await continueActiveMinami(active))return;
+        }
+        if(_startBtnOriginal)await _startBtnOriginal();
+      };
+      const _startMinami2Original=document.getElementById("startMinami2Btn").onclick;
+      document.getElementById("startMinami2Btn").onclick=async()=>{
+        const active=await getActiveAccountGameSave();
+        if(active?.mode==="minami2"&&active.state){
+          if(await continueActiveMinami(active))return;
+        }
+        if(_startMinami2Original)await _startMinami2Original();
+      };
+      const _startJokerOriginal=document.getElementById("startJokerBtn").onclick;
+      document.getElementById("startJokerBtn").onclick=async()=>{
+        const active=await getActiveAccountGameSave();
+        if(active?.mode==="joker"){
+          window.location.href="joker.html";
+          return;
+        }
+        if(_startJokerOriginal)await _startJokerOriginal();
+      };
     </script>
   
 <style id="achievement-card-stat-size">
@@ -10122,6 +10198,10 @@ function renderFeaturePanels(){
   .music-check{display:none;margin-left:3px}
   .music-choice.active .music-check{display:inline}
   .music-choice:hover{background:rgba(243,207,112,.1);color:#f3cf70}
+</style>
+<style id="active-game-resume-menu">
+  .active-game-resume{border-color:rgba(243,207,112,.42)!important;box-shadow:0 12px 35px rgba(0,0,0,.22),inset 0 1px 0 rgba(243,207,112,.08)}
+  .active-game-resume .setup-start{background:linear-gradient(145deg,#f3cf70,#c99e35)!important;color:#182019!important}
 </style>
 <style id="menu-hide-hand-only">
   /* Saat menu hamburger terbuka, hanya footer kartu milik kita yang disembunyikan.
