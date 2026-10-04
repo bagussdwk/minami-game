@@ -1136,6 +1136,36 @@
           gameOverTimer = null,
           gameOverCountdown = null;
         const $ = (x) => document.getElementById(x),
+        // Handler START dipasang sedini mungkin agar error di bagian lain tidak mematikan tombol.
+        const jokerStartEarly = document.getElementById("start");
+        if (jokerStartEarly) {
+          jokerStartEarly.onclick = async () => {
+            try {
+              if (typeof restorePendingJokerWin === "function" && restorePendingJokerWin()) return;
+              if (typeof loadGame === "function" && loadGame()) {
+                document.getElementById("setup").style.display = "none";
+                document.getElementById("game").style.display = "block";
+                if (typeof setJokerPointsVisible === "function") setJokerPointsVisible(true);
+                return;
+              }
+              if (typeof restoreJokerCloudAfterLogin === "function" && await restoreJokerCloudAfterLogin()) {
+                document.getElementById("setup").style.display = "none";
+                document.getElementById("game").style.display = "block";
+                if (typeof setJokerPointsVisible === "function") setJokerPointsVisible(true);
+                return;
+              }
+              if (typeof newMatch === "function") {
+                newMatch();
+                document.getElementById("setup").style.display = "none";
+                document.getElementById("game").style.display = "block";
+                if (typeof setJokerPointsVisible === "function") setJokerPointsVisible(true);
+              }
+            } catch (e) {
+              console.error("JOKER START:", e);
+              alert("JOKER gagal dilanjutkan: " + e.message);
+            }
+          };
+        }
           rv = (r) =>
             r === "A" ? 15 : ["J", "Q", "K"].includes(r) ? 10 : 5,
           sh = (a) => {
