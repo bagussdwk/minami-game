@@ -1312,6 +1312,13 @@
         async function restoreJokerCloudAfterLogin(){
           const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
           if(!token)return;
+          // WIN MATCH yang belum ditekan "Lanjut Match" adalah state final.
+          // Cloud tidak boleh menimpanya dengan state match lama.
+          try {
+            if (restorePendingJokerWin && restorePendingJokerWin()) return;
+          } catch (e) {
+            console.warn("restore pending win before cloud", e);
+          }
           try{
             const d=await jokerApiPost("game-load",{token,mode:"joker"});
             const save=d?.save||null;
