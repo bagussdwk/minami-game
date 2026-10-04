@@ -2624,9 +2624,15 @@ function advance() {
           deleteJokerCloudSave();
           let winnerCards = wp.hand.slice();
           winnerCards.push(c);
-          let playersHtml = g.p.map((p, i) =>
-            resultPlayer(p, i === w ? [c] : [])
-          ).join("");
+          // Saat WIN MATCH karena menangkap/ditangkap, jangan tampilkan
+          // tangan pemain lain secara acak. Gunakan analisis kartu yang sama
+          // dengan kondisi "tumpukan habis": semua kombinasi hidup ditampilkan
+          // sebagai meld, sisanya ditandai sebagai kartu mati.
+          let playersHtml = g.p.map((p, i) => {
+            const extra = i === w ? [c] : [];
+            const visibleCards = p.hand.slice().concat(extra);
+            return resultPlayer(p, extra, analyzePartial(visibleCards));
+          }).join("");
           let otherRows = g.p.map((p, i) => {
             if (i === w) return "";
             const totals = cardTotals(p);
