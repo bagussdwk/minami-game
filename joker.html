@@ -1321,7 +1321,6 @@
               try{sessionStorage.setItem("minami_joker_state",JSON.stringify(save.state))}catch(e){}
               saveJokerCloudMeta({revision:Number(save.revision)||0,updated_at:save.updated_at||null});
               if(loadGame()){
-                $("setup").style.display="none";
                 $("game").style.display="block";
                 setJokerPointsVisible(true);
                 return true;
@@ -1369,7 +1368,6 @@
             saveJokerCloudMeta({revision:Number(save.revision)||0,updated_at:save.updated_at||null});
 
             if(loadGame()){
-              $("setup").style.display="none";
               $("game").style.display="block";
               setJokerPointsVisible(true);
               return true;
@@ -2912,9 +2910,9 @@ $("jokerResetBtn").onclick=async()=>{
           }catch(e){}
           g=null;
           sel=-1;
-          $("game").style.display="none";
-          $("setup").style.display="block";
-          setJokerPointsVisible(false);
+          newMatch(0, 1, false);
+          $("game").style.display="block";
+          setJokerPointsVisible(true);
           window.scrollTo(0,0);
         };
         $("jokerRulesBtn").onclick=()=>{
@@ -2942,7 +2940,6 @@ $("jokerResetBtn").onclick=async()=>{
           }
           if (!restored) return false;
           render();
-          $("setup").style.display = "none";
           $("game").style.display = "block";
           setJokerPointsVisible(true);
           const pending = g.resultPending;
@@ -2958,31 +2955,11 @@ $("jokerResetBtn").onclick=async()=>{
           return true;
         }
 
-        $("start").onclick = async () => {
-          try {
-            if (await blockJokerIfOtherActiveGame()) return;
-            if (restorePendingJokerWin()) return;
-            if (!loadGame()) newMatch();
-            $("setup").style.display = "none";
-            $("game").style.display = "block";
-            setJokerPointsVisible(true);
-          } catch (e) {
-            console.error(e);
-            $("setup").style.display = "block";
-            $("game").style.display = "none";
-            alert("JOKER gagal dimulai: " + e.message);
-          }
-        };
-        $("back").onclick = () => {
-          clearSavedGame();
-          location.href = "index.html";
-        };
         // STARTUP JOKER:
         // Selama proses restore, SETUP SAMA SEKALI TIDAK BOLEH DITAMPILKAN.
         // Urutan: WIN snapshot -> local save -> Cloud save -> baru setup.
         // Jadi refresh tidak akan pernah menjatuhkan pemain ke menu awal
         // hanya karena restore Cloud membutuhkan waktu.
-        $("setup").style.display = "none";
         $("game").style.display = "none";
         setJokerPointsVisible(false);
 
@@ -3003,8 +2980,6 @@ $("jokerResetBtn").onclick=async()=>{
           }catch(e){
             console.warn("auto-load",e);
           }
-
-          $("setup").style.display="none";
           if(restored && g?.p?.length===n){
             jokerLocalRestoredThisLoad=true;
             $("game").style.display="block";
