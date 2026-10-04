@@ -1275,7 +1275,8 @@
           try{localStorage.setItem("minamiJokerCloudMetaV1",JSON.stringify(x||{}))}catch(e){}
         }
         function buildJokerSaveState(){
-          if(!g||g.over)return null;
+          if(!g)return null;
+          if(g.over)return null;
           return {n,g,sel};
         }
         async function flushJokerCloudSave(){
@@ -1333,6 +1334,7 @@
             if(loadGame()){
               $("setup").style.display="none";
               $("game").style.display="block";
+              setJokerPointsVisible(true);
             }
           }catch(e){
             console.warn("cloud resume",e);
@@ -1398,7 +1400,7 @@
         retryPendingJokerResults();
         function saveGame() {
           try {
-            if(g&&!g.over){
+            if(g&&(!g.over || g.resultPending)){
               const payload=JSON.stringify({n,g,sel});
               localStorage.setItem("minami_joker_state",payload);
               queueJokerCloudSave(payload,true);
@@ -1430,7 +1432,9 @@
 
             sel = typeof x.sel === "number" ? x.sel : -1;
             render();
-            if (
+            if(g.resultPending?.type==="win"){
+              setTimeout(()=>showWinResult(g.resultPending.winner,g.resultPending.caught,g.resultPending.card),0);
+            }else if (
               g.turn &&
               !g.over &&
               (g.phase === "take" || g.phase === "discard")
@@ -2086,6 +2090,7 @@
         $("centerPile").onclick = null;
         $("centerPile").querySelector(".deck").onclick = takeCenterHuman;
         function human(close) {
+          if (g?.resultPending) return;
           if (sel < 0) return;
           let p = g.p[0],
             c = p.hand[sel];
@@ -2316,7 +2321,7 @@
         }
 
         function aiWait() {
-          if (g.turn === 0 || g.over) return;
+          if (g.resultPending || g.turn === 0 || g.over) return;
           let p = g.p[g.turn];
 
           if (g.phase === "take") {
@@ -2561,24 +2566,47 @@ function advance() {
             p.name + '</b><span>Skor akumulasi: ' + p.score + '</span></div>' +
             arrangedHtml + '</div>';
         }
-        function finish(w, t, c) {
-          let wp = g.p[w],
-            tp = g.p[t],
-            bonus = c.joker ? 250 : 150,
-            wa = cardTotals(wp),
-            ta = cardTotals(tp);
-          wp.score += bonus + wa.liveValue;
-          tp.score += -bonus + ta.liveValue - ta.deadValue;
-          // Semua pemain lain tetap dihitung: kartu hidup menambah,
-          // kartu mati mengurangi. Pemenang dan pemain yang tertangkap
-          // memakai aturan skor khusus di atas.
-          g.p.forEach((p, i) => {
-            if (i === w || i === t) return;
-            const totals = cardTotals(p);
-            p.score += totals.liveValue - totals.deadValue;
+        function showWinResult(w, t, c) {
+          const wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150;
+          const wa=cardTotals(wp),ta=cardTotals(tp);
+          const playersHtml=g.p.map((p,i)=>{
+            const extra=i===w?[c]:[];
+            const visibleCards=p.hand.slice().concat(extra);
+            return resultPlayer(p,extra,analyzePartial(visibleCards));
+          }).join("");
+          const otherRows=g.p.map((p,i)=>{
+            if(i===w)return "";
+            const totals=cardTotals(p);
+            const delta=i===t?-bonus+totals.liveValue-totals.deadValue:totals.liveValue-totals.deadValue;
+            return '<div class="row"><b>'+p.name+'</b><span>+'+totals.liveValue+' - '+totals.deadValue+(i===t?' • bonus -'+bonus:'')+'</span><b>'+(delta>=0?"+":"")+delta+'</b></div>';
+          }).join("");
+          modal("🏆 WIN MATCH",
+            '<div class="note"><b>'+wp.name+'</b> menutup dengan <b>'+label(c)+'</b>. Bonus: +'+bonus+'. Semua kartu pemain ditampilkan di bawah.</div>'+
+            playersHtml+
+            '<div class="row"><b>'+wp.name+'</b><span>+'+bonus+' + '+wa.liveValue+'</span><b>+'+(bonus+wa.liveValue)+'</b></div>'+
+            '<div class="row"><b>'+tp.name+'</b><span>-'+bonus+' + '+ta.liveValue+' - '+ta.deadValue+'</span><b>'+(-bonus+ta.liveValue-ta.deadValue)+'</b></div>'+
+            '<div class="note"><b>'+wp.name+'</b> memenangkan match dengan menutup. Arah dibalik. Match berikutnya dimulai dari pemain dengan akumulasi poin terendah.</div>'+
+            otherRows,
+            "Lanjut Match",()=>{
+              closeModal();
+              g.resultPending=null;
+              if(g.p.some(x=>x.score>=1500))return gameOver();
+              const order=g.p.map((p,i)=>({i,score:p.score})).sort((a,b)=>a.score-b.score||a.i-b.i);
+              newMatch(order[0].i,-g.dir,true);
+            });
+        }
+        function finish(w,t,c){
+          if(g.resultPending)return;
+          let wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150,wa=cardTotals(wp),ta=cardTotals(tp);
+          wp.score+=bonus+wa.liveValue;
+          tp.score+=-bonus+ta.liveValue-ta.deadValue;
+          g.p.forEach((p,i)=>{
+            if(i===w||i===t)return;
+            const totals=cardTotals(p);
+            p.score+=totals.liveValue-totals.deadValue;
           });
           const resultId="joker-"+Date.now()+"-"+Math.random().toString(36).slice(2);
-          const gameFinished=g.p.some((x)=>Number(x.score)>=1500);
+          const gameFinished=g.p.some(x=>Number(x.score)>=1500);
           const userGameWin=Number(g.p[0]?.score)>=1500;
           ensureJokerActionStats();
           const rank1=w===0?1:0;
@@ -2586,17 +2614,12 @@ function advance() {
           if(g.source==="discard"&&w===0)markJokerAchievement("gotcha");
           if(g.source==="discard"&&t===0&&w!==0)markJokerAchievement("payback");
           if(w===0&&c?.joker)markJokerAchievement("perfectClose");
-          // Menangkap / Ditangkap hanya dihitung jika pengambilan buangan
-          // langsung berujung pada penutupan match pada giliran yang sama.
-          // g.source === "discard" memastikan pemenang memang mengambil
-          // kartu buangan, bukan kartu dari tumpukan tengah.
-          if(g.source === "discard"){
-            ensureJokerActionStats();
-            if(w===0) g.jokerStats.caught++;
-            if(t===0) g.jokerStats.caughtBy++;
+          if(g.source==="discard"){
+            if(w===0)g.jokerStats.caught++;
+            if(t===0)g.jokerStats.caughtBy++;
           }
           const streak=rank1?jokerCurrentStreak()+1:0;
-          if(rank1)saveJokerCurrentStreak(streak); else saveJokerCurrentStreak(0);
+          if(rank1)saveJokerCurrentStreak(streak);else saveJokerCurrentStreak(0);
           const jokerUnlocks=[];
           if(g.jokerStats.jokers>=1)jokerUnlocks.push("firstJoker");
           if(rank1)jokerUnlocks.push("firstWin");
@@ -2607,88 +2630,11 @@ function advance() {
           if(streak>=3)jokerUnlocks.push("hotStreak");
           if(streak>=5)jokerUnlocks.push("unstoppable");
           if(jokerUnlocks.length)syncJokerAchievements(jokerUnlocks);
-          syncJokerResult(resultId,{
-            games_finished:gameFinished?1:0,
-            game_wins:userGameWin?1:0,
-            rank1,
-            match_wins:rank1,
-            jokers:g.jokerStats.jokers,
-            joker_sets:g.jokerStats.sets,
-            caught:g.jokerStats.caught,
-            caught_by:g.jokerStats.caughtBy,
-            best_streak:streak
-          });
-          g.over = false;
+          syncJokerResult(resultId,{games_finished:gameFinished?1:0,game_wins:userGameWin?1:0,rank1,match_wins:rank1,jokers:g.jokerStats.jokers,joker_sets:g.jokerStats.sets,caught:g.jokerStats.caught,caught_by:g.jokerStats.caughtBy,best_streak:streak});
+          g.resultPending={type:"win",winner:w,caught:t,card:c};
           render();
           saveGame();
-          deleteJokerCloudSave();
-          let winnerCards = wp.hand.slice();
-          winnerCards.push(c);
-          // Saat WIN MATCH karena menangkap/ditangkap, jangan tampilkan
-          // tangan pemain lain secara acak. Gunakan analisis kartu yang sama
-          // dengan kondisi "tumpukan habis": semua kombinasi hidup ditampilkan
-          // sebagai meld, sisanya ditandai sebagai kartu mati.
-          let playersHtml = g.p.map((p, i) => {
-            const extra = i === w ? [c] : [];
-            const visibleCards = p.hand.slice().concat(extra);
-            return resultPlayer(p, extra, analyzePartial(visibleCards));
-          }).join("");
-          let otherRows = g.p.map((p, i) => {
-            if (i === w) return "";
-            const totals = cardTotals(p);
-            const delta = i === t
-              ? -bonus + totals.liveValue - totals.deadValue
-              : totals.liveValue - totals.deadValue;
-            return '<div class="row"><b>' + p.name + '</b><span>+' +
-              totals.liveValue + ' - ' + totals.deadValue +
-              (i === t ? ' • bonus -' + bonus : '') +
-              '</span><b>' + (delta >= 0 ? "+" : "") + delta + '</b></div>';
-          }).join("");
-          modal(
-            "🏆 WIN MATCH",
-            '<div class="note"><b>' +
-              wp.name +
-              "</b> menutup dengan <b>" +
-              label(c) +
-              "</b>. Bonus: +" +
-              bonus +
-              ". Semua kartu pemain ditampilkan di bawah.</div>" +
-            playersHtml +
-            '<div class="row"><b>' +
-              wp.name +
-              "</b><span>+" +
-              bonus +
-              " + " +
-              wa.liveValue +
-              "</span><b>+" +
-              (bonus + wa.liveValue) +
-              '</b></div><div class="row"><b>' +
-              tp.name +
-              "</b><span>-" +
-              bonus +
-              " + " +
-              ta.liveValue +
-              " - " +
-              ta.deadValue +
-              "</span><b>" +
-              (-bonus + ta.liveValue - ta.deadValue) +
-              '</b></div><div class="note"><b>' +
-              wp.name +
-              "</b> memenangkan match dengan menutup. Arah dibalik. Match berikutnya dimulai dari pemain dengan akumulasi poin terendah.</div>" +
-            otherRows,
-            "Lanjut Match",
-            () => {
-              closeModal();
-              if (g.p.some((x) => x.score >= 1500)) return gameOver();
-              // Pemain tertangkap hanya menentukan arah putaran.
-              // Starter match berikutnya tetap pemain dengan akumulasi poin terendah.
-              let order = g.p
-                .map((p, i) => ({ i, score: p.score }))
-                .sort((a, b) => a.score - b.score || a.i - b.i);
-              let starter = order[0].i;
-              newMatch(starter, -g.dir, true);
-            },
-          );
+          showWinResult(w,t,c);
         }
         function empty() {
           let totals = g.p.map(cardTotals);
