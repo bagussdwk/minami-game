@@ -1276,7 +1276,9 @@
         }
         function buildJokerSaveState(){
           if(!g)return null;
-          if(g.over)return null;
+          // State hasil WIN MATCH juga harus disimpan ke Cloud. Sebelumnya
+          // g.over membuat buildJokerSaveState() mengembalikan null sehingga
+          // Cloud masih menyimpan match lama.
           return {n,g,sel};
         }
         async function flushJokerCloudSave(){
@@ -1368,7 +1370,11 @@
           }catch(e){return null}
         }
         function clearJokerWinPending(){
-          try{localStorage.removeItem(JOKER_WIN_PENDING_KEY);localStorage.removeItem(JOKER_WIN_SNAPSHOT_KEY);sessionStorage.removeItem(JOKER_WIN_SNAPSHOT_KEY);}catch(e){}
+          try{
+            localStorage.removeItem(JOKER_WIN_PENDING_KEY);
+            localStorage.removeItem(JOKER_WIN_SNAPSHOT_KEY);
+            sessionStorage.removeItem(JOKER_WIN_SNAPSHOT_KEY);
+          }catch(e){}
         }
         function saveJokerWinSnapshot(){
           try{if(g&&g.p&&g.resultPending)localStorage.setItem(JOKER_WIN_SNAPSHOT_KEY,JSON.stringify({n,g,sel}));try{sessionStorage.setItem(JOKER_WIN_SNAPSHOT_KEY,JSON.stringify({n,g,sel}));}catch(e){}}catch(e){console.warn("save win snapshot",e)}
@@ -1442,16 +1448,18 @@
         retryPendingJokerResults();
         function saveGame() {
           try {
-            if(g&&(!g.over || g.resultPending)){
-              const payload=JSON.stringify({n,g,sel});
-              localStorage.setItem("minami_joker_state",payload);
-              queueJokerCloudSave(payload,true);
-            }
+            if(!g)return;
+            const payload=JSON.stringify({n,g,sel});
+            // Simpan di dua storage. Refresh/tab restore tidak boleh bergantung
+            // hanya pada salah satu storage.
+            localStorage.setItem("minami_joker_state",payload);
+            try{sessionStorage.setItem("minami_joker_state",payload)}catch(e){}
+            queueJokerCloudSave(payload,true);
           }catch(e){console.warn("save",e)}
         }
         function loadGame() {
           try {
-            let raw = localStorage.getItem("minami_joker_state");
+            let raw = localStorage.getItem("minami_joker_state") || sessionStorage.getItem("minami_joker_state");
             if (!raw) return false;
             let x = JSON.parse(raw);
             if (!x || !x.g || !x.g.p || x.g.p.length !== x.n) return false;
@@ -2119,6 +2127,7 @@
           }
         }
         function takeDiscardHuman() {
+          if (g?.resultPending || g?.over || g?.phase === "result") return;
           if (g.turn !== 0 || g.phase !== "take" || !g.p[prev()].out.length)
             return;
           if (takeOut(g.p[0])) {
@@ -2134,7 +2143,7 @@
         $("centerPile").onclick = null;
         $("centerPile").querySelector(".deck").onclick = takeCenterHuman;
         function human(close) {
-          if (g?.resultPending) return;
+          if (g?.resultPending || g?.over || g?.phase === "result") return;
           if (sel < 0) return;
           let p = g.p[0],
             c = p.hand[sel];
@@ -2641,7 +2650,7 @@ function advance() {
             });
         }
         function finish(w,t,c){
-          if(g.resultPending)return;
+          if(g.resultPending || g.over || g.phase === "result")return;
           let wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150,wa=cardTotals(wp),ta=cardTotals(tp);
           wp.score+=bonus+wa.liveValue;
           tp.score+=-bonus+ta.liveValue-ta.deadValue;
@@ -2676,11 +2685,17 @@ function advance() {
           if(streak>=5)jokerUnlocks.push("unstoppable");
           if(jokerUnlocks.length)syncJokerAchievements(jokerUnlocks);
           syncJokerResult(resultId,{games_finished:gameFinished?1:0,game_wins:userGameWin?1:0,rank1,match_wins:rank1,jokers:g.jokerStats.jokers,joker_sets:g.jokerStats.sets,caught:g.jokerStats.caught,caught_by:g.jokerStats.caughtBy,best_streak:streak});
+          // WIN MATCH adalah state terminal. Selama tombol "Lanjut Match"
+          // belum ditekan, tidak boleh ada aksi kartu atau match baru.
           g.resultPending={type:"win",winner:w,caught:t,card:c};
+          g.phase="result";
+          g.over=true;
           saveJokerWinPending(g.resultPending);
           saveJokerWinSnapshot();
           render();
           saveGame();
+          // Cloud juga menerima state terminal ini, bukan state match lama.
+          saveJokerCloudImmediately();
           showWinResult(w,t,c);
         }
         function empty() {
@@ -2924,8 +2939,13 @@ $("jokerResetBtn").onclick=async()=>{
         $("game").style.display = "none";
         setJokerPointsVisible(false);
         try {
+          // Urutan restore:
+          // 1) WIN MATCH terminal
+          // 2) permainan biasa dari local/session
+          // 3) Cloud akan dicoba sesudahnya
           if (!restorePendingJokerWin()) {
-            if (localStorage.getItem("minami_joker_state") && loadGame()) {
+            const rawSaved=localStorage.getItem("minami_joker_state")||sessionStorage.getItem("minami_joker_state");
+            if (rawSaved && loadGame()) {
               $("setup").style.display = "none";
               $("game").style.display = "block";
               setJokerPointsVisible(true);
