@@ -1333,10 +1333,29 @@
           const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
           if(!token)return false;
 
-          // BELANGRING: jangan menganggap keberadaan raw localStorage
-          // sebagai game yang valid. Coba benar-benar restore dulu.
-          // Kalau save lokal rusak/kosong, Cloud masih boleh menjadi
-          // sumber pemulihan.
+          // Jika akun memiliki save Joker aktif, Cloud adalah sumber utama.
+          // Ini memastikan refresh/perangkat lain langsung melanjutkan game
+          // yang tersimpan di player_game_saves, bukan kembali ke setup 4/5 pemain.
+          try{
+            const cloud=await jokerApiPost("game-load",{token,mode:"joker"});
+            const save=cloud?.save||null;
+            if(save?.state){
+              localStorage.setItem(JOKER_LOCAL_SAVE_V2,JSON.stringify(save.state));
+              localStorage.setItem("minami_joker_state",JSON.stringify(save.state));
+              try{sessionStorage.setItem("minami_joker_state",JSON.stringify(save.state))}catch(e){}
+              saveJokerCloudMeta({revision:Number(save.revision)||0,updated_at:save.updated_at||null});
+              if(loadGame()){
+                $("setup").style.display="none";
+                $("game").style.display="block";
+                setJokerPointsVisible(true);
+                return true;
+              }
+            }
+          }catch(e){
+            console.warn("account-first restore",e);
+          }
+
+          // Kalau tidak ada save akun aktif, baru coba save lokal.
           try{
             const localRaw =
               localStorage.getItem(JOKER_LOCAL_SAVE_V2) ||
@@ -1349,7 +1368,7 @@
               }
             }
           }catch(e){
-            console.warn("local-first restore",e);
+            console.warn("local restore",e);
           }
 
           // WIN MATCH yang belum ditekan "Lanjut Match" adalah state final.
