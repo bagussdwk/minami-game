@@ -1342,6 +1342,7 @@
         }
 
         const JOKER_WIN_PENDING_KEY="minamiJokerWinPendingV1";
+        const JOKER_WIN_SNAPSHOT_KEY="minamiJokerWinSnapshotV1";
         function saveJokerWinPending(x){
           try{localStorage.setItem(JOKER_WIN_PENDING_KEY,JSON.stringify(x||null));}catch(e){}
         }
@@ -1352,7 +1353,19 @@
           }catch(e){return null}
         }
         function clearJokerWinPending(){
-          try{localStorage.removeItem(JOKER_WIN_PENDING_KEY);}catch(e){}
+          try{localStorage.removeItem(JOKER_WIN_PENDING_KEY);localStorage.removeItem(JOKER_WIN_SNAPSHOT_KEY);}catch(e){}
+        }
+        function saveJokerWinSnapshot(){
+          try{if(g&&g.p&&g.resultPending)localStorage.setItem(JOKER_WIN_SNAPSHOT_KEY,JSON.stringify({n,g,sel}));}catch(e){console.warn("save win snapshot",e)}
+        }
+        function loadJokerWinSnapshot(){
+          try{
+            const x=JSON.parse(localStorage.getItem(JOKER_WIN_SNAPSHOT_KEY)||"null");
+            if(!x||!x.g||!Array.isArray(x.g.p)||x.g.p.length!==x.n)return false;
+            n=x.n;g=x.g;sel=typeof x.sel==="number"?x.sel:-1;ensureJokerActionStats();
+            if(g.marker&&g.draw){const jokerColor=g.marker.color==="r"?"b":"r";for(const p of g.p)for(const c of p.hand||[])c.joker=c.rank===g.marker.rank&&c.color===jokerColor;for(const c of g.draw)c.joker=c.rank===g.marker.rank&&c.color===jokerColor;}
+            return true;
+          }catch(e){return false}
         }
 
         const JOKER_PENDING_RESULTS_KEY="minamiJokerPendingResultsV1";
@@ -2650,6 +2663,7 @@ function advance() {
           syncJokerResult(resultId,{games_finished:gameFinished?1:0,game_wins:userGameWin?1:0,rank1,match_wins:rank1,jokers:g.jokerStats.jokers,joker_sets:g.jokerStats.sets,caught:g.jokerStats.caught,caught_by:g.jokerStats.caughtBy,best_streak:streak});
           g.resultPending={type:"win",winner:w,caught:t,card:c};
           saveJokerWinPending(g.resultPending);
+          saveJokerWinSnapshot();
           render();
           saveGame();
           showWinResult(w,t,c);
