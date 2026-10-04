@@ -1181,6 +1181,22 @@
         const JOKER_API_URL="/api/index.php";
         const JOKER_API_TOKEN_KEY="minamiApiToken";
         const JOKER_API_SYNC_KEY="minamiJokerApiSyncV1";
+        async function getActiveJokerCrossModeSave(){
+          const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
+          if(!token)return null;
+          try{
+            const d=await jokerApiPost("game-load",{token});
+            const saves=Array.isArray(d.saves)?d.saves:[];
+            return saves.find(x=>Number(x.active)===1)||null;
+          }catch(e){return null}
+        }
+        async function blockJokerIfOtherActiveGame(){
+          const save=await getActiveJokerCrossModeSave();
+          if(!save||save.mode==="joker")return false;
+          const label=save.mode==="minami2"?"MINAMI 2":"MINAMI 1";
+          alert("⚠️ Kamu masih dalam permainan "+label+" yang belum selesai.\n\nSelesaikan permainan tersebut terlebih dahulu sebelum memulai JOKER.");
+          return true;
+        }
         const JOKER_STREAK_KEY="minamiJokerCurrentStreakV1";
         function jokerCurrentStreak(){
           try{return Math.max(0,Number(localStorage.getItem(JOKER_STREAK_KEY)||0)||0)}catch(e){return 0}
@@ -2947,8 +2963,9 @@ $("jokerResetBtn").onclick=async()=>{
           return true;
         }
 
-        $("start").onclick = () => {
+        $("start").onclick = async () => {
           try {
+            if (await blockJokerIfOtherActiveGame()) return;
             if (restorePendingJokerWin()) return;
             if (!loadGame()) newMatch();
             $("setup").style.display = "none";
