@@ -1361,14 +1361,14 @@
           }catch(e){return null}
         }
         function clearJokerWinPending(){
-          try{localStorage.removeItem(JOKER_WIN_PENDING_KEY);localStorage.removeItem(JOKER_WIN_SNAPSHOT_KEY);}catch(e){}
+          try{localStorage.removeItem(JOKER_WIN_PENDING_KEY);localStorage.removeItem(JOKER_WIN_SNAPSHOT_KEY);sessionStorage.removeItem(JOKER_WIN_SNAPSHOT_KEY);}catch(e){}
         }
         function saveJokerWinSnapshot(){
-          try{if(g&&g.p&&g.resultPending)localStorage.setItem(JOKER_WIN_SNAPSHOT_KEY,JSON.stringify({n,g,sel}));}catch(e){console.warn("save win snapshot",e)}
+          try{if(g&&g.p&&g.resultPending)localStorage.setItem(JOKER_WIN_SNAPSHOT_KEY,JSON.stringify({n,g,sel}));try{sessionStorage.setItem(JOKER_WIN_SNAPSHOT_KEY,JSON.stringify({n,g,sel}));}catch(e){}}catch(e){console.warn("save win snapshot",e)}
         }
         function loadJokerWinSnapshot(){
           try{
-            const x=JSON.parse(localStorage.getItem(JOKER_WIN_SNAPSHOT_KEY)||"null");
+            const raw=localStorage.getItem(JOKER_WIN_SNAPSHOT_KEY)||sessionStorage.getItem(JOKER_WIN_SNAPSHOT_KEY)||"";const x=JSON.parse(raw||"null");
             if(!x||!x.g||!Array.isArray(x.g.p)||x.g.p.length!==x.n)return false;
             n=x.n;g=x.g;sel=typeof x.sel==="number"?x.sel:-1;ensureJokerActionStats();
             if(g.marker&&g.draw){const jokerColor=g.marker.color==="r"?"b":"r";for(const p of g.p)for(const c of p.hand||[])c.joker=c.rank===g.marker.rank&&c.color===jokerColor;for(const c of g.draw)c.joker=c.rank===g.marker.rank&&c.color===jokerColor;}
