@@ -1130,7 +1130,8 @@
             ["Chloe", "women/68"],
             ["Charlotte", "women/75"],
           ];
-        let n = 4,
+        const jokerQueryPlayers = new URLSearchParams(window.location.search).get("n");
+        let n = jokerQueryPlayers === "5" ? 5 : 4,
           g = null,
           sel = -1,
           gameOverTimer = null,
@@ -3020,18 +3021,21 @@ $("jokerResetBtn").onclick=async()=>{
             }else{
               restored=await restoreJokerCloudAfterLogin();
             }
+            if(!restored){
+              newMatch();
+              restored=true;
+            }
           }catch(e){
             console.warn("auto-load",e);
           }
 
+          $("setup").style.display="none";
           if(restored && g?.p?.length===n){
             jokerLocalRestoredThisLoad=true;
-            $("setup").style.display="none";
             $("game").style.display="block";
             setJokerPointsVisible(true);
           }else{
             $("game").style.display="none";
-            $("setup").style.display="block";
             setJokerPointsVisible(false);
           }
 
