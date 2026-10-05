@@ -3031,8 +3031,8 @@ function advance() {
           // Prioritas pertama: cari susunan PENUH dengan solver yang sama
           // untuk kartu 2-deck + Joker. Ini mencegah kartu identik seperti
           // 4♠ copy #1 dan 4♠ copy #2 salah dianggap kartu mati.
-          const full = exactJokerMeldCover(cs, true);
-          if (full && full.ids.length === cs.length) return full;
+          const exact = exactJokerMeldCover(cs, true);
+          if (exact) return exact;
 
           // Fallback analyzer lama dipertahankan untuk kondisi ketika tangan
           // memang belum bisa tersusun 100%.
