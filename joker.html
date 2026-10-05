@@ -2695,7 +2695,7 @@
             g.phase = "discard";
             render();
             saveGame();
-            setTimeout(aiWait, 2000 + Math.random() * 2000);
+            setTimeout(aiWait, 0);
             return;
           }
 
@@ -2744,7 +2744,7 @@
               if (close) finish(g.turn, prev(), c);
               else advance();
             },
-            2000 + Math.random() * 2000,
+            0,
           );
         }
 
@@ -2758,7 +2758,7 @@ function advance() {
           g.sourceCard = null;
           render();
           saveGame();
-          if (g.turn) waitAI(550);
+          if (g.turn) waitAI(0);
         }
         // Cari semua kombinasi dasar/pot yang sudah jadi, tanpa mengharuskan
         // seluruh kartu di tangan ikut tersusun. Ini dipakai untuk penilaian
