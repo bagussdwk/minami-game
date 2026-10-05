@@ -2014,7 +2014,9 @@
                    naturalCount <= Math.min(k, suitKeys.length);
                    naturalCount++) {
                 const needJoker = k - naturalCount;
-                if (needJoker > jokers.length) continue;
+                // Satu pot/set boleh memakai maksimal satu Joker.
+                // 2 Joker dalam pot yang sama tidak pernah dianggap valid.
+                if (needJoker > jokers.length || needJoker > 1) continue;
 
                 const naturalChoices = [];
                 chooseSuits(0, naturalCount, [], naturalChoices);
