@@ -1655,6 +1655,9 @@
           if (!card) return false;
           p.hand.push(card);
 
+          // Lock every card with the same rank+suit as the discard taken this turn.
+          g.sourceCardKey = card.rank + "|" + card.suit;
+
           if (ev) ev.takenBy = p.name;
           return true;
         }  function melds(cs) {
@@ -2408,6 +2411,7 @@
             g.phase = "discard";
             g.source = "discard";
             g.sourceCard = g.p[0].hand.at(-1).id;
+            g.sourceCardKey = g.p[0].hand.at(-1).rank + "|" + g.p[0].hand.at(-1).suit;
             sel = -1;
             render();
             saveGame();
