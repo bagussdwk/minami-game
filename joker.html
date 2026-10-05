@@ -1580,28 +1580,21 @@
             overlay.appendChild(label);
             document.body.appendChild(overlay);
 
-            // Titik dasar kartu selalu tepat di tengah viewport.
-            // Pergerakan ke meja/avatar dihitung sebagai delta dari titik ini.
+            // Gunakan koordinat PIXEL viewport secara langsung.
+            // Kartu pertama benar-benar lahir di tengah kotak tumpukan,
+            // lalu bergerak langsung ke tengah avatar pemain.
             const cr = center.getBoundingClientRect();
-            const viewportCenter = {
-              x: window.innerWidth / 2,
-              y: window.innerHeight / 2
-            };
             const origin = {
               x: cr.left + cr.width / 2,
               y: cr.top + cr.height / 2
-            };
-            const originDelta = {
-              x: origin.x - viewportCenter.x,
-              y: origin.y - viewportCenter.y
             };
 
             const targets = players.map((el) => {
               const avatar = el.querySelector(".avatar");
               const r = (avatar || el).getBoundingClientRect();
               return {
-                x: r.left + r.width / 2 - viewportCenter.x,
-                y: r.top + r.height / 2 - viewportCenter.y
+                x: r.left + r.width / 2,
+                y: r.top + r.height / 2
               };
             });
 
@@ -1609,22 +1602,18 @@
             let number = 0;
             const cards = [];
 
-            const transformAt = (x, y, scale, rotate) =>
-              "translate(calc(-50% + " + x + "px),calc(-50% + " + y + "px)) scale(" +
-              scale + ") rotate(" + rotate + "deg)";
-
             const add = (targetIndex, delay) => {
               const card = document.createElement("div");
               card.className = "joker-deal-card";
               const t = targets[targetIndex];
               const rot = ((number % 5) - 2) * 2.5;
 
-              // Posisi dasar selalu tengah layar; tidak pernah left/top = 0.
-              card.style.setProperty("left", "50%", "important");
-              card.style.setProperty("top", "50%", "important");
+              // Titik awal ABSOLUT: tengah tumpukan di meja.
+              card.style.setProperty("left", origin.x + "px", "important");
+              card.style.setProperty("top", origin.y + "px", "important");
               card.style.setProperty(
                 "transform",
-                transformAt(originDelta.x, originDelta.y, ".72", "0"),
+                "translate(-50%,-50%) scale(.72) rotate(0deg)",
                 "important"
               );
               card.style.opacity = "0";
@@ -1633,13 +1622,19 @@
 
               setTimeout(() => {
                 card.style.transition =
-                  "transform " + duration + "ms cubic-bezier(.2,.75,.25,1),opacity 100ms ease";
+                  "left " + duration + "ms cubic-bezier(.2,.75,.25,1)," +
+                  "top " + duration + "ms cubic-bezier(.2,.75,.25,1)," +
+                  "transform " + duration + "ms cubic-bezier(.2,.75,.25,1)," +
+                  "opacity 100ms ease";
                 card.style.opacity = "1";
 
                 requestAnimationFrame(() => {
+                  // Tujuan ABSOLUT: tengah avatar pemain.
+                  card.style.setProperty("left", t.x + "px", "important");
+                  card.style.setProperty("top", t.y + "px", "important");
                   card.style.setProperty(
                     "transform",
-                    transformAt(t.x, t.y, "1", rot),
+                    "translate(-50%,-50%) scale(1) rotate(" + rot + "deg)",
                     "important"
                   );
                 });
@@ -1661,7 +1656,6 @@
             },finish);
           });
         }
-
         function newMatch(start = 0, dir = 1, keep = true) {
           // Jangan delete Cloud di sini. Reset button sudah menunggu delete
           // selesai; memanggil delete lagi dari newMatch bisa balapan dengan
