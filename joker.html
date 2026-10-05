@@ -3399,6 +3399,20 @@ $("jokerResetBtn").onclick=async()=>{
           $("game").style.display = "block";
           setJokerPointsVisible(true);
           const pending = g.resultPending;
+
+          // Jika refresh terjadi tepat setelah buangan terakhir, state
+          // terminal sementara memang belum memiliki winner. Jangan pernah
+          // memanggil showWinResult(null,...). Finalisasi ulang MATCH sekarang
+          // agar langsung menjadi WIN MATCH.
+          if (pending?.reason === "empty" && pending?.winner == null) {
+            try {
+              empty();
+            } catch (e) {
+              console.error("restore empty-match finalization", e);
+            }
+            return true;
+          }
+
           setTimeout(() => {
             try {
               if (g?.resultPending?.type === "win") {
