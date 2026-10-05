@@ -1604,6 +1604,7 @@
             phase: "discard",
             source: null,
             sourceCard: null,
+            sourceCardKey: null,
             history: [],
             round: g ? g.round + 1 : 1,
             over: false,
@@ -2397,6 +2398,7 @@
             g.phase = "discard";
             g.source = "draw";
             g.sourceCard = g.p[0].hand.at(-1).id;
+            g.sourceCardKey = null;
             sel = -1;
             render();
             saveGame();
@@ -2775,6 +2777,7 @@ function advance() {
           g.phase = "take";
           g.source = null;
           g.sourceCard = null;
+          g.sourceCardKey = null;
           render();
           saveGame();
           if (g.turn) waitAI(0);
