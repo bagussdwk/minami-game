@@ -2381,13 +2381,8 @@
           if (takeDraw(g.p[0])) {
             recordJokerActionStats(0);
 
-            // Jika kartu terakhir dari tumpukan tengah baru saja diambil,
-            // MATCH selesai sekarang. Tidak ada buang tambahan.
-            if (!g.draw.length) {
-              sel = -1;
-              return empty();
-            }
-
+            // Kartu terakhir baru saja diambil. Tumpukan sekarang 0,
+            // tetapi pemain TETAP harus mendapat satu kesempatan discard.
             g.phase = "discard";
             g.source = "draw";
             g.sourceCard = g.p[0].hand.at(-1).id;
