@@ -3156,7 +3156,7 @@ function advance() {
         function showWinResult(w, t, c) {
           const matchDeltas = Array.isArray(g.resultPending?.matchDeltas)
             ? g.resultPending.matchDeltas
-            : g.p.map(() => 0);
+            : (Array.isArray(g.lastMatchDeltas) ? g.lastMatchDeltas : g.p.map(() => 0));
           const order = g.p
             .map((p, i) => ({ i, score: Number(matchDeltas[i]) || 0 }))
             .sort((a, b) => b.score - a.score || a.i - b.i);
@@ -3165,14 +3165,13 @@ function advance() {
           const bonus = c ? (c.joker ? 250 : 150) : 0;
 
           const playersHtml = g.p.map((p, i) => {
-            let matchDelta = 0;
+            let matchDelta = Number(matchDeltas[i]) || 0;
             let arranged;
 
             if (i === w && c) {
               const normalCards = p.hand.filter(x => x.id !== c.id);
               const totals = cardTotals(p, [c.id]);
               arranged = totals.analysis;
-              matchDelta = bonus + totals.liveValue;
               return resultPlayer(
                 p, [], arranged, c, bonus, "Tutupan", matchDelta
               );
@@ -3181,7 +3180,6 @@ function advance() {
             if (i === t && c) {
               const totals = cardTotals(p);
               arranged = totals.analysis;
-              matchDelta = -bonus + totals.liveValue - totals.deadValue;
               return resultPlayer(
                 p, [], arranged, c, -bonus, "Ditangkap oleh " + wp.name, matchDelta
               );
@@ -3189,7 +3187,6 @@ function advance() {
 
             const totals = cardTotals(p);
             arranged = totals.analysis;
-            matchDelta = totals.liveValue - totals.deadValue;
             return resultPlayer(p, [], arranged, null, 0, "", matchDelta);
           }).join("");
 
@@ -3273,6 +3270,7 @@ function advance() {
           syncJokerResult(resultId,{games_finished:gameFinished?1:0,game_wins:userGameWin?1:0,rank1,match_wins:rank1,jokers:g.jokerStats.jokers,joker_sets:g.jokerStats.sets,caught:g.jokerStats.caught,caught_by:g.jokerStats.caughtBy,best_streak:streak});
           // WIN MATCH adalah state terminal. Selama tombol "Lanjut Match"
           // belum ditekan, tidak boleh ada aksi kartu atau match baru.
+          g.lastMatchDeltas = matchDeltas.slice();
           g.resultPending={type:"win",winner:matchWinner,caught:t,card:c,matchDeltas};
           g.phase="result";
           g.over=true;
@@ -3348,6 +3346,7 @@ function advance() {
               best_streak: streak
             });
 
+            g.lastMatchDeltas = matchDeltas.slice();
             g.resultPending = {
               type: "win",
               winner: rank1,
