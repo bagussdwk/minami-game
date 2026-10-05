@@ -165,7 +165,8 @@
       @media(max-width:560px){.joker-start-showcase{padding:16px 10px 12px}.joker-start-badge{font-size:16px}.joker-start-features b{font-size:13px}}
       /* ===== JOKER MATCH DEAL ANIMATION ===== */
       .joker-deal-overlay{position:fixed;inset:0;z-index:250;pointer-events:none;overflow:hidden}
-      .joker-deal-card{position:absolute !important;left:0 !important;top:0 !important;width:42px;height:60px;border-radius:7px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);border:2px solid #e8e8e8;box-shadow:0 7px 20px #0008;transform:translate(-50%,-50%);will-change:left,top,transform,opacity}
+      .joker-deal-table{position:fixed;pointer-events:none;overflow:hidden;border-radius:22px}
+      .joker-deal-card{position:absolute;left:50%;top:40%;width:42px;height:60px;border-radius:7px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);border:2px solid #e8e8e8;box-shadow:0 7px 20px #0008;transform:translate(-50%,-50%) scale(.72) rotate(0deg);will-change:left,top,transform,opacity}
       .joker-deal-label{position:fixed;left:50%;top:calc(50% + 58px);transform:translateX(-50%);padding:7px 12px;border-radius:10px;background:#03231cf2;border:1px solid #f3cf7038;color:#f3cf70;font-size:9px;font-weight:900;letter-spacing:1.2px;white-space:nowrap}
       @media(max-width:560px){.joker-deal-card{width:34px;height:49px}.joker-deal-label{top:calc(50% + 48px);font-size:8px}}
 
@@ -1570,31 +1571,39 @@
           return new Promise((resolve) => {
             const players = [...document.querySelectorAll("#players .player")];
             const center = document.querySelector("#game .center");
-            if (!center || players.length !== g.p.length) return resolve();
+            const board = document.querySelector("#game");
+            if (!center || !board || players.length !== g.p.length) return resolve();
+
+            const br = board.getBoundingClientRect();
+            const cr = center.getBoundingClientRect();
+            const origin = {
+              x: cr.left + cr.width / 2 - br.left,
+              y: cr.top + cr.height / 2 - br.top
+            };
 
             const overlay = document.createElement("div");
             overlay.className = "joker-deal-overlay";
+
+            const table = document.createElement("div");
+            table.className = "joker-deal-table";
+            table.style.left = br.left + "px";
+            table.style.top = br.top + "px";
+            table.style.width = br.width + "px";
+            table.style.height = br.height + "px";
+            overlay.appendChild(table);
+
             const label = document.createElement("div");
             label.className = "joker-deal-label";
             label.textContent = "MEMBAGIKAN KARTU";
             overlay.appendChild(label);
             document.body.appendChild(overlay);
 
-            // Gunakan koordinat PIXEL viewport secara langsung.
-            // Kartu pertama benar-benar lahir di tengah kotak tumpukan,
-            // lalu bergerak langsung ke tengah avatar pemain.
-            const cr = center.getBoundingClientRect();
-            const origin = {
-              x: cr.left + cr.width / 2,
-              y: cr.top + cr.height / 2
-            };
-
             const targets = players.map((el) => {
               const avatar = el.querySelector(".avatar");
               const r = (avatar || el).getBoundingClientRect();
               return {
-                x: r.left + r.width / 2,
-                y: r.top + r.height / 2
+                x: r.left + r.width / 2 - br.left,
+                y: r.top + r.height / 2 - br.top
               };
             });
 
@@ -1606,37 +1615,28 @@
               const card = document.createElement("div");
               card.className = "joker-deal-card";
               const t = targets[targetIndex];
+              const dx = t.x - origin.x;
+              const dy = t.y - origin.y;
               const rot = ((number % 5) - 2) * 2.5;
 
-              // Titik awal ABSOLUT: tengah tumpukan di meja.
-              card.style.setProperty("left", origin.x + "px", "important");
-              card.style.setProperty("top", origin.y + "px", "important");
-              card.style.setProperty(
-                "transform",
-                "translate(-50%,-50%) scale(.72) rotate(0deg)",
-                "important"
-              );
+              card.style.setProperty("--dx", dx + "px");
+              card.style.setProperty("--dy", dy + "px");
+              card.style.setProperty("--rot", rot + "deg");
               card.style.opacity = "0";
-              overlay.appendChild(card);
+              table.appendChild(card);
               cards.push(card);
 
               setTimeout(() => {
                 card.style.transition =
-                  "left " + duration + "ms cubic-bezier(.2,.75,.25,1)," +
-                  "top " + duration + "ms cubic-bezier(.2,.75,.25,1)," +
-                  "transform " + duration + "ms cubic-bezier(.2,.75,.25,1)," +
+                  "left " + duration + "ms cubic-bezier(.2,.8,.25,1)," +
+                  "top " + duration + "ms cubic-bezier(.2,.8,.25,1)," +
+                  "transform " + duration + "ms cubic-bezier(.2,.8,.25,1)," +
                   "opacity 100ms ease";
                 card.style.opacity = "1";
-
                 requestAnimationFrame(() => {
-                  // Tujuan ABSOLUT: tengah avatar pemain.
-                  card.style.setProperty("left", t.x + "px", "important");
-                  card.style.setProperty("top", t.y + "px", "important");
-                  card.style.setProperty(
-                    "transform",
-                    "translate(-50%,-50%) scale(1) rotate(" + rot + "deg)",
-                    "important"
-                  );
+                  card.style.left = "calc(50% + " + (t.x - br.width / 2) + "px)";
+                  card.style.top = "calc(40% + " + (t.y - br.height * .4) + "px)";
+                  card.style.transform = "translate(-50%,-50%) scale(1) rotate(" + rot + "deg)";
                 });
               }, delay);
               number++;
