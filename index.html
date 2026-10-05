@@ -8881,8 +8881,22 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         try{const u=JSON.parse(localStorage.getItem("minamiAccountUserV1")||"null");return u&&typeof u==="object"?u:null}catch(e){return null}
       }
       function clearAccountSession(){
-        try{localStorage.removeItem(MINAMI_API_TOKEN_KEY);localStorage.removeItem("minamiAccountUserV1")}catch(e){}
+        try{
+          // Saat logout, hapus seluruh data lokal milik Minami/account.
+          // Data lifetime di database tidak disentuh dan akan dimuat lagi saat login.
+          for(let i=localStorage.length-1;i>=0;i--){
+            const key=localStorage.key(i);
+            if(key&&key.toLowerCase().startsWith("minami")) localStorage.removeItem(key);
+          }
+          for(let i=sessionStorage.length-1;i>=0;i--){
+            const key=sessionStorage.key(i);
+            if(key&&key.toLowerCase().startsWith("minami")) sessionStorage.removeItem(key);
+          }
+        }catch(e){}
         window.minamiGlobalStats=null;
+        window.minamiModeStats={};
+        window.minamiScoreHistory=[];
+        window.minamiScores=null;
       }
       async function minamiApiPost(action,payload={}){
         const body={...(payload||{})};
@@ -9111,7 +9125,11 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
       async function doAccountLogout(){
         const token=localStorage.getItem(MINAMI_API_TOKEN_KEY);
         try{if(token)await minamiApiPost("logout",{token})}catch(e){}
-        clearAccountSession();renderAccountUI();applyPlayerProfile();renderFeatureStats();
+        clearAccountSession();
+        // Buang juga state game yang masih hidup di halaman; setelah reload
+        // tidak ada data lokal akun yang bisa dipulihkan.
+        try{clearSavedGame(false)}catch(e){}
+        window.location.reload();
       }
       document.getElementById("accountLoginBtn").onclick=doAccountLogin;
       document.getElementById("accountRegisterBtn").onclick=doAccountRegister;
