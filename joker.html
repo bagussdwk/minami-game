@@ -3082,39 +3082,56 @@ function advance() {
             arrangedHtml + '</div>';
         }
         function showWinResult(w, t, c) {
-          const wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150;
-          const wa=cardTotals(wp,[c.id]),ta=cardTotals(tp);
-          const playersHtml=g.p.map((p,i)=>{
-            if(i===w){
-              const normalCards=p.hand.filter(x=>x.id!==c.id);
-              return resultPlayer(p,[],analyzePartial(normalCards),c,bonus,"Tutupan");
+          const order = g.p
+            .map((p, i) => ({ i, score: Number(p.score) || 0 }))
+            .sort((a, b) => b.score - a.score || a.i - b.i);
+          const rank1 = order[0]?.i ?? 0;
+          const wp = g.p[w], tp = g.p[t];
+          const bonus = c ? (c.joker ? 250 : 150) : 0;
+
+          const playersHtml = g.p.map((p, i) => {
+            if (i === w && c) {
+              const normalCards = p.hand.filter(x => x.id !== c.id);
+              return resultPlayer(p, [], analyzePartial(normalCards), c, bonus, "Tutupan");
             }
-            if(i===t){
-              return resultPlayer(p,[],analyzePartial(p.hand),c,-bonus,"Kartu Penutup Lawan");
-            }
-            return resultPlayer(p,[],analyzePartial(p.hand));
+            return resultPlayer(p, [], analyzePartial(p.hand));
           }).join("");
-          const otherRows=g.p.map((p,i)=>{
-            if(i===w)return "";
-            const totals=cardTotals(p);
-            const delta=i===t?-bonus+totals.liveValue-totals.deadValue:totals.liveValue-totals.deadValue;
-            return '<div class="row"><b>'+p.name+'</b><span>+'+totals.liveValue+' - '+totals.deadValue+(i===t?' • bonus -'+bonus:'')+'</span><b>'+(delta>=0?"+":"")+delta+'</b></div>';
+
+          const rows = order.map((x, rank) => {
+            const p = g.p[x.i];
+            return '<div class="row"><b>' +
+              (rank + 1) + '. ' + p.name +
+              '</b><span>' + (x.score >= 0 ? '+' : '') + x.score + '</span><b>' +
+              (rank === 0 ? 'WIN MATCH' : '') +
+              '</b></div>';
           }).join("");
-          modal("🏆 WIN MATCH",
-            '<div class="note"><b>'+wp.name+'</b> menutup dengan <b>'+label(c)+'</b>. Bonus: +'+bonus+'. Semua kartu pemain ditampilkan di bawah.</div>'+
-            playersHtml+
-            '<div class="row"><b>'+wp.name+'</b><span>+'+bonus+' + '+wa.liveValue+'</span><b>+'+(bonus+wa.liveValue)+'</b></div>'+
-            '<div class="row"><b>'+tp.name+'</b><span>-'+bonus+' + '+ta.liveValue+' - '+ta.deadValue+'</span><b>'+(-bonus+ta.liveValue-ta.deadValue)+'</b></div>'+
-            '<div class="note"><b>'+wp.name+'</b> memenangkan match dengan menutup. Arah dibalik. Match berikutnya dimulai dari pemain dengan akumulasi poin terendah.</div>'+
-            otherRows,
-            "Lanjut Match",()=>{
+
+          const closeNote = wp && c
+            ? '<div class="note"><b>' + wp.name + '</b> menutup dengan <b>' +
+              label(c) + '</b>. Bonus penutupan: +' + bonus +
+              '. Namun <b>Rank 1 / WIN MATCH ditentukan dari poin akumulasi tertinggi</b>.</div>'
+            : '<div class="note">Tumpukan tengah habis. <b>Rank 1 / WIN MATCH ditentukan dari poin akumulasi tertinggi</b>.</div>';
+
+          modal(
+            "🏆 WIN MATCH",
+            closeNote +
+            rows +
+            playersHtml +
+            '<div class="note">Match berikutnya dimulai dari pemain dengan <b>akumulasi poin terendah</b>.</div>',
+            "Lanjut Match",
+            () => {
               closeModal();
-              g.resultPending=null;
+              g.resultPending = null;
               clearJokerWinPending();
-              if(g.p.some(x=>x.score>=1500))return gameOver();
-              const order=g.p.map((p,i)=>({i,score:p.score})).sort((a,b)=>a.score-b.score||a.i-b.i);
-              newMatch(order[0].i,-g.dir,true);
-            });
+              if (g.p.some(x => x.score >= 1500)) return gameOver();
+
+              // Prioritas giliran tetap pemain dengan poin terendah.
+              const nextOrder = g.p
+                .map((p, i) => ({ i, score: Number(p.score) || 0 }))
+                .sort((a, b) => a.score - b.score || a.i - b.i);
+              newMatch(nextOrder[0].i, -g.dir, true);
+            }
+          );
         }
         function finish(w,t,c){
           if(g.resultPending || g.over || g.phase === "result")return;
@@ -3130,7 +3147,10 @@ function advance() {
           const gameFinished=g.p.some(x=>Number(x.score)>=1500);
           const userGameWin=Number(g.p[0]?.score)>=1500;
           ensureJokerActionStats();
-          const rank1=w===0?1:0;
+          const finishOrder = g.p
+            .map((p, i) => ({ i, score: Number(p.score) || 0 }))
+            .sort((a, b) => b.score - a.score || a.i - b.i);
+          const rank1 = finishOrder[0]?.i === 0 ? 1 : 0;
           if(g.jokerStats.setsThisMatch>=3)markJokerAchievement("tripleSet");
           if(g.source==="discard"&&w===0)markJokerAchievement("gotcha");
           if(g.source==="discard"&&t===0&&w!==0)markJokerAchievement("payback");
@@ -3190,8 +3210,8 @@ function advance() {
             totals.forEach((v, i) => (g.p[i].score += v.total));
 
             const order = g.p
-              .map((p, i) => ({ i, score: p.score }))
-              .sort((a, b) => a.score - b.score || a.i - b.i);
+              .map((p, i) => ({ i, score: Number(p.score) || 0 }))
+              .sort((a, b) => b.score - a.score || a.i - b.i);
 
             const rank1 = order[0]?.i ?? 0;
             const resultId = "joker-" + Date.now() + "-" + Math.random().toString(36).slice(2);
@@ -3267,7 +3287,7 @@ function advance() {
               "WIN MATCH",
               '<div class="note">Tumpukan tengah habis. Tidak ada yang menutup. ' +
                 '<b>' + g.p[rank1].name + '</b> mendapat <b>Rank 1</b> karena memiliki ' +
-                'skor akumulasi paling rendah.</div>' +
+                'skor akumulasi paling tinggi.</div>' +
                 rows +
                 playersHtml,
               "Lanjut Match",
