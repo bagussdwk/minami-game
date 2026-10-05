@@ -2796,6 +2796,14 @@ function advance() {
 
           function add(type, rank, cards) {
             if (!cards || cards.length < 3) return;
+            // Satu dasar urutan tidak boleh memuat rank yang sama dua kali.
+            // Ini penting untuk 2 deck: dua 6-7-8-9 yang identik harus
+            // menjadi dua dasar terpisah, bukan satu dasar gabungan.
+            if (
+              type === "seq" &&
+              new Set(cards.map(c => c.rank)).size !== cards.length
+            )
+              return;
             const ids = cards.map(c => c.id);
             if (new Set(ids).size !== ids.length) return;
             const values = {};
