@@ -3007,7 +3007,11 @@ function advance() {
                 if (m.ids.some(id => !left.has(id))) continue;
                 const next = new Set(left);
                 m.ids.forEach(id => next.delete(id));
-                const tail = cover(next, hasPure || m.pure);
+                // "Dasar murni" yang menjadi syarat adalah sequence murni,
+                // bukan Pot/Set murni. Jadi Pot 9 saja tidak membuka
+                // kombinasi Dasar + Joker.
+                const nextHasPure = hasPure || (m.type === "seq" && m.pure);
+                const tail = cover(next, nextHasPure);
                 if (!tail) continue;
 
                 const result = {
