@@ -3028,69 +3028,11 @@ function advance() {
         }
 
         function analyzePartial(cs) {
-          // Prioritas pertama: cari susunan PENUH dengan solver yang sama
-          // untuk kartu 2-deck + Joker. Ini mencegah kartu identik seperti
-          // 4♠ copy #1 dan 4♠ copy #2 salah dianggap kartu mati.
+          // Joker hanya boleh dihitung hidup jika susunan memiliki
+          // minimal 1 dasar murni. Jika tidak ada dasar murni,
+          // semua kartu dianggap mati.
           const exact = exactJokerMeldCover(cs, true);
-          if (exact) return exact;
-
-          // Fallback analyzer lama dipertahankan untuk kondisi ketika tangan
-          // memang belum bisa tersusun 100%.
-          let ms = melds(cs),
-            best = { ids: [], values: {}, v: 0, melds: [] };
-
-          function disjoint(ids, used) {
-            return ids.every(id => !used.has(id));
-          }
-
-          function isPureBase(m) {
-            if (m.ids.some(id => {
-              const c = cs.find(x => x.id === id);
-              return c && c.joker;
-            })) return false;
-            if (m.type === "seq" && m.ids.length >= 3) return true;
-            return m.type === "set" && m.rank === "A" && m.ids.length === 4;
-          }
-
-          function better(candidate) {
-            if (candidate.ids.length !== best.ids.length)
-              return candidate.ids.length > best.ids.length;
-            if (candidate.melds.length !== best.melds.length)
-              return candidate.melds.length > best.melds.length;
-            return candidate.v > best.v;
-          }
-
-          function expand(start, used, vals, v, chosen) {
-            const candidate = {
-              ids: [...used],
-              values: {...vals},
-              v,
-              melds: chosen.slice(),
-            };
-            if (better(candidate)) best = candidate;
-
-            for (let i = start; i < ms.length; i++) {
-              const m = ms[i];
-              if (!disjoint(m.ids, used)) continue;
-              const nextUsed = new Set(used);
-              m.ids.forEach(id => nextUsed.add(id));
-              expand(
-                i + 1,
-                nextUsed,
-                {...vals, ...m.values},
-                v + m.v,
-                chosen.concat([m]),
-              );
-            }
-          }
-
-          const pure = ms.filter(isPureBase);
-          for (const base of pure) {
-            const used = new Set(base.ids);
-            expand(0, used, {...base.values}, base.v, [base]);
-          }
-
-          return best;
+          return exact || { ids: [], values: {}, v: 0, melds: [] };
         }
         function cardTotals(p, excludedIds) {
           const excluded = new Set(excludedIds || []);
