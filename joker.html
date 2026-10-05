@@ -3153,10 +3153,12 @@ function advance() {
           g._resultModal = { title: t, body: b, ok: ok, fn: fn };
           modal(t, b, ok, fn, false, showResultTable, "Lihat Meja");
         }
-        function showWinResult(w, t, c) {
-          const matchDeltas = Array.isArray(g.resultPending?.matchDeltas)
-            ? g.resultPending.matchDeltas
-            : (Array.isArray(g.lastMatchDeltas) ? g.lastMatchDeltas : g.p.map(() => 0));
+        function showWinResult(w, t, c, matchDeltasOverride) {
+          const matchDeltas = Array.isArray(matchDeltasOverride)
+            ? matchDeltasOverride
+            : (Array.isArray(g.resultPending?.matchDeltas)
+              ? g.resultPending.matchDeltas
+              : (Array.isArray(g.lastMatchDeltas) ? g.lastMatchDeltas : g.p.map(() => 0)));
           const order = g.p
             .map((p, i) => ({ i, score: Number(matchDeltas[i]) || 0 }))
             .sort((a, b) => b.score - a.score || a.i - b.i);
@@ -3280,7 +3282,7 @@ function advance() {
           saveGame();
           // Cloud juga menerima state terminal ini, bukan state match lama.
           saveJokerCloudImmediately();
-          showWinResult(w,t,c);
+          showWinResult(w,t,c,matchDeltas);
         }
         function empty() {
           if (!g || g._emptyProcessing) return;
