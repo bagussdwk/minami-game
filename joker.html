@@ -3040,6 +3040,8 @@ function advance() {
           function better(candidate) {
             if (candidate.ids.length !== best.ids.length)
               return candidate.ids.length > best.ids.length;
+            if (candidate.melds.length !== best.melds.length)
+              return candidate.melds.length > best.melds.length;
             return candidate.v > best.v;
           }
 
@@ -3120,7 +3122,7 @@ function advance() {
             resultCards(cards) +
             '</div>';
         }
-        function resultPlayer(p, extraCards, arranged, closingCard, closingBonus, closingLabel) {
+        function resultPlayer(p, extraCards, arranged, closingCard, closingBonus, closingLabel, matchDeltaOverride) {
           let cards = p.hand.slice();
           if (extraCards && extraCards.length) cards = cards.concat(extraCards);
 
@@ -3155,8 +3157,11 @@ function advance() {
               '</div>';
           }
 
-          const beforeScore = Number(p.matchStartScore) || 0;
-          const matchDelta = Number(p.score) - beforeScore;
+          const matchDelta =
+            Number.isFinite(Number(matchDeltaOverride))
+              ? Number(matchDeltaOverride)
+              : Number(p.score) - (Number(p.matchStartScore) || 0);
+          const beforeScore = Number(p.score) - matchDelta;
           const deltaText = (matchDelta >= 0 ? "+" : "") + matchDelta;
           return '<div class="result-player"><div class="result-head"><b>' +
             p.name + '</b>' +
@@ -3196,14 +3201,32 @@ function advance() {
           const bonus = c ? (c.joker ? 250 : 150) : 0;
 
           const playersHtml = g.p.map((p, i) => {
+            let matchDelta = 0;
+            let arranged;
+
             if (i === w && c) {
               const normalCards = p.hand.filter(x => x.id !== c.id);
-              return resultPlayer(p, [], analyzePartial(normalCards), c, bonus, "Tutupan");
+              const totals = cardTotals(p, [c.id]);
+              arranged = totals.analysis;
+              matchDelta = bonus + totals.liveValue;
+              return resultPlayer(
+                p, [], arranged, c, bonus, "Tutupan", matchDelta
+              );
             }
+
             if (i === t && c) {
-              return resultPlayer(p, [], analyzePartial(p.hand), c, -bonus, "Ditangkap oleh " + wp.name);
+              const totals = cardTotals(p);
+              arranged = totals.analysis;
+              matchDelta = -bonus + totals.liveValue - totals.deadValue;
+              return resultPlayer(
+                p, [], arranged, c, -bonus, "Ditangkap oleh " + wp.name, matchDelta
+              );
             }
-            return resultPlayer(p, [], analyzePartial(p.hand));
+
+            const totals = cardTotals(p);
+            arranged = totals.analysis;
+            matchDelta = totals.liveValue - totals.deadValue;
+            return resultPlayer(p, [], arranged, null, 0, "", matchDelta);
           }).join("");
 
           const rows = order.map((x, rank) => {
@@ -3391,7 +3414,17 @@ function advance() {
             // Jangan menjalankan exact-cover analyzer sekali lagi di sini,
             // karena itu bisa membuat modal WIN MATCH terasa macet.
             const playersHtml = g.p
-              .map((p, i) => resultPlayer(p, [], totals[i]?.analysis || {ids:[], values:{}}))
+              .map((p, i) =>
+                resultPlayer(
+                  p,
+                  [],
+                  totals[i]?.analysis || {ids:[], values:{}, melds:[]},
+                  null,
+                  0,
+                  "",
+                  Number(totals[i]?.total) || 0
+                )
+              )
               .join("");
 
             resultModal(
