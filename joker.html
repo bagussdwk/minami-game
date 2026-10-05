@@ -3376,25 +3376,31 @@ $("jokerMusicOnBtn").onclick=()=>{localStorage.setItem("minamiMusicMuted","0");u
 $("jokerProfileNameSave").onclick=()=>{const i=$("jokerProfileNameInput"),name=String(i?.value||"").trim().replace(/\s+/g," ").slice(0,18);try{localStorage.setItem("minamiProfileV1",JSON.stringify({name:name||"Anda"}))}catch(e){}if(g?.p?.[0])g.p[0].name=name||"Anda";updateJokerProfileUI()};
 $("jokerStatsBtn").onclick=async()=>{closeJokerMenu();await loadJokerAccountStats();openJokerFeature("global")};$("jokerAchievementBtn").onclick=async()=>{closeJokerMenu();await loadJokerAccountStats();openJokerFeature("achievements")};
 $("jokerResetBtn").onclick=async()=>{
-          if(!confirm("Reset permainan Joker ini?\n\nSkor dan posisi permainan saat ini akan dihapus. Statistik akun yang sudah tercatat tetap aman."))return;
+          if(!confirm("Reset permainan Joker ini?\n\nSemua progres, skor, kartu, posisi, dan riwayat permainan Joker saat ini akan dihapus. Statistik akun yang sudah tercatat tetap aman."))return;
           closeJokerMenu();
           clearTimeout(gameOverTimer);
           clearInterval(gameOverCountdown);
           clearTimeout(jokerCloudTimer);
           jokerCloudTimer=null;
           jokerCloudPending=null;
-          await deleteJokerCloudSave();
+
+          // Reset benar-benar menghapus pertandingan sekarang.
+          // Jangan membuat match baru di sini. Saat masuk Joker lagi,
+          // startup akan membuat match baru dengan skor 0.
           try{
+            clearJokerWinPending();
             localStorage.removeItem(JOKER_LOCAL_SAVE_V2);
             localStorage.removeItem("minami_joker_state");
             sessionStorage.removeItem("minami_joker_state");
           }catch(e){}
+
+          await deleteJokerCloudSave();
+
           g=null;
           sel=-1;
-          newMatch(0, 1, false);
-          $("game").style.display="block";
-          setJokerPointsVisible(true);
-          window.scrollTo(0,0);
+          $("game").style.display="none";
+          setJokerPointsVisible(false);
+          window.location.href="index.html";
         };
         $("jokerRulesBtn").onclick=()=>{
           closeJokerMenu();
