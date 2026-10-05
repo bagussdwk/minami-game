@@ -1617,6 +1617,7 @@
               hand: h[i],
               out: [],
               score: keep && old ? old[i].score : 0,
+              matchStartScore: keep && old ? Number(old[i].score) || 0 : 0,
             })),
             draw: d,
             marker,
@@ -1705,6 +1706,13 @@
             return out;
           }
           function addMeld(type, rank, ids, values, v) {
+            // Satu dasar urutan hanya boleh berisi satu kartu untuk setiap rank.
+            // Pada 2 deck, dua 6-7-8-9 yang identik harus menjadi dua dasar
+            // terpisah, bukan satu dasar +20 yang berisi 8 kartu.
+            if (type === "seq") {
+              const cards = ids.map(id => x.find(c => c.id === id)).filter(Boolean);
+              if (new Set(cards.map(c => c.rank)).size !== cards.length) return;
+            }
             out.push({ type, rank, ids, values, v });
           }
           for (let r of ranks) {
@@ -3147,8 +3155,7 @@ function advance() {
               '</div>';
           }
 
-          const beforeScores = g._lastMatchBeforeScores || {};
-          const beforeScore = Number(beforeScores[p.id]) || 0;
+          const beforeScore = Number(p.matchStartScore) || 0;
           const matchDelta = Number(p.score) - beforeScore;
           const deltaText = (matchDelta >= 0 ? "+" : "") + matchDelta;
           return '<div class="result-player"><div class="result-head"><b>' +
@@ -3239,11 +3246,6 @@ function advance() {
         }
         function finish(w,t,c){
           if(g.resultPending || g.over || g.phase === "result")return;
-          // Simpan akumulasi tepat sebelum hasil match terakhir ditambahkan.
-          g._lastMatchBeforeScores = {};
-          g.p.forEach(p => {
-            g._lastMatchBeforeScores[p.id] = Number(p.score) || 0;
-          });
           let wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150,wa=cardTotals(wp,[c.id]),ta=cardTotals(tp);
           wp.score+=bonus+wa.liveValue;
           tp.score+=-bonus+ta.liveValue-ta.deadValue;
