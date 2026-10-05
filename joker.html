@@ -1041,7 +1041,7 @@
           <button class="btn" id="sortSuit" type="button">🌸 Urut Bunga</button
           ><button class="btn" id="sortPot" type="button">🔢 Urut Pot</button>
         </div>
-        <div class="actions"><button class="btn" id="close">Tutup</button></div>
+        <div class="actions"><button class="btn" id="discardBtn" type="button">Buang</button><button class="btn" id="close">Tutup</button></div>
       </div>
     </section>
     <div class="joker-menu-overlay" id="jokerMenuOverlay"><div class="joker-menu-box">
@@ -2460,7 +2460,7 @@
           saveGame();
           advance();
         }
-        $("close").onclick = () => human(true);
+        $("discardBtn").onclick = () => human(false);\n        $("close").onclick = () => human(true);
         function discardFit(hand, top) {
           if (!top) return 0;
           let score = 0,
