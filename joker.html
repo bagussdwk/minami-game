@@ -2608,9 +2608,18 @@
         }
 
         function aiBestDiscard(hand, sourceId, receiver) {
+          let sourceKey = null;
+          if (g.source === "discard" && sourceId !== -1) {
+            const sourceCard = hand.find((c) => c.id === sourceId);
+            if (sourceCard) sourceKey = sourceCard.rank + "|" + sourceCard.suit;
+          }
           let choices = hand
             .map((c, i) => ({ c, i }))
-            .filter((x) => x.c.id !== sourceId);
+            .filter(
+              (x) =>
+                x.c.id !== sourceId &&
+                !(sourceKey && x.c.rank + "|" + x.c.suit === sourceKey),
+            );
 
           // Joker hanya boleh dibuang setelah kartu terakhir tumpukan
           // sudah diambil. Selama tumpukan masih berisi kartu, AI wajib
