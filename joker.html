@@ -3154,8 +3154,11 @@ function advance() {
           modal(t, b, ok, fn, false, showResultTable, "Lihat Meja");
         }
         function showWinResult(w, t, c) {
+          const matchDeltas = Array.isArray(g.resultPending?.matchDeltas)
+            ? g.resultPending.matchDeltas
+            : g.p.map(() => 0);
           const order = g.p
-            .map((p, i) => ({ i, score: Number(p.score) || 0 }))
+            .map((p, i) => ({ i, score: Number(matchDeltas[i]) || 0 }))
             .sort((a, b) => b.score - a.score || a.i - b.i);
           const rank1 = order[0]?.i ?? 0;
           const wp = g.p[w], tp = g.p[t];
@@ -3204,8 +3207,8 @@ function advance() {
               label(c) + '</b>. Bonus penutupan: +' + bonus +
               '. <b>' + tp.name + '</b> ditangkap oleh <b>' + wp.name +
               '</b> dan mendapat -' + bonus +
-              '. Namun <b>Rank 1 / WIN MATCH ditentukan dari poin akumulasi tertinggi</b>.</div>'
-            : '<div class="note">Tumpukan tengah habis. <b>Rank 1 / WIN MATCH ditentukan dari poin akumulasi tertinggi</b>.</div>';
+              '. <b>Rank 1 / WIN MATCH ditentukan dari poin match tertinggi pada match ini</b>.</div>'
+            : '<div class="note">Tumpukan tengah habis. <b>Rank 1 / WIN MATCH ditentukan dari poin match tertinggi pada match ini</b>.</div>';
 
           resultModal(
             "🏆 WIN MATCH",
@@ -3231,21 +3234,22 @@ function advance() {
         function finish(w,t,c){
           if(g.resultPending || g.over || g.phase === "result")return;
           let wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150,wa=cardTotals(wp,[c.id]),ta=cardTotals(tp);
-          wp.score+=bonus+wa.liveValue;
-          tp.score+=-bonus+ta.liveValue-ta.deadValue;
-          g.p.forEach((p,i)=>{
-            if(i===w||i===t)return;
+          const matchDeltas = g.p.map((p,i)=>{
+            if(i===w)return bonus+wa.liveValue;
+            if(i===t)return -bonus+ta.liveValue-ta.deadValue;
             const totals=cardTotals(p);
-            p.score+=totals.liveValue-totals.deadValue;
+            return totals.liveValue-totals.deadValue;
           });
+          g.p.forEach((p,i)=>{ p.score += matchDeltas[i]; });
           const resultId="joker-"+Date.now()+"-"+Math.random().toString(36).slice(2);
           const gameFinished=g.p.some(x=>Number(x.score)>=1500);
           const userGameWin=Number(g.p[0]?.score)>=1500;
           ensureJokerActionStats();
           const finishOrder = g.p
-            .map((p, i) => ({ i, score: Number(p.score) || 0 }))
+            .map((p, i) => ({ i, score: Number(matchDeltas[i]) || 0 }))
             .sort((a, b) => b.score - a.score || a.i - b.i);
-          const rank1 = finishOrder[0]?.i === 0 ? 1 : 0;
+          const matchWinner = finishOrder[0]?.i ?? 0;
+          const rank1 = matchWinner === 0 ? 1 : 0;
           if(g.jokerStats.setsThisMatch>=3)markJokerAchievement("tripleSet");
           if(g.source==="discard"&&w===0)markJokerAchievement("gotcha");
           if(g.source==="discard"&&t===0&&w!==0)markJokerAchievement("payback");
@@ -3269,7 +3273,7 @@ function advance() {
           syncJokerResult(resultId,{games_finished:gameFinished?1:0,game_wins:userGameWin?1:0,rank1,match_wins:rank1,jokers:g.jokerStats.jokers,joker_sets:g.jokerStats.sets,caught:g.jokerStats.caught,caught_by:g.jokerStats.caughtBy,best_streak:streak});
           // WIN MATCH adalah state terminal. Selama tombol "Lanjut Match"
           // belum ditekan, tidak boleh ada aksi kartu atau match baru.
-          g.resultPending={type:"win",winner:w,caught:t,card:c};
+          g.resultPending={type:"win",winner:matchWinner,caught:t,card:c,matchDeltas};
           g.phase="result";
           g.over=true;
           saveJokerWinPending(g.resultPending);
@@ -3302,10 +3306,11 @@ function advance() {
             }
 
             // Semua pemain sudah dihitung. Baru sekarang MATCH dibuat terminal.
-            totals.forEach((v, i) => (g.p[i].score += v.total));
+            const matchDeltas = totals.map(v => Number(v?.total) || 0);
+            totals.forEach((v, i) => (g.p[i].score += matchDeltas[i]));
 
             const order = g.p
-              .map((p, i) => ({ i, score: Number(p.score) || 0 }))
+              .map((p, i) => ({ i, score: matchDeltas[i] }))
               .sort((a, b) => b.score - a.score || a.i - b.i);
 
             const rank1 = order[0]?.i ?? 0;
@@ -3348,7 +3353,8 @@ function advance() {
               winner: rank1,
               caught: null,
               card: null,
-              reason: "empty"
+              reason: "empty",
+              matchDeltas
             };
             g.phase = "result";
             g.over = true;
@@ -3365,7 +3371,7 @@ function advance() {
                 const p = g.p[x.i];
                 return '<div class="row"><b>' +
                   (rank + 1) + '. ' + p.name +
-                  '</b><span>' + p.score + '</span><b>' +
+                  '</b><span>' + (x.score >= 0 ? '+' : '') + x.score + '</span><b>' +
                   (rank === 0 ? 'WIN MATCH' : '') +
                   '</b></div>';
               })
@@ -3391,8 +3397,8 @@ function advance() {
             resultModal(
               "WIN MATCH",
               '<div class="note">Tumpukan tengah habis. Tidak ada yang menutup. ' +
-                '<b>' + g.p[rank1].name + '</b> mendapat <b>Rank 1</b> karena memiliki ' +
-                'skor akumulasi paling tinggi.</div>' +
+                '<b>' + g.p[rank1].name + '</b> mendapat <b>Rank 1</b> karena memperoleh ' +
+                'poin match tertinggi pada match ini.</div>' +
                 rows +
                 playersHtml,
               "Lanjut Match",
