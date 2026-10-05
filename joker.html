@@ -1747,7 +1747,7 @@
               // terpisah sehingga dapat dipakai pada pot berikutnya.
               for (let takeCount = 0; takeCount <= Math.min(k, suitKeys.length); takeCount++) {
                 let need = k - takeCount;
-                if (need < 0 || need > j.length) continue;
+                if (need < 0 || need > j.length || need > 1) continue;
 
                 let naturalChoices = [];
                 chooseDistinctSuits(0, takeCount, [], naturalChoices);
@@ -1793,7 +1793,7 @@
 
             let missing = options.filter((a) => !a.length).length;
             if (!missing) build(0, []);
-            else if (missing <= j.length) {
+            else if (missing === 1 && j.length >= 1) {
               let fixedRanks = [];
               options.forEach((a, i) => {
                 if (a.length) fixedRanks.push({ i, a });
