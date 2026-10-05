@@ -2445,9 +2445,12 @@
             return finish(0, prev(), c);
           }
 
-          // Bila tidak ada yang menutup dan tumpukan tengah sudah habis,
-          // MATCH selesai dan SEMUA kartu yang masih di tangan dihitung.
-          if (!g.draw.length) {
+          // Jika kartu yang baru diambil tadi adalah kartu TERAKHIR dari
+          // tumpukan tengah, pemain tetap mendapat tepat satu kesempatan
+          // untuk membuang kartu. Setelah buangan itu barulah MATCH selesai.
+          if (g.endAfterDiscard || !g.draw.length) {
+            g.endAfterDiscard = false;
+            saveGame();
             return empty();
           }
 
