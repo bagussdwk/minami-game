@@ -3121,6 +3121,9 @@ function advance() {
               const normalCards = p.hand.filter(x => x.id !== c.id);
               return resultPlayer(p, [], analyzePartial(normalCards), c, bonus, "Tutupan");
             }
+            if (i === t && c) {
+              return resultPlayer(p, [], analyzePartial(p.hand), c, -bonus, "Ditangkap oleh " + wp.name);
+            }
             return resultPlayer(p, [], analyzePartial(p.hand));
           }).join("");
 
@@ -3136,6 +3139,8 @@ function advance() {
           const closeNote = wp && c
             ? '<div class="note"><b>' + wp.name + '</b> menutup dengan <b>' +
               label(c) + '</b>. Bonus penutupan: +' + bonus +
+              '. <b>' + tp.name + '</b> ditangkap oleh <b>' + wp.name +
+              '</b> dan mendapat -' + bonus +
               '. Namun <b>Rank 1 / WIN MATCH ditentukan dari poin akumulasi tertinggi</b>.</div>'
             : '<div class="note">Tumpukan tengah habis. <b>Rank 1 / WIN MATCH ditentukan dari poin akumulasi tertinggi</b>.</div>';
 
