@@ -165,7 +165,7 @@
       @media(max-width:560px){.joker-start-showcase{padding:16px 10px 12px}.joker-start-badge{font-size:16px}.joker-start-features b{font-size:13px}}
       /* ===== JOKER MATCH DEAL ANIMATION ===== */
       .joker-deal-overlay{position:fixed;inset:0;z-index:250;pointer-events:none;overflow:hidden}
-      .joker-deal-card{position:fixed !important;left:0 !important;top:0 !important;width:42px;height:60px;border-radius:7px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);border:2px solid #e8e8e8;box-shadow:0 7px 20px #0008;transform:translate(-50%,-50%);will-change:left,top,transform,opacity}
+      .joker-deal-card{position:fixed !important;left:50% !important;top:50% !important;width:42px;height:60px;border-radius:7px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);border:2px solid #e8e8e8;box-shadow:0 7px 20px #0008;transform:translate(-50%,-50%);will-change:transform,opacity}
       .joker-deal-label{position:fixed;left:50%;top:calc(50% + 58px);transform:translateX(-50%);padding:7px 12px;border-radius:10px;background:#03231cf2;border:1px solid #f3cf7038;color:#f3cf70;font-size:9px;font-weight:900;letter-spacing:1.2px;white-space:nowrap}
       @media(max-width:560px){.joker-deal-card{width:34px;height:49px}.joker-deal-label{top:calc(50% + 48px);font-size:8px}}
 
@@ -1580,18 +1580,28 @@
             overlay.appendChild(label);
             document.body.appendChild(overlay);
 
+            // Titik dasar kartu selalu tepat di tengah viewport.
+            // Pergerakan ke meja/avatar dihitung sebagai delta dari titik ini.
             const cr = center.getBoundingClientRect();
+            const viewportCenter = {
+              x: window.innerWidth / 2,
+              y: window.innerHeight / 2
+            };
             const origin = {
               x: cr.left + cr.width / 2,
               y: cr.top + cr.height / 2
+            };
+            const originDelta = {
+              x: origin.x - viewportCenter.x,
+              y: origin.y - viewportCenter.y
             };
 
             const targets = players.map((el) => {
               const avatar = el.querySelector(".avatar");
               const r = (avatar || el).getBoundingClientRect();
               return {
-                x: r.left + r.width / 2,
-                y: r.top + r.height / 2
+                x: r.left + r.width / 2 - viewportCenter.x,
+                y: r.top + r.height / 2 - viewportCenter.y
               };
             });
 
@@ -1599,32 +1609,39 @@
             let number = 0;
             const cards = [];
 
+            const transformAt = (x, y, scale, rotate) =>
+              "translate(calc(-50% + " + x + "px),calc(-50% + " + y + "px)) scale(" +
+              scale + ") rotate(" + rotate + "deg)";
+
             const add = (targetIndex, delay) => {
               const card = document.createElement("div");
               card.className = "joker-deal-card";
               const t = targets[targetIndex];
               const rot = ((number % 5) - 2) * 2.5;
 
-              card.style.setProperty("left", origin.x + "px", "important");
-              card.style.setProperty("top", origin.y + "px", "important");
+              // Posisi dasar selalu tengah layar; tidak pernah left/top = 0.
+              card.style.setProperty("left", "50%", "important");
+              card.style.setProperty("top", "50%", "important");
+              card.style.setProperty(
+                "transform",
+                transformAt(originDelta.x, originDelta.y, ".72", "0"),
+                "important"
+              );
               card.style.opacity = "0";
-              card.style.transform = "translate(-50%,-50%) scale(.72) rotate(0deg)";
               document.body.appendChild(card);
               cards.push(card);
 
               setTimeout(() => {
                 card.style.transition =
-                  "left " + duration + "ms cubic-bezier(.2,.75,.25,1), " +
-                  "top " + duration + "ms cubic-bezier(.2,.75,.25,1), " +
-                  "transform " + duration + "ms cubic-bezier(.2,.75,.25,1), " +
-                  "opacity 100ms ease";
+                  "transform " + duration + "ms cubic-bezier(.2,.75,.25,1),opacity 100ms ease";
                 card.style.opacity = "1";
 
                 requestAnimationFrame(() => {
-                  card.style.setProperty("left", t.x + "px", "important");
-                  card.style.setProperty("top", t.y + "px", "important");
-                  card.style.transform =
-                    "translate(-50%,-50%) scale(1) rotate(" + rot + "deg)";
+                  card.style.setProperty(
+                    "transform",
+                    transformAt(t.x, t.y, "1", rot),
+                    "important"
+                  );
                 });
               }, delay);
               number++;
