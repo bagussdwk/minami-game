@@ -2413,8 +2413,9 @@
           // tumpukan tengah diambil. Setelah kartu ini dibuang, MATCH
           // langsung selesai. Tidak boleh lanjut ke turn berikutnya.
           if (endAfterDiscard || !g.draw.length) {
+            // Jangan simpan state discard sementara. Setelah buangan terakhir
+            // langsung ubah menjadi state terminal WIN MATCH.
             g.endAfterDiscard = false;
-            saveGame();
             return empty();
           }
 
@@ -2692,15 +2693,21 @@
           });
 
           render();
+
+          // Jika ini adalah buangan setelah kartu terakhir diambil,
+          // MATCH selesai SEKARANG. Jangan save state "discard" dulu,
+          // karena refresh pada jeda AI akan membuat kartu bisa dibuang lagi.
+          if (!close && (endAfterDiscard || !g.draw.length)) {
+            g.endAfterDiscard = false;
+            return empty();
+          }
+
           saveGame();
 
           setTimeout(
             () => {
               if (close) finish(g.turn, prev(), c);
-              else if (endAfterDiscard || !g.draw.length) {
-                g.endAfterDiscard = false;
-                empty();
-              } else advance();
+              else advance();
             },
             2000 + Math.random() * 2000,
           );
@@ -3188,6 +3195,8 @@ function advance() {
             card: null,
             reason: "empty"
           };
+          // State terminal: refresh tidak boleh mengembalikan kesempatan discard.
+          g.endAfterDiscard = false;
           g.phase = "result";
           g.over = true;
           saveJokerWinPending(g.resultPending);
