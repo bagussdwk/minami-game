@@ -1589,15 +1589,16 @@
             const add = (targetIndex, delay) => {
               const card = document.createElement("div");
               card.className = "joker-deal-card";
-              card.style.left = origin.x + "px";
-              card.style.top = origin.y + "px";
-              overlay.appendChild(card);
               const t = targets[targetIndex];
               const rot = ((number % 5) - 2) * 2.5;
+              card.style.left = origin.x + "px";
+              card.style.top = origin.y + "px";
+              card.style.transform = "translate(-50%,-50%) scale(.72) rotate(0deg)";
+              overlay.appendChild(card);
               card.animate([
-                {transform:"translate(-50%,-50%) scale(.72) rotate(0deg)",opacity:0},
-                {transform:"translate(-50%,-50%) scale(1) rotate("+rot+"deg)",opacity:1,offset:.18},
-                {transform:"translate("+(t.x-origin.x)+"px,"+(t.y-origin.y)+"px) scale(1) rotate("+rot+"deg)",opacity:1}
+                {left:origin.x+"px",top:origin.y+"px",transform:"translate(-50%,-50%) scale(.72) rotate(0deg)",opacity:0},
+                {left:origin.x+"px",top:origin.y+"px",transform:"translate(-50%,-50%) scale(1) rotate("+rot+"deg)",opacity:1,offset:.18},
+                {left:t.x+"px",top:t.y+"px",transform:"translate(-50%,-50%) scale(1) rotate("+rot+"deg)",opacity:1}
               ],{duration,delay,easing:"cubic-bezier(.2,.75,.25,1)",fill:"forwards"});
               number++;
             };
