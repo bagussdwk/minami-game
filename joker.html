@@ -2901,7 +2901,8 @@ function advance() {
                    naturalCount <= Math.min(k, suitsHere.length);
                    naturalCount++) {
                 const needJoker = k - naturalCount;
-                if (needJoker > jokers.length) continue;
+                // Satu pot/set maksimal 1 Joker.
+                if (needJoker > jokers.length || needJoker > 1) continue;
                 const naturalChoices = [];
                 chooseDistinct(0, naturalCount, [], naturalChoices);
                 for (const take of naturalChoices)
@@ -2927,7 +2928,8 @@ function advance() {
               naturals.filter(c => c.suit === suit && c.rank === r)
             );
             const missing = options.filter(a => !a.length).length;
-            if (missing > jokers.length) continue;
+            // Satu dasar urutan juga maksimal 1 Joker.
+            if (missing > jokers.length || missing > 1) continue;
 
             for (const js of choose(jokers, missing)) {
               const build = (pos, picked, ji) => {
@@ -3076,9 +3078,11 @@ function advance() {
           let cards = m.ids
             .map(id => cs.find(c => c.id === id))
             .filter(Boolean);
+          // "Dasar Murni" hanya jika meld memang ditandai pure:
+          // semua kartu natural, bukan sekadar karena berisi 4 kartu A.
           let title = m.type === "seq"
-            ? "Dasar" + (cards.some(c => c.joker) ? " + Joker" : " Murni")
-            : "Pot" + (m.rank === "A" && cards.length === 4 ? " / Dasar Murni" : "");
+            ? "Dasar" + (m.pure ? " Murni" : " + Joker")
+            : "Pot" + (m.pure ? " / Dasar Murni" : "");
           return '<div style="margin:6px 0;padding:6px 7px;border-radius:7px;background:#ffffff08;border:1px solid #ffffff10">' +
             '<div style="font-size:8px;font-weight:900;color:#f3cf70;margin-bottom:4px">' +
             title + ' • +' + m.v + '</div>' +
