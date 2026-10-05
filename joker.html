@@ -1585,14 +1585,14 @@
               y: cr.top + cr.height / 2
             };
             const targets = players.map((el) => {
-              const r = el.getBoundingClientRect();
+              const r = el.querySelector(".avatar")?.getBoundingClientRect() || el.getBoundingClientRect();
               return {
                 x: r.left + r.width / 2,
-                y: r.top + Math.min(r.height / 2, 34)
+                y: r.top + r.height / 2
               };
             });
 
-            const interval = 62, duration = 300;
+            const interval = 62, duration = 330;
             let number = 0;
 
             const add = (targetIndex, delay) => {
@@ -1601,26 +1601,25 @@
               const t = targets[targetIndex];
               const rot = ((number % 5) - 2) * 2.5;
 
-              // Gunakan transform absolut terhadap viewport.
-              // Ini menghindari kartu jatuh ke (0,0) saat left/top
-              // diinterpolasi oleh Web Animations API.
-              const from = "translate(" + origin.x + "px," + origin.y + "px) translate(-50%,-50%) scale(.72) rotate(0deg)";
-              const mid = "translate(" + origin.x + "px," + origin.y + "px) translate(-50%,-50%) scale(1) rotate(" + rot + "deg)";
-              const to = "translate(" + t.x + "px," + t.y + "px) translate(-50%,-50%) scale(1) rotate(" + rot + "deg)";
-
-              card.style.left = "0px";
-              card.style.top = "0px";
-              card.style.transform = from;
+              card.style.left = origin.x + "px";
+              card.style.top = origin.y + "px";
+              card.style.opacity = "0";
+              card.style.transform = "translate(-50%,-50%) scale(.72) rotate(0deg)";
               overlay.appendChild(card);
 
-              card.animate(
-                [
-                  {transform: from, opacity: 0},
-                  {transform: mid, opacity: 1, offset: .18},
-                  {transform: to, opacity: 1}
-                ],
-                {duration, delay, easing: "cubic-bezier(.2,.75,.25,1)", fill: "forwards"}
-              );
+              setTimeout(() => {
+                card.style.transition =
+                  "left " + duration + "ms cubic-bezier(.2,.75,.25,1),top " +
+                  duration + "ms cubic-bezier(.2,.75,.25,1),transform " +
+                  duration + "ms cubic-bezier(.2,.75,.25,1),opacity 100ms ease";
+                card.style.opacity = "1";
+                requestAnimationFrame(() => {
+                  card.style.left = t.x + "px";
+                  card.style.top = t.y + "px";
+                  card.style.transform =
+                    "translate(-50%,-50%) scale(1) rotate(" + rot + "deg)";
+                });
+              }, delay);
               number++;
             };
 
