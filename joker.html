@@ -3256,8 +3256,11 @@ function advance() {
               })
               .join("");
 
+            // Gunakan hasil analysis yang sudah dihitung saat scoring.
+            // Jangan menjalankan exact-cover analyzer sekali lagi di sini,
+            // karena itu bisa membuat modal WIN MATCH terasa macet.
             const playersHtml = g.p
-              .map(p => resultPlayer(p, [], analyzePartial(p.hand)))
+              .map((p, i) => resultPlayer(p, [], totals[i]?.analysis || {ids:[], values:{}}))
               .join("");
 
             modal(
