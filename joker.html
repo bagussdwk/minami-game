@@ -1046,7 +1046,7 @@
     </section>
     <div class="joker-menu-overlay" id="jokerMenuOverlay"><div class="joker-menu-box">
 <div class="joker-menu-head"><div><div class="joker-menu-title">☰ Menu JOKER</div><div class="joker-menu-sub">Menu pemain</div></div><button class="joker-menu-close" id="jokerMenuClose" type="button">×</button></div>
-<div class="joker-profile-card"><div class="joker-profile-avatar" id="jokerMenuAvatar">👤</div><div class="joker-profile-main">
+<div class="joker-profile-card" id="jokerProfileCard"><div class="joker-profile-avatar" id="jokerMenuAvatar">👤</div><div class="joker-profile-main">
 <div class="joker-profile-label">PROFIL PEMAIN</div><div class="joker-profile-name" id="jokerMenuName">Anda</div>
 <div class="joker-profile-title-row"><span id="jokerRankIcon">🌱</span><b id="jokerRankName">PEMULA</b></div>
 <div class="joker-profile-rank-sub" id="jokerRankSub">0 Rank 1</div><div class="joker-profile-rank-bar"><span id="jokerRankProgress"></span></div>
@@ -3418,7 +3418,7 @@ function closeJokerMenu(){$("jokerMenuOverlay").classList.remove("show")}
 function updateJokerMusicUI(){const m=localStorage.getItem("minamiMusicMuted")==="1";$("jokerMusicOnBtn").classList.toggle("active",!m);$("jokerMusicOffBtn").classList.toggle("active",m)}
 function startMinamiMusic(){if(localStorage.getItem("minamiMusicMuted")==="1")return;if(window.minamiMusic?.audio){window.minamiMusic.audio.play().catch(()=>{});return}try{const a=new Audio("./casino-vip-music-classy-lounge-casino-1-469300.mp3");a.loop=true;a.volume=.36;a.style.display="none";document.body.appendChild(a);window.minamiMusic={audio:a};a.play().catch(()=>{})}catch(e){}}
 function stopMinamiMusic(){try{window.minamiMusic?.audio?.pause()}catch(e){}window.minamiMusic=null}
-async function openJokerMenu(){await loadJokerAccountStats();updateJokerProfileUI();updateJokerMusicUI();$("jokerMenuOverlay").classList.add("show")}
+async function openJokerMenu(){const logged=!!localStorage.getItem(JOKER_API_TOKEN_KEY);const profile=$("jokerProfileCard");const stats=$("jokerStatsBtn");const achievements=$("jokerAchievementBtn");if(profile)profile.style.display=logged?"":"none";if(stats)stats.style.display=logged?"":"none";if(achievements)achievements.style.display=logged?"":"none";if(logged)await loadJokerAccountStats();updateJokerProfileUI();updateJokerMusicUI();$("jokerMenuOverlay").classList.add("show")}
 $("jokerMenuBtn").onclick=openJokerMenu;$("jokerPointsBtn").onclick=openJokerPoints;$("jokerMenuClose").onclick=closeJokerMenu;$("jokerMenuOverlay").onclick=e=>{if(e.target===$("jokerMenuOverlay"))closeJokerMenu()};
 $("jokerMusicOnBtn").onclick=()=>{localStorage.setItem("minamiMusicMuted","0");updateJokerMusicUI();startMinamiMusic()};$("jokerMusicOffBtn").onclick=()=>{localStorage.setItem("minamiMusicMuted","1");updateJokerMusicUI();stopMinamiMusic()};
 $("jokerProfileNameSave").onclick=()=>{const i=$("jokerProfileNameInput"),name=String(i?.value||"").trim().replace(/\s+/g," ").slice(0,18);try{localStorage.setItem("minamiProfileV1",JSON.stringify({name:name||"Anda"}))}catch(e){}if(g?.p?.[0])g.p[0].name=name||"Anda";updateJokerProfileUI()};
