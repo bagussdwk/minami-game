@@ -2425,9 +2425,14 @@
           if (sel < 0) return;
           let p = g.p[0],
             c = p.hand[sel];
-          if (!close && g.source === "discard" && c.id === g.sourceCard)
+          if (
+            !close &&
+            g.source === "discard" &&
+            g.sourceCardKey &&
+            c.rank + "|" + c.suit === g.sourceCardKey
+          )
             return alert(
-              "Kartu yang baru diambil dari buangan tidak boleh langsung dibuang. Simpan sampai putaran berikutnya.",
+              "Kartu dengan rank dan bunga yang baru diambil dari buangan tidak boleh dibuang pada giliran ini. Simpan sampai putaran berikutnya.",
             );
           if (close && g.source !== "discard")
             return alert(
