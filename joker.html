@@ -3154,11 +3154,36 @@ function advance() {
           modal(t, b, ok, fn, false, showResultTable, "Lihat Meja");
         }
         function showWinResult(w, t, c, matchDeltasOverride) {
-          const matchDeltas = Array.isArray(matchDeltasOverride)
-            ? matchDeltasOverride
-            : (Array.isArray(g.resultPending?.matchDeltas)
-              ? g.resultPending.matchDeltas
-              : (Array.isArray(g.lastMatchDeltas) ? g.lastMatchDeltas : g.p.map(() => 0)));
+          let matchDeltas;
+          if (Array.isArray(matchDeltasOverride)) {
+            matchDeltas = matchDeltasOverride.slice();
+          } else if (Array.isArray(g.resultPending?.matchDeltas)) {
+            matchDeltas = g.resultPending.matchDeltas.slice();
+          } else if (Array.isArray(g.lastMatchDeltas)) {
+            matchDeltas = g.lastMatchDeltas.slice();
+          } else {
+            // Pulihkan hasil match lama yang tersimpan tanpa matchDeltas.
+            const repaired = g.p.map(p => cardTotals(p).total);
+            const alreadyApplied = g.p.every(p =>
+              Number.isFinite(Number(p.matchStartScore)) &&
+              Number(p.score) !== Number(p.matchStartScore)
+            );
+            matchDeltas = repaired.map(Number);
+            if (alreadyApplied) {
+              matchDeltas = g.p.map(p =>
+                Number(p.score) - Number(p.matchStartScore)
+              );
+            } else {
+              g.p.forEach((p, i) => {
+                p.score += Number(matchDeltas[i]) || 0;
+              });
+            }
+            g.lastMatchDeltas = matchDeltas.slice();
+            if (g.resultPending) g.resultPending.matchDeltas = matchDeltas.slice();
+            saveJokerWinPending(g.resultPending);
+            saveJokerWinSnapshot();
+            saveGame();
+          }
           const order = g.p
             .map((p, i) => ({ i, score: Number(matchDeltas[i]) || 0 }))
             .sort((a, b) => b.score - a.score || a.i - b.i);
