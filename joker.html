@@ -1521,26 +1521,37 @@
             // Itu berarti buangan terakhir sudah menjadi titik akhir MATCH.
             // Finalisasi SEKARANG sebelum render/AI dijalankan.
             if (!g.over && g.phase === "discard" && !g.draw.length) {
-              g.endAfterDiscard = false;
-              g.over = true;
-              g.phase = "result";
-              g.resultPending = {
-                type: "win",
-                winner: null,
-                caught: null,
-                card: null,
-                reason: "empty"
-              };
-              saveJokerWinPending(g.resultPending);
-              saveJokerWinSnapshot();
-              try {
-                empty();
-              } catch (e) {
-                console.error("finalize empty match on load", e);
-              }
-              if (g?.resultPending?.winner != null) {
-                render();
-                return true;
+              // Jika pemain baru saja mengambil KARTU TERAKHIR dari
+              // tumpukan tengah, endAfterDiscard=true berarti pemain
+              // MASIH berhak membuang tepat satu kartu. Refresh tidak
+              // boleh mengakhiri match sebelum buangan terakhir itu.
+              if (g.endAfterDiscard === true || g.source === "draw") {
+                g.endAfterDiscard = true;
+              } else {
+                // Hanya finalisasi otomatis jika state tersimpan memang
+                // sudah melewati buangan terakhir tetapi belum sempat
+                // disimpan sebagai phase=result.
+                g.endAfterDiscard = false;
+                g.over = true;
+                g.phase = "result";
+                g.resultPending = {
+                  type: "win",
+                  winner: null,
+                  caught: null,
+                  card: null,
+                  reason: "empty"
+                };
+                saveJokerWinPending(g.resultPending);
+                saveJokerWinSnapshot();
+                try {
+                  empty();
+                } catch (e) {
+                  console.error("finalize empty match on load", e);
+                }
+                if (g?.resultPending?.winner != null) {
+                  render();
+                  return true;
+                }
               }
             }
 
