@@ -2824,28 +2824,37 @@ function advance() {
           const naturals = cs.filter(c => !c.joker);
           const candidates = [];
 
-          function add(type, rank, cards) {
+          function add(type, rank, cards, logicalRanks = null) {
             if (!cards || cards.length < 3) return;
-            // Satu dasar urutan tidak boleh memuat rank yang sama dua kali.
-            // Ini penting untuk 2 deck: dua 6-7-8-9 yang identik harus
-            // menjadi dua dasar terpisah, bukan satu dasar gabungan.
+            // Untuk sequence, Joker memakai rank posisi yang digantikannya.
+            // Rank fisik Joker (mis. J) tidak boleh dihitung sebagai rank
+            // sebenarnya, karena J♠ + Joker + K♠ adalah sequence J-Q-K yang sah.
+            const effectiveRanks = cards.map((c, i) =>
+              type === "seq" && c.joker && logicalRanks
+                ? logicalRanks[i]
+                : c.rank
+            );
             if (
               type === "seq" &&
-              new Set(cards.map(c => c.rank)).size !== cards.length
+              new Set(effectiveRanks).size !== effectiveRanks.length
             )
               return;
             const ids = cards.map(c => c.id);
             if (new Set(ids).size !== ids.length) return;
             const values = {};
-            cards.forEach(c => {
-              values[c.id] = rv(type === "set" ? rank : c.rank);
+            cards.forEach((c, i) => {
+              values[c.id] = rv(type === "set" ? rank : effectiveRanks[i]);
             });
             candidates.push({
               type,
               rank: rank ?? null,
               ids,
               values,
-              v: cards.reduce((z, c) => z + (type === "set" ? rv(rank) : rv(c.rank)), 0),
+              v: cards.reduce(
+                (z, c, i) =>
+                  z + (type === "set" ? rv(rank) : rv(effectiveRanks[i])),
+                0
+              ),
               pure: cards.every(c => !c.joker),
             });
           }
@@ -2921,7 +2930,7 @@ function advance() {
             for (const js of choose(jokers, missing)) {
               const build = (pos, picked, ji) => {
                 if (pos === options.length) {
-                  add("seq", null, picked);
+                  add("seq", null, picked, seq);
                   return;
                 }
                 if (!options[pos].length) {
