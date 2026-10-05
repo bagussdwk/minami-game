@@ -1516,18 +1516,22 @@
 
             sel = typeof x.sel === "number" ? x.sel : -1;
 
-            // Jika refresh terjadi ketika kartu tengah sudah habis tetapi
-            // MATCH belum tersimpan sebagai hasil, MATCH langsung selesai.
-            // Tidak ada "buang terakhir" setelah tumpukan habis.
+            // Jika kartu tengah sudah habis setelah pemain mengambil
+            // kartu terakhir, pemain masih berhak melakukan tepat satu
+            // discard. Refresh tidak boleh langsung mengakhiri MATCH.
             if (!g.over && g.phase === "discard" && !g.draw.length) {
-              try {
-                empty();
-              } catch (e) {
-                console.error("finalize empty match on load", e);
-              }
-              if (g?.resultPending?.type === "win") {
-                render();
-                return true;
+              if(g.endAfterDiscard === true) {
+                // Tetap di fase discard untuk satu buangan terakhir.
+              } else {
+                try {
+                  empty();
+                } catch (e) {
+                  console.error("finalize empty match on load", e);
+                }
+                if (g?.resultPending?.type === "win") {
+                  render();
+                  return true;
+                }
               }
             }
 
@@ -1603,6 +1607,7 @@
             history: [],
             round: g ? g.round + 1 : 1,
             over: false,
+            endAfterDiscard: false,
             jokerStats: { jokers: 0, sets: 0, caught: 0, caughtBy: 0, seenSets: [], seenJokers: [] },
           };
           for (let i = 1; i < n; i++) {
@@ -1622,6 +1627,9 @@
         function takeDraw(p) {
           if (!g.draw.length) return false;
           p.hand.push(g.draw.pop());
+          // Jika ini kartu terakhir, pemain tetap mendapat tepat satu
+          // kesempatan discard. MATCH baru selesai setelah discard tersebut.
+          g.endAfterDiscard = g.draw.length === 0;
           return true;
         }
         function takeOut(p) {
@@ -2679,10 +2687,6 @@
               takeDraw(p);
               g.source = "draw";
               g.sourceCard = p.hand.at(-1).id;
-
-              // Kartu terakhir dari tumpukan baru saja diambil:
-              // MATCH langsung selesai. Semua kartu di tangan dihitung.
-              if (!g.draw.length) return empty();
             }
 
             g.phase = "discard";
@@ -2720,9 +2724,11 @@
 
           render();
 
-          // Jika tidak menutup dan tumpukan tengah sudah habis,
-          // MATCH selesai dan semua kartu di tangan dihitung.
-          if (!close && !g.draw.length) {
+          // Buangan setelah mengambil kartu TERAKHIR dari tumpukan
+          // adalah buangan terakhir. Setelah itu MATCH selesai.
+          if (!close && (g.endAfterDiscard || !g.draw.length)) {
+            g.endAfterDiscard=false;
+            saveGame();
             return empty();
           }
 
