@@ -3176,10 +3176,24 @@ function advance() {
           showWinResult(w,t,c);
         }
         function empty() {
-          // Ini hanya dipanggil SETELAH buangan terakhir. MATCH sudah
-          // ditandai terminal oleh caller, sehingga refresh tidak dapat
-          // kembali ke fase discard.
-          if (!g || g.over !== true || g.phase !== "result") return;
+          if (!g) return;
+
+          // Semua jalur "tumpukan habis" harus masuk ke hasil MATCH di sini.
+          // Khusus AI, empty() bisa dipanggil langsung setelah buangan
+          // terakhir, jadi jangan bergantung pada caller untuk lebih dulu
+          // mengubah phase/over.
+          if (!g.over || g.phase !== "result") {
+            g.endAfterDiscard = false;
+            g.over = true;
+            g.phase = "result";
+            g.resultPending = {
+              type: "win",
+              winner: null,
+              caught: null,
+              card: null,
+              reason: "empty"
+            };
+          }
 
           // Tumpukan tengah habis tetap mengakhiri MATCH.
           // Tidak ada kartu penutup, jadi rank ditentukan dari skor
