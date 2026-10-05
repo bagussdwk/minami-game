@@ -2729,6 +2729,7 @@
             rest = p.hand.filter((_, k) => k !== i),
             close =
               g.source === "discard" &&
+              (!g.sourceCardKey || c.rank + "|" + c.suit !== g.sourceCardKey) &&
               c.id !== g.sourceCard &&
               (c.rank === "A" || c.joker) &&
               hasPureBase(rest) &&
