@@ -9018,6 +9018,24 @@ jokerRank: minamiMode === 1 && joker ? joker.rank : null,
         const logged=!!localStorage.getItem(MINAMI_API_TOKEN_KEY)&&!!loadAccountUser();
         out.style.display=logged?"none":"block";inn.style.display=logged?"block":"none";
         status.textContent=logged?"● ONLINE":"Belum login";status.style.color=logged?"#7ff0b0":"#9fc6b7";
+
+        // Sebelum login, hanya bagian Masuk/Daftar yang ditampilkan.
+        // Profil, gelar, statistik, achievement, dan leaderboard muncul setelah login.
+        const profileSection=document.getElementById("profileMenuSection");
+        if(profileSection){
+          profileSection.querySelector(".menu-section-title").style.display=logged?"":"none";
+          profileSection.querySelector(".menu-profile-avatar").style.display=logged?"":"none";
+          profileSection.querySelector(".menu-profile-label").style.display=logged?"":"none";
+          profileSection.querySelector(".menu-profile-current").style.display=logged?"":"none";
+          profileSection.querySelector(".menu-profile-rank").style.display=logged?"":"none";
+          profileSection.querySelector(".menu-profile-edit").style.display=logged?"":"none";
+          profileSection.querySelector(".menu-profile-note").style.display=logged?"":"none";
+          const accountBox=document.getElementById("accountBox");
+          if(accountBox)accountBox.style.marginTop=logged?"":"0";
+        }
+        const statsBtn=document.getElementById("menuStatsBtn");
+        if(statsBtn)statsBtn.style.display=logged?"":"none";
+
         if(logged){
           const u=loadAccountUser()||{},gs=window.minamiGlobalStats||{};
           document.getElementById("accountDisplayName").textContent=u.display_name||u.username||"Pemain";
@@ -9906,7 +9924,10 @@ function renderFeaturePanels(){
       document.getElementById("quickChatBtn").onclick=showQuickChat;
       document.getElementById("quickChatClose").onclick=()=>document.getElementById("quickChatModal").classList.remove("show");
       document.getElementById("quickChatModal").onclick=e=>{if(e.target.id==="quickChatModal")e.currentTarget.classList.remove("show")};
-      document.getElementById("menuStatsBtn").onclick=async()=>{closeMenu();setYourHandOverlayHidden(true);document.getElementById("featureModal").classList.add("show");await loadAccountAchievements();renderFeaturePanels();};
+      document.getElementById("menuStatsBtn").onclick=async()=>{
+        if(!localStorage.getItem(MINAMI_API_TOKEN_KEY)||!loadAccountUser())return;
+        closeMenu();setYourHandOverlayHidden(true);document.getElementById("featureModal").classList.add("show");await loadAccountAchievements();renderFeaturePanels();
+      };
       document.getElementById("featureModalClose").onclick=()=>{document.getElementById("featureModal").classList.remove("show");setYourHandOverlayHidden(false)};
       document.getElementById("featureModal").onclick=e=>{if(e.target.id==="featureModal"){e.currentTarget.classList.remove("show");setYourHandOverlayHidden(false)}};
       document.querySelectorAll(".feature-tab").forEach(b=>b.onclick=()=>{
