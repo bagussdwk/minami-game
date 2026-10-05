@@ -2413,9 +2413,22 @@
           // tumpukan tengah diambil. Setelah kartu ini dibuang, MATCH
           // langsung selesai. Tidak boleh lanjut ke turn berikutnya.
           if (endAfterDiscard || !g.draw.length) {
-            // Jangan simpan state discard sementara. Setelah buangan terakhir
-            // langsung ubah menjadi state terminal WIN MATCH.
+            // Buangan terakhir = terminal MATCH. Tandai terminal SEBELUM
+            // proses hasil, supaya refresh tidak pernah bisa mengembalikan
+            // pemain ke fase discard.
             g.endAfterDiscard = false;
+            g.over = true;
+            g.phase = "result";
+            g.resultPending = {
+              type: "win",
+              winner: null,
+              caught: null,
+              card: null,
+              reason: "empty"
+            };
+            saveJokerWinPending(g.resultPending);
+            saveJokerWinSnapshot();
+            saveGame();
             return empty();
           }
 
@@ -3138,6 +3151,11 @@ function advance() {
           showWinResult(w,t,c);
         }
         function empty() {
+          // Ini hanya dipanggil SETELAH buangan terakhir. MATCH sudah
+          // ditandai terminal oleh caller, sehingga refresh tidak dapat
+          // kembali ke fase discard.
+          if (!g || g.over !== true || g.phase !== "result") return;
+
           // Tumpukan tengah habis tetap mengakhiri MATCH.
           // Tidak ada kartu penutup, jadi rank ditentukan dari skor
           // akumulasi: skor paling rendah = Rank 1 / WIN MATCH.
@@ -3234,7 +3252,8 @@ function advance() {
             },
           );
 
-          if (gameFinished) setTimeout(gameOver, 100);
+          // Jangan otomatis mengganti WIN MATCH dengan GAME SELESAI.
+          // Tombol "Lanjut Match" yang menentukan langkah berikutnya.
         }
         function gameOver() {
           clearTimeout(gameOverTimer);
