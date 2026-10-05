@@ -163,6 +163,12 @@
       .joker-start-features b{display:block;color:#f3cf70;font-size:14px}
       .joker-start-features span{display:block;margin-top:3px;color:#789f90;font-size:7px;font-weight:800}
       @media(max-width:560px){.joker-start-showcase{padding:16px 10px 12px}.joker-start-badge{font-size:16px}.joker-start-features b{font-size:13px}}
+      /* ===== JOKER MATCH DEAL ANIMATION ===== */
+      .joker-deal-overlay{position:fixed;inset:0;z-index:250;pointer-events:none;overflow:hidden}
+      .joker-deal-card{position:fixed;left:0;top:0;width:42px;height:60px;border-radius:7px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);border:2px solid #e8e8e8;box-shadow:0 7px 20px #0008;transform:translate(-50%,-50%);will-change:transform,opacity}
+      .joker-deal-label{position:fixed;left:50%;top:calc(50% + 58px);transform:translateX(-50%);padding:7px 12px;border-radius:10px;background:#03231cf2;border:1px solid #f3cf7038;color:#f3cf70;font-size:9px;font-weight:900;letter-spacing:1.2px;white-space:nowrap}
+      @media(max-width:560px){.joker-deal-card{width:34px;height:49px}.joker-deal-label{top:calc(50% + 48px);font-size:8px}}
+
       /* ===== STATUS BAR ===== */
       /* ===== STATUS BAR ===== */
       .status {
@@ -1560,6 +1566,54 @@
           }catch(e){}
           if(removeCloud)deleteJokerCloudSave();
         }
+        function playJokerDealAnimation(startPlayer = 0) {
+          return new Promise((resolve) => {
+            const players = [...document.querySelectorAll("#players .player")];
+            const center = document.querySelector("#game .center");
+            if (!center || players.length !== g.p.length) return resolve();
+            const overlay = document.createElement("div");
+            overlay.className = "joker-deal-overlay";
+            const label = document.createElement("div");
+            label.className = "joker-deal-label";
+            label.textContent = "MEMBAGIKAN KARTU";
+            overlay.appendChild(label);
+            document.body.appendChild(overlay);
+            const cr = center.getBoundingClientRect();
+            const origin = {x: cr.left + cr.width / 2, y: cr.top + cr.height / 2};
+            const targets = players.map((el) => {
+              const r = el.getBoundingClientRect();
+              return {x: r.left + r.width / 2, y: r.top + Math.min(r.height / 2, 34)};
+            });
+            const interval = 62, duration = 300;
+            let number = 0;
+            const add = (targetIndex, delay) => {
+              const card = document.createElement("div");
+              card.className = "joker-deal-card";
+              card.style.left = origin.x + "px";
+              card.style.top = origin.y + "px";
+              overlay.appendChild(card);
+              const t = targets[targetIndex];
+              const rot = ((number % 5) - 2) * 2.5;
+              card.animate([
+                {transform:"translate(-50%,-50%) scale(.72) rotate(0deg)",opacity:0},
+                {transform:"translate(-50%,-50%) scale(1) rotate("+rot+"deg)",opacity:1,offset:.18},
+                {transform:"translate("+(t.x-origin.x)+"px,"+(t.y-origin.y)+"px) scale(1) rotate("+rot+"deg)",opacity:1}
+              ],{duration,delay,easing:"cubic-bezier(.2,.75,.25,1)",fill:"forwards"});
+              number++;
+            };
+            for(let round=0;round<13;round++)
+              for(let offset=0;offset<g.p.length;offset++)
+                add((startPlayer+offset)%g.p.length,number*interval);
+            add(startPlayer,number*interval);
+            const finish=number*interval+duration+180;
+            setTimeout(()=>{
+              overlay.style.transition="opacity .22s ease";
+              overlay.style.opacity="0";
+              setTimeout(()=>{overlay.remove();resolve()},230);
+            },finish);
+          });
+        }
+
         function newMatch(start = 0, dir = 1, keep = true) {
           // Jangan delete Cloud di sini. Reset button sudah menunggu delete
           // selesai; memanggil delete lagi dari newMatch bisa balapan dengan
@@ -1616,7 +1670,9 @@
           }
           render();
           saveGame();
-          if (g.turn) waitAI(0);
+          playJokerDealAnimation(start).then(() => {
+            if (g && !g.over && g.turn) waitAI(0);
+          });
         }
         function prev() {
           return (g.turn - g.dir + n) % n;
