@@ -2305,14 +2305,22 @@
             });
             e.addEventListener("dragend", (ev) => {
               e.classList.remove("dragging");
-              let r = document.getElementById("hand").getBoundingClientRect();
-              let outside =
+              const handEl = document.getElementById("hand");
+              const r = handEl.getBoundingClientRect();
+              const outside =
                 ev.clientX < r.left ||
                 ev.clientX > r.right ||
                 ev.clientY < r.top ||
                 ev.clientY > r.bottom;
-              if (outside && sel === i && g.turn === 0 && g.phase === "discard")
-                human(false);
+
+              // Jangan bergantung pada nilai global "sel" saat drag selesai.
+              // Browser dapat memicu click/render di sekitar dragend sehingga
+              // sel bisa berubah menjadi -1. Kartu yang sedang di-drag tetap
+              // dikenali dari ID fisiknya.
+              if (outside && g.turn === 0 && g.phase === "discard") {
+                const idx = g.p[0].hand.findIndex(c => c.id === e.dataset.cardId);
+                if (idx >= 0) human(false, idx);
+              }
             });
             e.addEventListener("dragover", (ev) => {
               ev.preventDefault();
@@ -2400,8 +2408,9 @@
         }
         $("centerPile").onclick = null;
         $("centerPile").querySelector(".deck").onclick = takeCenterHuman;
-        function human(close) {
+        function human(close, forcedIndex = null) {
           if (g?.resultPending || g?.over || g?.phase === "result") return;
+          if (forcedIndex !== null) sel = forcedIndex;
           if (sel < 0) return;
           let p = g.p[0],
             c = p.hand[sel];
