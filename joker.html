@@ -698,6 +698,28 @@
         color: #aacdc0;
         font-size: 9px;
       }
+      .score-breakdown {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 5px;
+        margin-top: 5px;
+      }
+      .score-breakdown div {
+        padding: 5px 4px;
+        border-radius: 6px;
+        background: #ffffff08;
+        border: 1px solid #ffffff10;
+        text-align: center;
+        font-size: 7px;
+        line-height: 1.25;
+        color: #aacdc0;
+      }
+      .score-breakdown b {
+        display: block;
+        font-size: 10px;
+        color: #f3cf70;
+        margin-top: 2px;
+      }
       .result-cards {
         display: flex;
         flex-wrap: wrap;
@@ -3125,8 +3147,17 @@ function advance() {
               '</div>';
           }
 
+          const beforeScores = g._lastMatchBeforeScores || {};
+          const beforeScore = Number(beforeScores[p.id]) || 0;
+          const matchDelta = Number(p.score) - beforeScore;
+          const deltaText = (matchDelta >= 0 ? "+" : "") + matchDelta;
           return '<div class="result-player"><div class="result-head"><b>' +
-            p.name + '</b><span>Skor akumulasi: ' + p.score + '</span></div>' +
+            p.name + '</b>' +
+            '<div class="score-breakdown">' +
+            '<div>SEBELUM MATCH<b>' + beforeScore + '</b></div>' +
+            '<div>TOTAL WIN MATCH<b>' + deltaText + '</b></div>' +
+            '<div>TOTAL AKUMULASI<b>' + p.score + '</b></div>' +
+            '</div></div>' +
             arrangedHtml + '</div>';
         }
         function showResultTable() {
@@ -3208,6 +3239,11 @@ function advance() {
         }
         function finish(w,t,c){
           if(g.resultPending || g.over || g.phase === "result")return;
+          // Simpan akumulasi tepat sebelum hasil match terakhir ditambahkan.
+          g._lastMatchBeforeScores = {};
+          g.p.forEach(p => {
+            g._lastMatchBeforeScores[p.id] = Number(p.score) || 0;
+          });
           let wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150,wa=cardTotals(wp,[c.id]),ta=cardTotals(tp);
           wp.score+=bonus+wa.liveValue;
           tp.score+=-bonus+ta.liveValue-ta.deadValue;
