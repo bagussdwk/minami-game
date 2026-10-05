@@ -2939,25 +2939,36 @@ function advance() {
               }
             }
 
+            let best = null;
             for (const m of byId.get(first) || []) {
               if (m.ids.some(id => !left.has(id))) continue;
               const next = new Set(left);
               m.ids.forEach(id => next.delete(id));
               const tail = cover(next, hasPure || m.pure);
-              if (tail) {
-                const result = {
-                  ids: m.ids.concat(tail.ids),
-                  values: Object.assign({}, m.values, tail.values),
-                  v: m.v + tail.v,
-                  melds: [m].concat(tail.melds),
-                };
-                memo.set(key, result);
-                return result;
+              if (!tail) continue;
+
+              const result = {
+                ids: m.ids.concat(tail.ids),
+                values: Object.assign({}, m.values, tail.values),
+                v: m.v + tail.v,
+                melds: [m].concat(tail.melds),
+              };
+
+              // Pilih susunan dengan nilai poin tertinggi. Jika nilainya sama,
+              // utamakan susunan dengan jumlah dasar/pot lebih banyak agar
+              // dua rangkaian identik dari 2 deck tetap tampil sebagai 2 dasar.
+              if (
+                !best ||
+                result.v > best.v ||
+                (result.v === best.v &&
+                  result.melds.length > best.melds.length)
+              ) {
+                best = result;
               }
             }
 
-            memo.set(key, null);
-            return null;
+            memo.set(key, best);
+            return best;
           }
 
           return cover(new Set(cs.map(c => c.id)), false);
