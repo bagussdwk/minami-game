@@ -2305,21 +2305,28 @@
             });
             e.addEventListener("dragend", (ev) => {
               e.classList.remove("dragging");
-              const handEl = document.getElementById("hand");
-              const r = handEl.getBoundingClientRect();
-              const outside =
+
+              // Buang = drag kartu keluar dari AREA KARTU.
+              // Jangan pakai bounding box #hand karena #hand mencakup
+              // seluruh panel bawah (termasuk tombol urut). Yang penting
+              // adalah kartu benar-benar dilepas di luar deretan kartu.
+              const cardsEl = document.querySelector("#hand");
+              const r = cardsEl.getBoundingClientRect();
+              const outsideCards =
                 ev.clientX < r.left ||
                 ev.clientX > r.right ||
                 ev.clientY < r.top ||
                 ev.clientY > r.bottom;
 
-              // Jangan bergantung pada nilai global "sel" saat drag selesai.
-              // Browser dapat memicu click/render di sekitar dragend sehingga
-              // sel bisa berubah menjadi -1. Kartu yang sedang di-drag tetap
-              // dikenali dari ID fisiknya.
-              if (outside && g.turn === 0 && g.phase === "discard") {
-                const idx = g.p[0].hand.findIndex(c => c.id === e.dataset.cardId);
-                if (idx >= 0) human(false, idx);
+              if (outsideCards && g.turn === 0 && g.phase === "discard") {
+                const idx = g.p[0].hand.findIndex(
+                  c => c.id === e.dataset.cardId
+                );
+                if (idx >= 0) {
+                  // Paksa index dari ID kartu supaya click/render di tengah
+                  // drag tidak bisa membatalkan proses buang.
+                  human(false, idx);
+                }
               }
             });
             e.addEventListener("dragover", (ev) => {
