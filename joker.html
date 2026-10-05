@@ -3166,121 +3166,116 @@ function advance() {
           showWinResult(w,t,c);
         }
         function empty() {
-          if (!g) return;
+          if (!g || g._emptyProcessing) return;
+          g._emptyProcessing = true;
 
-          // Semua jalur "tumpukan habis" harus masuk ke hasil MATCH di sini.
-          // Khusus AI, empty() bisa dipanggil langsung setelah buangan
-          // terakhir, jadi jangan bergantung pada caller untuk lebih dulu
-          // mengubah phase/over.
-          if (!g.over || g.phase !== "result") {
-            g.over = true;
-            g.phase = "result";
+          // Tumpukan sudah habis dan buangan terakhir sudah dilakukan.
+          // Scoring exact-cover bisa cukup berat, jadi jangan jalankan seluruh
+          // perhitungan sinkron di dalam event discard. Beri browser kesempatan
+          // menyelesaikan render lalu hitung satu pemain per tick.
+          const totals = Array(g.p.length);
+          let idx = 0;
+
+          const scoreNextPlayer = () => {
+            if (!g) return;
+
+            if (idx < g.p.length) {
+              totals[idx] = cardTotals(g.p[idx]);
+              idx++;
+              setTimeout(scoreNextPlayer, 0);
+              return;
+            }
+
+            // Semua pemain sudah dihitung. Baru sekarang MATCH dibuat terminal.
+            totals.forEach((v, i) => (g.p[i].score += v.total));
+
+            const order = g.p
+              .map((p, i) => ({ i, score: p.score }))
+              .sort((a, b) => a.score - b.score || a.i - b.i);
+
+            const rank1 = order[0]?.i ?? 0;
+            const resultId = "joker-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+            const gameFinished = g.p.some(x => Number(x.score) >= 1500);
+            const userGameWin = Number(g.p[0]?.score) >= 1500;
+
+            ensureJokerActionStats();
+
+            const userRank1 = rank1 === 0 ? 1 : 0;
+            const streak = userRank1 ? jokerCurrentStreak() + 1 : 0;
+            if (userRank1) saveJokerCurrentStreak(streak);
+            else saveJokerCurrentStreak(0);
+
+            const jokerUnlocks = [];
+            if (g.jokerStats.jokers >= 1) jokerUnlocks.push("firstJoker");
+            if (userRank1) jokerUnlocks.push("firstWin");
+            if (userGameWin) jokerUnlocks.push("firstChampion");
+            if (g.jokerStats.sets >= 1) jokerUnlocks.push("setMaster");
+            if (g.jokerStats.jokers >= 10) jokerUnlocks.push("collector");
+            if (g.jokerStats.jokers >= 25) jokerUnlocks.push("hoarder");
+            if (streak >= 3) jokerUnlocks.push("hotStreak");
+            if (streak >= 5) jokerUnlocks.push("unstoppable");
+            if (jokerUnlocks.length) syncJokerAchievements(jokerUnlocks);
+
+            syncJokerResult(resultId, {
+              games_finished: gameFinished ? 1 : 0,
+              game_wins: userGameWin ? 1 : 0,
+              rank1: userRank1,
+              match_wins: userRank1,
+              jokers: g.jokerStats.jokers,
+              joker_sets: g.jokerStats.sets,
+              caught: g.jokerStats.caught,
+              caught_by: g.jokerStats.caughtBy,
+              best_streak: streak
+            });
+
             g.resultPending = {
               type: "win",
-              winner: null,
+              winner: rank1,
               caught: null,
               card: null,
               reason: "empty"
             };
-          }
+            g.phase = "result";
+            g.over = true;
+            delete g._emptyProcessing;
 
-          // Tumpukan tengah habis tetap mengakhiri MATCH.
-          // Tidak ada kartu penutup, jadi rank ditentukan dari skor
-          // akumulasi: skor paling rendah = Rank 1 / WIN MATCH.
-          let totals = g.p.map(cardTotals);
-          totals.forEach((v, i) => (g.p[i].score += v.total));
+            saveJokerWinPending(g.resultPending);
+            saveJokerWinSnapshot();
+            render();
+            saveGame();
+            saveJokerCloudImmediately();
 
-          let order = g.p
-            .map((p, i) => ({ i, score: p.score }))
-            .sort((a, b) => a.score - b.score || a.i - b.i);
+            const rows = order
+              .map((x, rank) => {
+                const p = g.p[x.i];
+                return '<div class="row"><b>' +
+                  (rank + 1) + '. ' + p.name +
+                  '</b><span>' + p.score + '</span><b>' +
+                  (rank === 0 ? 'WIN MATCH' : '') +
+                  '</b></div>';
+              })
+              .join("");
 
-          const rank1 = order[0]?.i ?? 0;
-          const resultId = "joker-" + Date.now() + "-" + Math.random().toString(36).slice(2);
-          const gameFinished = g.p.some(x => Number(x.score) >= 1500);
-          const userGameWin = Number(g.p[0]?.score) >= 1500;
+            const playersHtml = g.p
+              .map(p => resultPlayer(p, [], analyzePartial(p.hand)))
+              .join("");
 
-          ensureJokerActionStats();
-
-          // Match selesai walaupun berakhir karena tumpukan habis.
-          // Rank 1 mengikuti aturan skor Joker: angka paling rendah.
-          const userRank1 = rank1 === 0 ? 1 : 0;
-          const streak = userRank1 ? jokerCurrentStreak() + 1 : 0;
-          if (userRank1) saveJokerCurrentStreak(streak);
-          else saveJokerCurrentStreak(0);
-
-          const jokerUnlocks = [];
-          if (g.jokerStats.jokers >= 1) jokerUnlocks.push("firstJoker");
-          if (userRank1) jokerUnlocks.push("firstWin");
-          if (userGameWin) jokerUnlocks.push("firstChampion");
-          if (g.jokerStats.sets >= 1) jokerUnlocks.push("setMaster");
-          if (g.jokerStats.jokers >= 10) jokerUnlocks.push("collector");
-          if (g.jokerStats.jokers >= 25) jokerUnlocks.push("hoarder");
-          if (streak >= 3) jokerUnlocks.push("hotStreak");
-          if (streak >= 5) jokerUnlocks.push("unstoppable");
-          if (jokerUnlocks.length) syncJokerAchievements(jokerUnlocks);
-
-          syncJokerResult(resultId, {
-            games_finished: gameFinished ? 1 : 0,
-            game_wins: userGameWin ? 1 : 0,
-            rank1: userRank1,
-            match_wins: userRank1,
-            jokers: g.jokerStats.jokers,
-            joker_sets: g.jokerStats.sets,
-            caught: g.jokerStats.caught,
-            caught_by: g.jokerStats.caughtBy,
-            best_streak: streak
-          });
-
-          // Sama seperti WIN MATCH karena tutup:
-          // hasil match disimpan sebagai state terminal sampai user
-          // menekan "Lanjut Match".
-          g.resultPending = {
-            type: "win",
-            winner: rank1,
-            caught: null,
-            card: null,
-            reason: "empty"
+            modal(
+              "WIN MATCH",
+              '<div class="note">Tumpukan tengah habis. Tidak ada yang menutup. ' +
+                '<b>' + g.p[rank1].name + '</b> mendapat <b>Rank 1</b> karena memiliki ' +
+                'skor akumulasi paling rendah.</div>' +
+                rows +
+                playersHtml,
+              "Lanjut Match",
+              () => {
+                if (g.p.some(x => x.score >= 1500)) return gameOver();
+                newMatch(rank1, g.dir, true);
+              },
+            );
           };
-          // State terminal: refresh tidak boleh mengembalikan kesempatan discard.
-          g.phase = "result";
-          g.over = true;
-          saveJokerWinPending(g.resultPending);
-          saveJokerWinSnapshot();
-          render();
-          saveGame();
-          saveJokerCloudImmediately();
 
-          let rows = order
-            .map((x, rank) => {
-              const p = g.p[x.i];
-              return '<div class="row"><b>' +
-                (rank + 1) + '. ' + p.name +
-                '</b><span>' + p.score + '</span><b>' +
-                (rank === 0 ? 'WIN MATCH' : '') +
-                '</b></div>';
-            })
-            .join("");
-
-          let playersHtml = g.p
-            .map(p => resultPlayer(p, [], analyzePartial(p.hand)))
-            .join("");
-
-          modal(
-            "WIN MATCH",
-            '<div class="note">Tumpukan tengah habis. Tidak ada yang menutup. ' +
-              '<b>' + g.p[rank1].name + '</b> mendapat <b>Rank 1</b> karena memiliki ' +
-              'skor akumulasi paling rendah.</div>' +
-              rows +
-              playersHtml,
-            "Lanjut Match",
-            () => {
-              if (g.p.some(x => x.score >= 1500)) return gameOver();
-              newMatch(rank1, g.dir, true);
-            },
-          );
-
-          // Jangan otomatis mengganti WIN MATCH dengan GAME SELESAI.
-          // Tombol "Lanjut Match" yang menentukan langkah berikutnya.
+          scoreNextPlayer();
         }
         function gameOver() {
           clearTimeout(gameOverTimer);
