@@ -3233,13 +3233,18 @@ function advance() {
         function finish(w,t,c){
           if(g.resultPending || g.over || g.phase === "result")return;
           let wp=g.p[w],tp=g.p[t],bonus=c.joker?250:150,wa=cardTotals(wp,[c.id]),ta=cardTotals(tp);
-          const matchDeltas = g.p.map((p,i)=>{
+          g.p.forEach(p=>{
+            if(!Number.isFinite(Number(p.matchStartScore)))
+              p.matchStartScore=Number(p.score)||0;
+          });
+          const calculatedMatchDeltas = g.p.map((p,i)=>{
             if(i===w)return bonus+wa.liveValue;
             if(i===t)return -bonus+ta.liveValue-ta.deadValue;
             const totals=cardTotals(p);
             return totals.liveValue-totals.deadValue;
           });
-          g.p.forEach((p,i)=>{ p.score += matchDeltas[i]; });
+          g.p.forEach((p,i)=>{ p.score += Number(calculatedMatchDeltas[i])||0; });
+          const matchDeltas = g.p.map(p => Number(p.score)-Number(p.matchStartScore));
           const resultId="joker-"+Date.now()+"-"+Math.random().toString(36).slice(2);
           const gameFinished=g.p.some(x=>Number(x.score)>=1500);
           const userGameWin=Number(g.p[0]?.score)>=1500;
