@@ -2368,13 +2368,21 @@
             "disabled",
             !(g.turn === 0 && g.phase === "take" && g.draw.length),
           );
-          $("sortSuit").disabled = false;
-          $("sortPot").disabled = false;
-          $("close").disabled = !(
-            g.turn === 0 &&
-            g.phase === "discard" &&
-            sel >= 0
-          );
+          $("sortSuit").disabled = !!g._viewingResultTable;
+          $("sortPot").disabled = !!g._viewingResultTable;
+          if (g._viewingResultTable) {
+            $("close").textContent = "← Kembali ke Hasil";
+            $("close").disabled = false;
+            $("close").onclick = returnToResult;
+          } else {
+            $("close").textContent = "Tutup";
+            $("close").disabled = !(
+              g.turn === 0 &&
+              g.phase === "discard" &&
+              sel >= 0
+            );
+            $("close").onclick = () => human(true);
+          }
         }
         function takeCenterHuman() {
           if (g.turn !== 0 || g.phase !== "take" || !g.draw.length) return;
@@ -2452,7 +2460,6 @@
           saveGame();
           advance();
         }
-        $("close").onclick = () => human(true);
         function discardFit(hand, top) {
           if (!top) return 0;
           let score = 0,
@@ -3081,6 +3088,26 @@ function advance() {
             p.name + '</b><span>Skor akumulasi: ' + p.score + '</span></div>' +
             arrangedHtml + '</div>';
         }
+        function showResultTable() {
+          if (!g) return;
+          g._viewingResultTable = true;
+          closeModal();
+          render();
+          $("close").textContent = "← Kembali ke Hasil";
+          $("close").disabled = false;
+          $("close").onclick = returnToResult;
+        }
+        function returnToResult() {
+          if (!g) return;
+          g._viewingResultTable = false;
+          render();
+          const r = g._resultModal;
+          if (r) modal(r.title, r.body, r.ok, r.fn, false, showResultTable, "Lihat Meja");
+        }
+        function resultModal(t, b, ok, fn) {
+          g._resultModal = { title: t, body: b, ok: ok, fn: fn };
+          modal(t, b, ok, fn, false, showResultTable, "Lihat Meja");
+        }
         function showWinResult(w, t, c) {
           const order = g.p
             .map((p, i) => ({ i, score: Number(p.score) || 0 }))
@@ -3112,7 +3139,7 @@ function advance() {
               '. Namun <b>Rank 1 / WIN MATCH ditentukan dari poin akumulasi tertinggi</b>.</div>'
             : '<div class="note">Tumpukan tengah habis. <b>Rank 1 / WIN MATCH ditentukan dari poin akumulasi tertinggi</b>.</div>';
 
-          modal(
+          resultModal(
             "🏆 WIN MATCH",
             closeNote +
             rows +
@@ -3283,7 +3310,7 @@ function advance() {
               .map((p, i) => resultPlayer(p, [], totals[i]?.analysis || {ids:[], values:{}}))
               .join("");
 
-            modal(
+            resultModal(
               "WIN MATCH",
               '<div class="note">Tumpukan tengah habis. Tidak ada yang menutup. ' +
                 '<b>' + g.p[rank1].name + '</b> mendapat <b>Rank 1</b> karena memiliki ' +
@@ -3345,13 +3372,14 @@ function advance() {
 
           gameOverTimer = setTimeout(startNewGame, 5000);
         }
-        function modal(t, b, ok, fn, singleButton = false) {
+        function modal(t, b, ok, fn, singleButton = false, closeFn = closeModal, closeLabel = "Tutup") {
           $("mt").textContent = t;
           $("mb").innerHTML = b;
           $("mp").textContent = ok;
           $("mp").onclick = fn;
           $("mp").style.display = singleButton ? "none" : "";
-          $("mx").onclick = closeModal;
+          $("mx").textContent = closeLabel;
+          $("mx").onclick = closeFn;
           $("modal").classList.add("show");
         }
         function closeModal() {
