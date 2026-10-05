@@ -3112,7 +3112,6 @@ function advance() {
           const order = g.p
             .map((p, i) => ({ i, score: Number(p.score) || 0 }))
             .sort((a, b) => b.score - a.score || a.i - b.i);
-          const rank1 = order[0]?.i ?? 0;
           const wp = g.p[w], tp = g.p[t];
           const bonus = c ? (c.joker ? 250 : 150) : 0;
 
@@ -3139,6 +3138,10 @@ function advance() {
               '. Namun <b>Rank 1 / WIN MATCH ditentukan dari poin akumulasi tertinggi</b>.</div>'
             : '<div class="note">Tumpukan tengah habis. <b>Rank 1 / WIN MATCH ditentukan dari poin akumulasi tertinggi</b>.</div>';
 
+          if (g.p.some(x => Number(x.score) >= 1500)) {
+            return gameOver(closeNote + rows, playersHtml);
+          }
+
           resultModal(
             "🏆 WIN MATCH",
             closeNote +
@@ -3150,7 +3153,6 @@ function advance() {
               closeModal();
               g.resultPending = null;
               clearJokerWinPending();
-              if (g.p.some(x => x.score >= 1500)) return gameOver();
 
               // Prioritas giliran tetap pemain dengan poin terendah.
               const nextOrder = g.p
@@ -3292,6 +3294,13 @@ function advance() {
             saveGame();
             saveJokerCloudImmediately();
 
+            // Gunakan hasil analysis yang sudah dihitung saat scoring.
+            // Jangan menjalankan exact-cover analyzer sekali lagi di sini,
+            // karena itu bisa membuat modal WIN MATCH terasa macet.
+            const playersHtml = g.p
+              .map((p, i) => resultPlayer(p, [], totals[i]?.analysis || {ids:[], values:{}}))
+              .join("");
+
             const rows = order
               .map((x, rank) => {
                 const p = g.p[x.i];
@@ -3303,74 +3312,96 @@ function advance() {
               })
               .join("");
 
-            // Gunakan hasil analysis yang sudah dihitung saat scoring.
-            // Jangan menjalankan exact-cover analyzer sekali lagi di sini,
-            // karena itu bisa membuat modal WIN MATCH terasa macet.
-            const playersHtml = g.p
-              .map((p, i) => resultPlayer(p, [], totals[i]?.analysis || {ids:[], values:{}}))
-              .join("");
+            const note = '<div class="note">Tumpukan tengah habis. Tidak ada yang menutup. ' +
+              '<b>' + g.p[rank1].name + '</b> mendapat <b>Rank 1</b> karena memiliki ' +
+              'skor akumulasi paling tinggi.</div>';
 
-            resultModal(
-              "WIN MATCH",
-              '<div class="note">Tumpukan tengah habis. Tidak ada yang menutup. ' +
-                '<b>' + g.p[rank1].name + '</b> mendapat <b>Rank 1</b> karena memiliki ' +
-                'skor akumulasi paling tinggi.</div>' +
-                rows +
-                playersHtml,
-              "Lanjut Match",
-              () => {
-                if (g.p.some(x => x.score >= 1500)) return gameOver();
-                newMatch(rank1, g.dir, true);
-              },
-            );
+            if (gameFinished) {
+              gameOver(note + rows, playersHtml);
+            } else {
+              resultModal(
+                "WIN MATCH",
+                note + rows + playersHtml,
+                "Lanjut Match",
+                () => {
+                  if (g.p.some(x => x.score >= 1500)) return gameOver(note + rows, playersHtml);
+                  newMatch(rank1, g.dir, true);
+                },
+              );
+            }
           };
 
           scoreNextPlayer();
         }
-        function gameOver() {
+        function gameOver(matchNote, playersHtml) {
           clearTimeout(gameOverTimer);
           clearInterval(gameOverCountdown);
 
-          let left = 5;
+          const order = g.p
+            .map((p, i) => ({ i, score: Number(p.score) || 0 }))
+            .sort((a, b) => b.score - a.score || a.i - b.i);
+
+          const podium = order.slice(0, 3).map((x, rank) => {
+            const p = g.p[x.i];
+            const medal = ["🥇", "🥈", "🥉"][rank];
+            return '<div style="flex:1;min-width:82px;text-align:center;padding:8px 5px;border-radius:12px;background:' +
+              (rank === 0 ? '#f3cf7014' : '#ffffff07') +
+              ';border:1px solid ' + (rank === 0 ? '#f3cf7040' : '#ffffff0d') + '">' +
+              '<div style="font-size:24px">' + medal + '</div>' +
+              '<div style="font-size:10px;font-weight:900;color:#f3cf70">' + p.name + '</div>' +
+              '<div style="font-size:9px;color:#aacdc0;margin-top:3px">' + p.score + ' poin</div>' +
+              '</div>';
+          }).join("");
+
+          const history = (g.history || []).length
+            ? '<div style="margin-top:12px;border-top:1px solid #ffffff12;padding-top:10px">' +
+              '<div style="color:#f3cf70;font-size:9px;font-weight:900;letter-spacing:1px;margin-bottom:7px">RIWAYAT BUANGAN MATCH TERAKHIR</div>' +
+              g.p.map((p, i) => {
+                const list = g.history.filter(x => x.player === i);
+                if (!list.length) return "";
+                const cards = list.map((x, k) =>
+                  '<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid #ffffff12">' +
+                  '<span style="width:22px;color:#aacdc0;font-size:8px">' + (k + 1) + '.</span>' +
+                  '<span class="smallcard ' + (x.card.color === "r" ? "red " : "") + (x.card.joker ? "joker" : "") + '">' +
+                  label(x.card) + '</span>' +
+                  '<span style="font-size:8px;color:' + (x.takenBy ? "#f3cf70" : "#aacdc0") + '">' +
+                  (x.takenBy ? "Diambil " + x.takenBy : "Tidak diambil") + '</span></div>'
+                ).join("");
+                return '<div style="margin:7px 0"><b style="font-size:8px;color:#fff">' + p.name + '</b>' + cards + '</div>';
+              }).join("") +
+              '</div>'
+            : "";
+
+          const winner = g.p[order[0]?.i || 0];
+          const body =
+            '<div style="text-align:center;color:#f3cf70;font-size:9px;font-weight:900;letter-spacing:2px;margin-bottom:10px">HASIL AKHIR GAME</div>' +
+            '<div style="display:flex;align-items:flex-end;gap:7px;margin-bottom:10px">' + podium + '</div>' +
+            '<div class="note" style="margin-bottom:10px">🏆 Pemenang Game: <b>' + winner.name + '</b></div>' +
+            matchNote +
+            '<div style="border-top:1px solid #ffffff12;padding-top:10px;margin-top:10px">' +
+            '<div style="color:#f3cf70;font-size:9px;font-weight:900;letter-spacing:1px;margin-bottom:7px">HASIL MATCH TERAKHIR</div>' +
+            playersHtml +
+            '</div>' +
+            history +
+            '<div class="note">Target <b>1.500 poin</b> tercapai. Game ini sudah selesai dan tidak akan dilanjutkan.</div>' +
+            '<button id="gameOverBackMenu" style="width:100%;min-height:40px;margin-top:7px;border-radius:10px;border:1px solid #ffffff1c;background:#ffffff0d;color:#fff;font-weight:900;cursor:pointer">← Kembali ke Menu Awal</button>';
+
           const startNewGame = () => {
-            clearTimeout(gameOverTimer);
-            clearInterval(gameOverCountdown);
             closeModal();
-            // Game baru harus benar-benar dimulai dari 0 poin.
+            g.resultPending = null;
+            clearJokerWinPending();
             newMatch(0, 1, false);
           };
 
-          modal(
-            "GAME SELESAI",
-            g.p
-              .map(
-                (x) =>
-                  '<div class="row"><b>' +
-                  x.name +
-                  "</b><span>" +
-                  x.score +
-                  "</span><b>" +
-                  (x.score >= 1500 ? "TARGET" : "") +
-                  "</b></div>",
-              )
-              .join("") +
-              '<div class="note">🏆 Target 1.500 tercapai. Match berikutnya akan dimulai otomatis dalam <b id="gameOverCountdown">5</b> detik.</div>',
-            "Main Lagi (5)",
-            startNewGame,
-          );
+          g._resultModal = {
+            title: "🏆 GAME SELESAI",
+            body,
+            ok: "▶ Mulai Permainan",
+            fn: startNewGame,
+            gameOver: true
+          };
 
-          gameOverCountdown = setInterval(() => {
-            left--;
-            const el = $("gameOverCountdown");
-            if (el) el.textContent = Math.max(0, left);
-            $("mp").textContent = "Main Lagi (" + Math.max(0, left) + ")";
-            if (left <= 0) {
-              clearInterval(gameOverCountdown);
-              startNewGame();
-            }
-          }, 1000);
-
-          gameOverTimer = setTimeout(startNewGame, 5000);
+          modal("🏆 GAME SELESAI", body, "▶ Mulai Permainan", startNewGame, false, showResultTable, "👁 Lihat Meja");
         }
         function modal(t, b, ok, fn, singleButton = false, closeFn = closeModal, closeLabel = "Tutup") {
           $("mt").textContent = t;
