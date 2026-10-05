@@ -1570,7 +1570,10 @@
           if(removeCloud)deleteJokerCloudSave();
         }
         function newMatch(start = 0, dir = 1, keep = true) {
-          clearSavedGame(true);
+          // Jangan delete Cloud di sini. Reset button sudah menunggu delete
+          // selesai; memanggil delete lagi dari newMatch bisa balapan dengan
+          // saveGame() match baru dan menghapus save yang baru dibuat.
+          clearSavedGame(false);
           // Pastikan overlay hasil match sebelumnya tidak ikut terbawa ke match baru.
           closeModal();
           let d = sh(deck()),
