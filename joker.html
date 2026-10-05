@@ -165,21 +165,22 @@
       @media(max-width:560px){.joker-start-showcase{padding:16px 10px 12px}.joker-start-badge{font-size:16px}.joker-start-features b{font-size:13px}}
       /* ===== JOKER MATCH DEAL ANIMATION ===== */
       .joker-deal-overlay{position:fixed;inset:0;z-index:250;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.72);pointer-events:none;overflow:hidden}
-      .joker-deal-box{position:relative;width:min(92vw,760px);height:min(78vh,620px)}
+      .joker-deal-box{position:relative;width:min(90vw,700px);height:420px;display:flex;align-items:center;justify-content:center}
       .joker-deal-title{position:absolute;top:20px;left:0;right:0;text-align:center;color:#f3cf70;font-size:11px;font-weight:900;letter-spacing:2px}
-      .joker-deal-deck{position:absolute;left:50%;top:40%;width:62px;height:86px;transform:translate(-50%,-50%);border:2px solid #ddd;border-radius:8px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);box-shadow:0 8px 25px #0008}
-      .joker-deal-player{position:absolute;width:110px;padding:7px 9px;border-radius:10px;background:#ffffff10;border:1px solid #ffffff18;color:#fff;text-align:center;font-size:9px;font-weight:900}
+      .joker-deal-deck{position:absolute;left:50%;top:50%;width:55px;height:78px;transform:translate(-50%,-50%);border-radius:7px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 4px,#3b4b78 4px,#3b4b78 8px);border:3px solid white;box-shadow:0 5px 15px #0008}
+      .joker-deal-player{position:absolute;min-width:90px;padding:8px 12px;border-radius:10px;background:#ffffff1f;color:#fff;text-align:center;font-size:9px;font-weight:900}
+      .joker-deal-player.p1{left:10px;bottom:30px}
+      .joker-deal-player.p2{right:10px;bottom:30px}
+      .joker-deal-player.p3{right:10px;top:55px}
+      .joker-deal-player.p4{left:10px;top:55px}
+      .joker-deal-player.p5{left:50%;top:25px;transform:translateX(-50%)}
+      .players-5 .joker-deal-player.p4{left:10px;top:55px;transform:none}
+      .players-5 .joker-deal-player.p5{left:10px;top:55px;transform:none}
       .joker-deal-player .avatar{width:40px;height:40px;margin:auto;border-radius:50%;border:2px solid #f3cf7066;background:#173b2d;display:grid;place-items:center}
       .joker-deal-player b{display:block;margin-top:4px;color:#f3cf70}
-      .joker-deal-player.p1{left:50%;bottom:8px;transform:translateX(-50%)}
-      .joker-deal-player.p2{right:4%;top:67%;transform:translateY(-50%)}
-      .joker-deal-player.p3{right:4%;top:8%}
-      .joker-deal-player.p4{left:4%;top:8%}
-      .joker-deal-player.p5{left:4%;top:67%;transform:translateY(-50%)}
-      .joker-deal-flying-card{position:absolute;left:50%;top:40%;width:42px;height:60px;margin-left:-21px;margin-top:-30px;border-radius:6px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 4px,#3b4b78 4px,#3b4b78 8px);border:2px solid #fff;box-shadow:0 5px 15px #0008;z-index:5;pointer-events:none;transition:left .06s ease-out,top .06s ease-out,transform .06s ease-out}
+      .joker-deal-flying-card{position:absolute;left:50%;top:50%;width:42px;height:60px;margin-left:-21px;margin-top:-30px;border-radius:6px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 4px,#3b4b78 4px,#3b4b78 8px);border:2px solid white;z-index:5;pointer-events:none;transition:left .06s ease-out,top .06s ease-out,transform .06s ease-out}
       .joker-deal-count{position:absolute;bottom:2px;left:0;right:0;text-align:center;color:#ffffffb8;font-size:9px;font-weight:800}
-      @media(max-width:560px){.joker-deal-box{width:94vw;height:70vh}.joker-deal-player{width:82px;padding:5px 4px;font-size:8px}.joker-deal-player .avatar{width:34px;height:34px}.joker-deal-player.p2,.joker-deal-player.p5{top:64%}.joker-deal-flying-card{width:34px;height:49px;margin-left:-17px;margin-top:-24px}}
-    </style>
+      @media(max-width:560px){.joker-deal-box{width:94vw;height:70vh}.joker-deal-player{min-width:70px;padding:5px 7px;font-size:8px}.joker-deal-player.p2,.joker-deal-player.p5{top:auto;bottom:30px}.joker-deal-player.p2{right:4px}.joker-deal-player.p5{left:4px;transform:none}.joker-deal-flying-card{width:34px;height:49px;margin-left:-17px;margin-top:-24px}}</style>
   </head>
   <body>
     <header class="top">
@@ -738,7 +739,7 @@
 
             const overlay = document.createElement("div");
             overlay.id = "jokerDealOverlay";
-            overlay.className = "joker-deal-overlay";
+            overlay.className = "joker-deal-overlay players-" + g.p.length;
 
             const box = document.createElement("div");
             box.className = "joker-deal-box";
@@ -752,15 +753,15 @@
             deck.className = "joker-deal-deck";
             box.appendChild(deck);
 
-            const names = g.p.map((p, i) => i === 0 ? "Anda" : (p.name || "Pemain " + (i + 1)));
-            const classes = ["p1","p2","p3","p4","p5"];
-
-            g.p.forEach((p, i) => {
-              const player = document.createElement("div");
-              player.className = "joker-deal-player " + classes[i];
-              player.innerHTML = '<div class="avatar">👤</div><b>' + names[i] + '</b>';
-              box.appendChild(player);
-            });
+            const positions = ["p1","p2","p3","p4","p5"];
+            for (let i = 0; i < g.p.length; i++) {
+              const p = document.createElement("div");
+              p.className = "joker-deal-player " + positions[i];
+              p.innerHTML = '<div class="avatar">👤</div><b>' +
+                (i === 0 ? "Anda" : (g.p[i].name || "Pemain " + (i + 1))) +
+                "</b>";
+              box.appendChild(p);
+            }
 
             const count = document.createElement("div");
             count.className = "joker-deal-count";
@@ -770,7 +771,16 @@
             overlay.appendChild(box);
             document.body.appendChild(overlay);
 
-            const positions = g.p.map((p, i) => classes[i]);
+            function getPlayerTarget(index) {
+              const el = box.querySelector(".joker-deal-player." + positions[index]);
+              const boxRect = box.getBoundingClientRect();
+              const r = el.getBoundingClientRect();
+              return {
+                left: r.left - boxRect.left + r.width / 2,
+                top: r.top - boxRect.top + r.height / 2
+              };
+            }
+
             const totalCards = g.p.length * 13 + 1;
             const order = [];
             for (let round = 0; round < 13; round++) {
@@ -781,51 +791,41 @@
             order.push(startPlayer);
 
             let dealt = 0;
-            let timer = null;
 
-            const finish = () => {
-              if (timer) clearTimeout(timer);
-              overlay.style.transition = "opacity .25s ease";
-              overlay.style.opacity = "0";
-              setTimeout(() => {
-                overlay.remove();
-                resolve();
-              }, 260);
-            };
-
-            const dealNext = () => {
+            function dealNext() {
               if (dealt >= order.length) {
-                timer = setTimeout(finish, 250);
+                setTimeout(() => {
+                  overlay.style.transition = "opacity .25s ease";
+                  overlay.style.opacity = "0";
+                  setTimeout(() => {
+                    overlay.remove();
+                    resolve();
+                  }, 260);
+                }, 250);
                 return;
               }
 
-              const playerIndex = order[dealt];
-              const target = box.querySelector(".joker-deal-player." + positions[playerIndex]);
-              const boxRect = box.getBoundingClientRect();
-              const targetRect = target.getBoundingClientRect();
-
+              const player = order[dealt];
               const card = document.createElement("div");
               card.className = "joker-deal-flying-card";
               box.appendChild(card);
 
-              const left = targetRect.left - boxRect.left + targetRect.width / 2;
-              const top = targetRect.top - boxRect.top + targetRect.height / 2;
+              const target = getPlayerTarget(player);
 
               requestAnimationFrame(() => {
-                card.style.left = left + "px";
-                card.style.top = top + "px";
+                card.style.left = target.left + "px";
+                card.style.top = target.top + "px";
                 card.style.transform = "scale(.55) rotate(" + (((dealt % 5) - 2) * 3) + "deg)";
               });
 
               dealt++;
               count.textContent = dealt + " / " + totalCards;
 
-              timer = setTimeout(() => {
-                timer = null;
+              setTimeout(() => {
                 card.remove();
                 dealNext();
               }, 65);
-            };
+            }
 
             dealNext();
           });
