@@ -1515,6 +1515,13 @@
             }
 
             sel = typeof x.sel === "number" ? x.sel : -1;
+
+            // Jika tumpukan sudah habis dan masih fase discard, berarti
+            // kartu terakhir baru saja diambil. Pemain hanya boleh membuang
+            // SATU kartu terakhir, lalu MATCH langsung selesai.
+            if (!g.over && g.phase === "discard" && !g.draw.length)
+              g.endAfterDiscard = true;
+
             render();
             const pending= g.resultPending?.type==="win" ? g.resultPending : loadJokerWinPending();
             if(pending?.type==="win"){
@@ -1584,6 +1591,7 @@
             history: [],
             round: g ? g.round + 1 : 1,
             over: false,
+            endAfterDiscard: false,
             jokerStats: { jokers: 0, sets: 0, caught: 0, caughtBy: 0, seenSets: [], seenJokers: [] },
           };
           for (let i = 1; i < n; i++) {
@@ -1603,6 +1611,11 @@
         function takeDraw(p) {
           if (!g.draw.length) return false;
           p.hand.push(g.draw.pop());
+
+          // Kartu terakhir dari tumpukan sudah diambil.
+          // Sekarang wajib masuk fase discard dan setelah satu discard
+          // MATCH langsung selesai.
+          g.endAfterDiscard = g.draw.length === 0;
           return true;
         }
         function takeOut(p) {
@@ -2383,19 +2396,28 @@
             return alert(
               "Joker hanya boleh dibuang pada buangan terakhir saat kartu tengah habis.",
             );
+          const endAfterDiscard = !!g.endAfterDiscard;
+
           p.hand.splice(sel, 1);
           p.out.push(c);
           g.history.push({ name: p.name, player: 0, card: c, takenBy: null });
           recordJokerActionStats(0);
           sel = -1;
+
           if (close) {
             saveGame();
             return finish(0, prev(), c);
           }
-          if (!g.draw.length) {
+
+          // Ini adalah discard terakhir setelah kartu terakhir dari
+          // tumpukan tengah diambil. Setelah kartu ini dibuang, MATCH
+          // langsung selesai. Tidak boleh lanjut ke turn berikutnya.
+          if (endAfterDiscard || !g.draw.length) {
+            g.endAfterDiscard = false;
             saveGame();
             return empty();
           }
+
           saveGame();
           advance();
         }
@@ -2658,6 +2680,8 @@
 
           if (c.joker && g.draw.length > 0) close = false;
 
+          const endAfterDiscard = !!g.endAfterDiscard;
+
           p.hand.splice(i, 1);
           p.out.push(c);
           g.history.push({
@@ -2673,8 +2697,10 @@
           setTimeout(
             () => {
               if (close) finish(g.turn, prev(), c);
-              else if (!g.draw.length) empty();
-              else advance();
+              else if (endAfterDiscard || !g.draw.length) {
+                g.endAfterDiscard = false;
+                empty();
+              } else advance();
             },
             2000 + Math.random() * 2000,
           );
