@@ -1516,11 +1516,33 @@
 
             sel = typeof x.sel === "number" ? x.sel : -1;
 
-            // Jika tumpukan sudah habis dan masih fase discard, berarti
-            // kartu terakhir baru saja diambil. Pemain hanya boleh membuang
-            // SATU kartu terakhir, lalu MATCH langsung selesai.
-            if (!g.over && g.phase === "discard" && !g.draw.length)
-              g.endAfterDiscard = true;
+            // PENTING: bila refresh terjadi saat tumpukan sudah 0 dan
+            // state masih "discard", jangan beri kesempatan membuang lagi.
+            // Itu berarti buangan terakhir sudah menjadi titik akhir MATCH.
+            // Finalisasi SEKARANG sebelum render/AI dijalankan.
+            if (!g.over && g.phase === "discard" && !g.draw.length) {
+              g.endAfterDiscard = false;
+              g.over = true;
+              g.phase = "result";
+              g.resultPending = {
+                type: "win",
+                winner: null,
+                caught: null,
+                card: null,
+                reason: "empty"
+              };
+              saveJokerWinPending(g.resultPending);
+              saveJokerWinSnapshot();
+              try {
+                empty();
+              } catch (e) {
+                console.error("finalize empty match on load", e);
+              }
+              if (g?.resultPending?.winner != null) {
+                render();
+                return true;
+              }
+            }
 
             render();
             const pending= g.resultPending?.type==="win" ? g.resultPending : loadJokerWinPending();
