@@ -165,7 +165,7 @@
       @media(max-width:560px){.joker-start-showcase{padding:16px 10px 12px}.joker-start-badge{font-size:16px}.joker-start-features b{font-size:13px}}
       /* ===== JOKER MATCH DEAL ANIMATION ===== */
       .joker-deal-overlay{position:fixed;inset:0;z-index:250;pointer-events:none;overflow:hidden}
-      .joker-deal-card{position:absolute;left:0;top:0;width:42px;height:60px;border-radius:7px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);border:2px solid #e8e8e8;box-shadow:0 7px 20px #0008;transform:translate(-50%,-50%);will-change:left,top,transform,opacity}
+      .joker-deal-card{position:fixed !important;left:0 !important;top:0 !important;width:42px;height:60px;border-radius:7px;background:repeating-linear-gradient(45deg,#242d4f,#242d4f 5px,#3b4b78 5px,#3b4b78 10px);border:2px solid #e8e8e8;box-shadow:0 7px 20px #0008;transform:translate(-50%,-50%);will-change:left,top,transform,opacity}
       .joker-deal-label{position:fixed;left:50%;top:calc(50% + 58px);transform:translateX(-50%);padding:7px 12px;border-radius:10px;background:#03231cf2;border:1px solid #f3cf7038;color:#f3cf70;font-size:9px;font-weight:900;letter-spacing:1.2px;white-space:nowrap}
       @media(max-width:560px){.joker-deal-card{width:34px;height:49px}.joker-deal-label{top:calc(50% + 48px);font-size:8px}}
 
@@ -1571,6 +1571,7 @@
             const players = [...document.querySelectorAll("#players .player")];
             const center = document.querySelector("#game .center");
             if (!center || players.length !== g.p.length) return resolve();
+
             const overlay = document.createElement("div");
             overlay.className = "joker-deal-overlay";
             const label = document.createElement("div");
@@ -1584,8 +1585,10 @@
               x: cr.left + cr.width / 2,
               y: cr.top + cr.height / 2
             };
+
             const targets = players.map((el) => {
-              const r = el.querySelector(".avatar")?.getBoundingClientRect() || el.getBoundingClientRect();
+              const avatar = el.querySelector(".avatar");
+              const r = (avatar || el).getBoundingClientRect();
               return {
                 x: r.left + r.width / 2,
                 y: r.top + r.height / 2
@@ -1594,6 +1597,7 @@
 
             const interval = 62, duration = 330;
             let number = 0;
+            const cards = [];
 
             const add = (targetIndex, delay) => {
               const card = document.createElement("div");
@@ -1601,21 +1605,24 @@
               const t = targets[targetIndex];
               const rot = ((number % 5) - 2) * 2.5;
 
-              card.style.left = origin.x + "px";
-              card.style.top = origin.y + "px";
+              card.style.setProperty("left", origin.x + "px", "important");
+              card.style.setProperty("top", origin.y + "px", "important");
               card.style.opacity = "0";
               card.style.transform = "translate(-50%,-50%) scale(.72) rotate(0deg)";
-              overlay.appendChild(card);
+              document.body.appendChild(card);
+              cards.push(card);
 
               setTimeout(() => {
                 card.style.transition =
-                  "left " + duration + "ms cubic-bezier(.2,.75,.25,1),top " +
-                  duration + "ms cubic-bezier(.2,.75,.25,1),transform " +
-                  duration + "ms cubic-bezier(.2,.75,.25,1),opacity 100ms ease";
+                  "left " + duration + "ms cubic-bezier(.2,.75,.25,1), " +
+                  "top " + duration + "ms cubic-bezier(.2,.75,.25,1), " +
+                  "transform " + duration + "ms cubic-bezier(.2,.75,.25,1), " +
+                  "opacity 100ms ease";
                 card.style.opacity = "1";
+
                 requestAnimationFrame(() => {
-                  card.style.left = t.x + "px";
-                  card.style.top = t.y + "px";
+                  card.style.setProperty("left", t.x + "px", "important");
+                  card.style.setProperty("top", t.y + "px", "important");
                   card.style.transform =
                     "translate(-50%,-50%) scale(1) rotate(" + rot + "deg)";
                 });
@@ -1630,6 +1637,7 @@
 
             const finish=number*interval+duration+180;
             setTimeout(()=>{
+              cards.forEach((card) => card.remove());
               overlay.style.transition="opacity .22s ease";
               overlay.style.opacity="0";
               setTimeout(()=>{overlay.remove();resolve()},230);
