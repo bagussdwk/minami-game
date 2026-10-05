@@ -1578,34 +1578,57 @@
             label.textContent = "MEMBAGIKAN KARTU";
             overlay.appendChild(label);
             document.body.appendChild(overlay);
+
             const cr = center.getBoundingClientRect();
-            const origin = {x: cr.left + cr.width / 2, y: cr.top + cr.height / 2};
+            const origin = {
+              x: cr.left + cr.width / 2,
+              y: cr.top + cr.height / 2
+            };
             const targets = players.map((el) => {
               const r = el.getBoundingClientRect();
-              return {x: r.left + r.width / 2, y: r.top + Math.min(r.height / 2, 34)};
+              return {
+                x: r.left + r.width / 2,
+                y: r.top + Math.min(r.height / 2, 34)
+              };
             });
+
             const interval = 62, duration = 300;
             let number = 0;
+
             const add = (targetIndex, delay) => {
               const card = document.createElement("div");
               card.className = "joker-deal-card";
               const t = targets[targetIndex];
               const rot = ((number % 5) - 2) * 2.5;
-              card.style.left = origin.x + "px";
-              card.style.top = origin.y + "px";
-              card.style.transform = "translate(-50%,-50%) scale(.72) rotate(0deg)";
+
+              // Gunakan transform absolut terhadap viewport.
+              // Ini menghindari kartu jatuh ke (0,0) saat left/top
+              // diinterpolasi oleh Web Animations API.
+              const from = "translate(" + origin.x + "px," + origin.y + "px) translate(-50%,-50%) scale(.72) rotate(0deg)";
+              const mid = "translate(" + origin.x + "px," + origin.y + "px) translate(-50%,-50%) scale(1) rotate(" + rot + "deg)";
+              const to = "translate(" + t.x + "px," + t.y + "px) translate(-50%,-50%) scale(1) rotate(" + rot + "deg)";
+
+              card.style.left = "0px";
+              card.style.top = "0px";
+              card.style.transform = from;
               overlay.appendChild(card);
-              card.animate([
-                {left:origin.x+"px",top:origin.y+"px",transform:"translate(-50%,-50%) scale(.72) rotate(0deg)",opacity:0},
-                {left:origin.x+"px",top:origin.y+"px",transform:"translate(-50%,-50%) scale(1) rotate("+rot+"deg)",opacity:1,offset:.18},
-                {left:t.x+"px",top:t.y+"px",transform:"translate(-50%,-50%) scale(1) rotate("+rot+"deg)",opacity:1}
-              ],{duration,delay,easing:"cubic-bezier(.2,.75,.25,1)",fill:"forwards"});
+
+              card.animate(
+                [
+                  {transform: from, opacity: 0},
+                  {transform: mid, opacity: 1, offset: .18},
+                  {transform: to, opacity: 1}
+                ],
+                {duration, delay, easing: "cubic-bezier(.2,.75,.25,1)", fill: "forwards"}
+              );
               number++;
             };
+
             for(let round=0;round<13;round++)
               for(let offset=0;offset<g.p.length;offset++)
                 add((startPlayer+offset)%g.p.length,number*interval);
             add(startPlayer,number*interval);
+
             const finish=number*interval+duration+180;
             setTimeout(()=>{
               overlay.style.transition="opacity .22s ease";
