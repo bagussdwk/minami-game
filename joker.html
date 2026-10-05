@@ -2962,6 +2962,15 @@ function advance() {
             }
 
           const memo = new Map();
+          function betterCover(a, b) {
+            if (!a) return b;
+            if (!b) return a;
+            if (b.v !== a.v) return b.v > a.v ? b : a;
+            if (b.melds.length !== a.melds.length)
+              return b.melds.length > a.melds.length ? b : a;
+            return b.ids.length > a.ids.length ? b : a;
+          }
+
           function cover(left, hasPure) {
             if (!left.size)
               return (!requirePure || hasPure)
@@ -2976,41 +2985,38 @@ function advance() {
               const choices = (byId.get(id) || []).filter(m =>
                 m.ids.every(x => left.has(x))
               );
-              if (!choices.length) {
-                memo.set(key, null);
-                return null;
-              }
-              if (choices.length < fewest) {
+              if (choices.length && choices.length < fewest) {
                 fewest = choices.length;
                 first = id;
               }
             }
 
             let best = null;
-            for (const m of byId.get(first) || []) {
-              if (m.ids.some(id => !left.has(id))) continue;
-              const next = new Set(left);
-              m.ids.forEach(id => next.delete(id));
-              const tail = cover(next, hasPure || m.pure);
-              if (!tail) continue;
 
-              const result = {
-                ids: m.ids.concat(tail.ids),
-                values: Object.assign({}, m.values, tail.values),
-                v: m.v + tail.v,
-                melds: [m].concat(tail.melds),
-              };
+            // Kartu fisik boleh menjadi kartu mati. Jangan pernah memakai
+            // kartu fisik yang sama dua kali, tetapi kartu rank+suit yang sama
+            // dari deck kedua tetap merupakan ID berbeda dan boleh masuk meld lain.
+            const skipped = new Set(left);
+            const skipId = first ?? [...left][0];
+            skipped.delete(skipId);
+            const skipResult = cover(skipped, hasPure);
+            if (skipResult) best = skipResult;
 
-              // Pilih susunan dengan nilai poin tertinggi. Jika nilainya sama,
-              // utamakan susunan dengan jumlah dasar/pot lebih banyak agar
-              // dua rangkaian identik dari 2 deck tetap tampil sebagai 2 dasar.
-              if (
-                !best ||
-                result.v > best.v ||
-                (result.v === best.v &&
-                  result.melds.length > best.melds.length)
-              ) {
-                best = result;
+            if (first != null) {
+              for (const m of byId.get(first) || []) {
+                if (m.ids.some(id => !left.has(id))) continue;
+                const next = new Set(left);
+                m.ids.forEach(id => next.delete(id));
+                const tail = cover(next, hasPure || m.pure);
+                if (!tail) continue;
+
+                const result = {
+                  ids: m.ids.concat(tail.ids),
+                  values: Object.assign({}, m.values, tail.values),
+                  v: m.v + tail.v,
+                  melds: [m].concat(tail.melds),
+                };
+                best = betterCover(best, result);
               }
             }
 
