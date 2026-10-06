@@ -9993,6 +9993,38 @@
           photo: "https://randomuser.me/api/portraits/women/75.jpg",
         },
       ];
+      // Profile akun: avatar kartun bawaan game. Database hanya menyimpan profile_id.
+      const MINAMI_USER_PROFILE_POOL = Array.from({ length: 12 }, (_, i) => {
+        const id = "cartoon_" + String(i + 1).padStart(2, "0");
+        const palettes = [
+          ["#ffd6b0","#3b241c","#4b79a1"],["#e8b98f","#171717","#8c4a35"],
+          ["#f3c7a1","#5b2c83","#3d8b74"],["#d99b72","#2b2118","#c95b4a"],
+          ["#f6d1b1","#b23b3b","#4f6d9a"],["#b87952","#1e1b4d","#d29b32"],
+          ["#f0c09a","#172554","#7c3aed"],["#d49a70","#402218","#15803d"],
+          ["#f5c9aa","#7f1d1d","#db2777"],["#b96f49","#292524","#0f766e"],
+          ["#f2c29e","#334155","#ca8a04"],["#dca27e","#3f1d38","#2563eb"],
+        ];
+        const [skin,hair,shirt] = palettes[i];
+        const female = i >= 6;
+        const hairPath = female
+          ? `<path d="M29 42c0-22 10-32 31-32s31 10 31 32v35c-7 9-18 14-31 14S36 86 29 77z" fill="${hair}"/>`
+          : `<path d="M30 44c1-22 12-34 30-34s29 10 31 32c-9-7-20-10-31-10s-21 4-30 12z" fill="${hair}"/>`;
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+          <rect width="120" height="120" rx="60" fill="#101820"/>
+          <circle cx="60" cy="57" r="30" fill="${skin}"/>
+          ${hairPath}
+          <circle cx="49" cy="55" r="3" fill="#1f2937"/><circle cx="71" cy="55" r="3" fill="#1f2937"/>
+          <path d="M52 69q8 6 16 0" fill="none" stroke="#7c3f32" stroke-width="3" stroke-linecap="round"/>
+          <path d="M22 120c4-23 18-35 38-35s34 12 38 35" fill="${shirt}"/>
+          ${female ? '<path d="M27 43c-3 17-1 36 8 49" fill="none" stroke="'+hair+'" stroke-width="9" stroke-linecap="round"/><path d="M93 43c3 17 1 36-8 49" fill="none" stroke="'+hair+'" stroke-width="9" stroke-linecap="round"/>' : ''}
+          <circle cx="60" cy="57" r="31" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="2"/>
+        </svg>`;
+        return {
+          id,
+          name: female ? "Kartun " + (i - 5) : "Kartun " + (i + 1),
+          photo: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+        };
+      });
       const MINAMI_AI_ROSTER_KEY = "minamiAIRosterV2";
 
       function minamiRankTitleFromStats(rank1, games = 0, gameWins = 0) {
@@ -10563,16 +10595,15 @@
             localStorage.getItem(MINAMI_PROFILE_KEY) || "null",
           );
           const name = typeof saved?.name === "string" ? saved.name.trim() : "";
-          const photo =
-            typeof saved?.photo === "string" && saved.photo.trim()
-              ? saved.photo.trim()
-              : MINAMI_AI_PROFILE_POOL[0]?.photo || "";
-          return { name: name || "Anda", photo };
+          const profileId =
+            /^cartoon_(0[1-9]|1[0-2])$/.test(saved?.profile_id || "")
+              ? saved.profile_id
+              : "cartoon_01";
+          const selected = MINAMI_USER_PROFILE_POOL.find(p => p.id === profileId) || MINAMI_USER_PROFILE_POOL[0];
+          return { name: name || "Anda", profile_id: profileId, photo: selected.photo };
         } catch (e) {
-          return {
-            name: "Anda",
-            photo: MINAMI_AI_PROFILE_POOL[0]?.photo || "",
-          };
+          const p = MINAMI_USER_PROFILE_POOL[0];
+          return { name: "Anda", profile_id: p.id, photo: p.photo };
         }
       }
       function getPlayerName(i) {
@@ -10608,7 +10639,7 @@
           }
         }
         document.querySelectorAll(".menu-profile-option").forEach((el) => {
-          el.classList.toggle("active", el.dataset.photo === photo);
+          el.classList.toggle("active", el.dataset.profileId === profile.profile_id);
         });
 
         const current = document.getElementById("profileCurrentName");
@@ -10647,7 +10678,7 @@
         try {
           localStorage.setItem(
             MINAMI_PROFILE_KEY,
-            JSON.stringify({ name, photo }),
+            JSON.stringify({ name, profile_id: getPlayerProfile().profile_id }),
           );
         } catch (e) {}
         applyPlayerProfile();
@@ -10667,37 +10698,39 @@
       function renderProfileOptions() {
         const wrap = document.getElementById("profileOptions");
         if (!wrap) return;
-        const current = getPlayerProfile().photo;
-        wrap.innerHTML = MINAMI_AI_PROFILE_POOL.map((p, i) => {
-          const safePhoto = String(p.photo || "").replace(/"/g, "&quot;");
-          const active = p.photo === current ? " active" : "";
-          return (
-            '<button type="button" class="menu-profile-option' +
-            active +
-            '" data-photo="' +
-            safePhoto +
-            '" title="' +
-            p.name +
-            '" aria-label="Profile ' +
-            p.name +
-            '">' +
-            '<img src="' +
-            safePhoto +
-            '" alt="" loading="lazy" />' +
-            "</button>"
-          );
+        const current = getPlayerProfile().profile_id;
+        wrap.innerHTML = MINAMI_USER_PROFILE_POOL.map((p) => {
+          const active = p.id === current ? " active" : "";
+          return '<button type="button" class="menu-profile-option' + active +
+            '" data-profile-id="' + p.id + '" title="' + p.name + '" aria-label="' + p.name + '">' +
+            '<img src="' + p.photo + '" alt="" loading="lazy" /></button>';
         }).join("");
 
         wrap.querySelectorAll(".menu-profile-option").forEach((btn) => {
-          btn.onclick = () => {
-            const photo = btn.dataset.photo || "";
+          btn.onclick = async () => {
+            const profileId = btn.dataset.profileId || "cartoon_01";
             const profile = getPlayerProfile();
             try {
-              localStorage.setItem(
-                MINAMI_PROFILE_KEY,
-                JSON.stringify({ name: profile.name, photo }),
-              );
+              localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({
+                name: profile.name,
+                profile_id: profileId
+              }));
             } catch (e) {}
+            applyPlayerProfile();
+            if (localStorage.getItem(MINAMI_API_TOKEN_KEY) && window.minamiApiPost) {
+              try {
+                await minamiApiPost("profile", {
+                  token: localStorage.getItem(MINAMI_API_TOKEN_KEY),
+                  profile_id: profileId
+                });
+                const user = JSON.parse(localStorage.getItem(MINAMI_API_USER_KEY) || "{}");
+                user.profile_id = profileId;
+                localStorage.setItem(MINAMI_API_USER_KEY, JSON.stringify(user));
+              } catch (e) {
+                console.warn("Profile belum tersimpan ke server:", e.message);
+              }
+            }
+            renderProfileOptions();
             applyPlayerProfile();
           };
         });
@@ -11301,6 +11334,15 @@
         try {
           const d = await minamiApiPost("me", { token });
           saveAccountUser(d.user || {});
+          if (d.user?.profile_id) {
+            try {
+              const current = getPlayerProfile();
+              localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({
+                name: current.name,
+                profile_id: d.user.profile_id
+              }));
+            } catch (e) {}
+          }
           renderAccountUI();
           await refreshAccountStats();
 
@@ -11334,11 +11376,20 @@
           localStorage.setItem(MINAMI_API_TOKEN_KEY, d.token);
           saveAccountUser(d.user || { username: u, display_name: u });
           const dn = (d.user?.display_name || u).trim();
+          if (d.user?.profile_id) {
+            try {
+              const current = getPlayerProfile();
+              localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({
+                name: current.name,
+                profile_id: d.user.profile_id
+              }));
+            } catch (e) {}
+          }
           if (dn)
             try {
               localStorage.setItem(
                 MINAMI_PROFILE_KEY,
-                JSON.stringify({ name: dn.slice(0, 18) }),
+                JSON.stringify({ name: dn.slice(0, 18), profile_id: getPlayerProfile().profile_id }),
               );
             } catch (e) {}
           await refreshAccountStats();
@@ -11379,11 +11430,20 @@
           localStorage.setItem(MINAMI_API_TOKEN_KEY, d.token);
           saveAccountUser(d.user || { username: u, display_name: dn || u });
           const display = (d.user?.display_name || dn || u).trim();
+          if (d.user?.profile_id) {
+            try {
+              const current = getPlayerProfile();
+              localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({
+                name: current.name,
+                profile_id: d.user.profile_id
+              }));
+            } catch (e) {}
+          }
           if (display)
             try {
               localStorage.setItem(
                 MINAMI_PROFILE_KEY,
-                JSON.stringify({ name: display.slice(0, 18) }),
+                JSON.stringify({ name: display.slice(0, 18), profile_id: getPlayerProfile().profile_id }),
               );
             } catch (e) {}
           await refreshAccountStats();
