@@ -26,6 +26,7 @@ try {
   // Aman dijalankan berulang karena seed memakai INSERT IGNORE.
   ensureAchievementTables($db);
   ensurePresenceTable($db);
+  ensureUserProfileTable($db);
 } catch(Throwable $e) { fail('Database tidak dapat dihubungkan.',500); }
 
 $path=trim(parse_url($_SERVER['REQUEST_URI']??'/',PHP_URL_PATH)??'/','/');
@@ -40,6 +41,7 @@ switch($path){
   case 'login': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); loginUser($db,$body); break;
   case 'logout': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); logoutUser($db); break;
   case 'me': me($db); break;
+  case 'profile': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); profile($db,$body); break;
   case 'stats': stats($db); break;
   case 'presence': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); presence($db,$body); break;
   case 'leaderboard': leaderboard($db); break;
@@ -126,7 +128,29 @@ function logoutUser(PDO $db):never{
   }
   ok();
 }
-function me(PDO $db):never{$u=auth($db);ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name']]]);}
+function me(PDO $db):never{
+  $u=auth($db); ensureUserProfileTable($db);
+  $q=$db->prepare('SELECT profile_id FROM user_profiles WHERE user_id=? LIMIT 1');$q->execute([$u['id']]);
+  $profile=(string)($q->fetchColumn()?:'cartoon_01');
+  ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name'],'profile_id'=>$profile]]);
+}
+function profile(PDO $db,array $b):never{
+  $u=auth($db); ensureUserProfileTable($db);
+  $id=trim((string)($b['profile_id']??''));
+  if(!preg_match('/^cartoon_(0[1-9]|1[0-2])$/',$id))fail('Profile tidak valid.');
+  $q=$db->prepare('INSERT INTO user_profiles(user_id,profile_id) VALUES(?,?) ON DUPLICATE KEY UPDATE profile_id=VALUES(profile_id)');
+  $q->execute([$u['id'],$id]);
+  ok(['profile_id'=>$id]);
+}
+function ensureUserProfileTable(PDO $db):void{
+  $db->exec('CREATE TABLE IF NOT EXISTS user_profiles (
+    user_id BIGINT UNSIGNED NOT NULL,
+    profile_id VARCHAR(32) NOT NULL DEFAULT "cartoon_01",
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id),
+    CONSTRAINT fk_user_profiles_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+}
 function stats(PDO $db):never{
   $u=auth($db);
   $q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');
