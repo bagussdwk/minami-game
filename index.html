@@ -3878,6 +3878,58 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      .menu-profile-selector {
+        margin-top: 9px;
+        padding: 8px;
+        border-radius: 9px;
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      .menu-profile-selector-title {
+        color: #9fc6b7;
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: 0.9px;
+        text-transform: uppercase;
+        margin-bottom: 7px;
+      }
+      .menu-profile-options {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .menu-profile-option {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        padding: 2px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.05);
+        cursor: pointer;
+        overflow: hidden;
+      }
+      .menu-profile-option img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        object-position: center top;
+      }
+      .menu-profile-option.active {
+        border-color: #f3cf70;
+        box-shadow: 0 0 0 2px rgba(243, 207, 112, 0.18);
+      }
+      .menu-profile-option:hover {
+        border-color: rgba(243, 207, 112, 0.65);
+      }
+      @media (max-width: 700px), (hover: none) and (pointer: coarse) {
+        .menu-profile-options {
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          gap: 5px;
+        }
+      }
       .menu-profile-edit {
         display: flex;
         gap: 6px;
@@ -5981,7 +6033,7 @@
         <div class="menu-section" id="profileMenuSection">
           <div class="menu-section-title">Profil Saya</div>
           <div class="menu-profile-card">
-            <div class="menu-profile-avatar">👤</div>
+            <div class="menu-profile-avatar" id="menuProfileAvatar">👤</div>
             <div class="menu-profile-main">
               <div class="menu-profile-label">PROFIL PEMAIN</div>
               <div class="menu-profile-current" id="profileCurrentName">
@@ -6006,6 +6058,10 @@
                   <span id="menuRankNext">5 Rank 1 ke NOVICE</span
                   ><span id="menuRankPercent">0%</span>
                 </div>
+              </div>
+              <div class="menu-profile-selector">
+                <div class="menu-profile-selector-title">Pilih Profile</div>
+                <div class="menu-profile-options" id="profileOptions"></div>
               </div>
               <div class="menu-profile-edit">
                 <input
@@ -10496,9 +10552,16 @@
             localStorage.getItem(MINAMI_PROFILE_KEY) || "null",
           );
           const name = typeof saved?.name === "string" ? saved.name.trim() : "";
-          return { name: name || "Anda" };
+          const photo =
+            typeof saved?.photo === "string" && saved.photo.trim()
+              ? saved.photo.trim()
+              : MINAMI_AI_PROFILE_POOL[0]?.photo || "";
+          return { name: name || "Anda", photo };
         } catch (e) {
-          return { name: "Anda" };
+          return {
+            name: "Anda",
+            photo: MINAMI_AI_PROFILE_POOL[0]?.photo || "",
+          };
         }
       }
       function getPlayerName(i) {
@@ -10507,9 +10570,36 @@
         return profile?.name || "Pemain " + (i + 1);
       }
       function applyPlayerProfile() {
-        const name = getPlayerProfile().name;
+        const profile = getPlayerProfile();
+        const name = profile.name;
+        const photo = profile.photo;
         const playerNameEl = document.getElementById("playerName1");
         if (playerNameEl) playerNameEl.textContent = name;
+
+        const tableAvatar = document.querySelector("#player1 .avatar");
+        if (tableAvatar) {
+          if (photo) {
+            tableAvatar.innerHTML = '<img src="' + photo + '" alt="" />';
+            tableAvatar.classList.add("profile-photo");
+          } else {
+            tableAvatar.textContent = "👤";
+            tableAvatar.classList.remove("profile-photo");
+          }
+        }
+        const menuAvatar = document.getElementById("menuProfileAvatar");
+        if (menuAvatar) {
+          if (photo) {
+            menuAvatar.innerHTML = '<img src="' + photo + '" alt="" />';
+            menuAvatar.classList.add("profile-photo");
+          } else {
+            menuAvatar.textContent = "👤";
+            menuAvatar.classList.remove("profile-photo");
+          }
+        }
+        document.querySelectorAll(".menu-profile-option").forEach((el) => {
+          el.classList.toggle("active", el.dataset.photo === photo);
+        });
+
         const current = document.getElementById("profileCurrentName");
         if (current) current.textContent = name;
         const input = document.getElementById("profileNameInput");
@@ -10542,8 +10632,12 @@
         let name = (input?.value || "").trim().replace(/\s+/g, " ");
         if (!name) name = "Anda";
         name = name.slice(0, 18);
+        const photo = getPlayerProfile().photo;
         try {
-          localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({ name }));
+          localStorage.setItem(
+            MINAMI_PROFILE_KEY,
+            JSON.stringify({ name, photo }),
+          );
         } catch (e) {}
         applyPlayerProfile();
         if (note) {
@@ -10559,6 +10653,46 @@
           }, 1800);
         }
       }
+      function renderProfileOptions() {
+        const wrap = document.getElementById("profileOptions");
+        if (!wrap) return;
+        const current = getPlayerProfile().photo;
+        wrap.innerHTML = MINAMI_AI_PROFILE_POOL.map((p, i) => {
+          const safePhoto = String(p.photo || "").replace(/"/g, "&quot;");
+          const active = p.photo === current ? " active" : "";
+          return (
+            '<button type="button" class="menu-profile-option' +
+            active +
+            '" data-photo="' +
+            safePhoto +
+            '" title="' +
+            p.name +
+            '" aria-label="Profile ' +
+            p.name +
+            '">' +
+            '<img src="' +
+            safePhoto +
+            '" alt="" loading="lazy" />' +
+            "</button>"
+          );
+        }).join("");
+
+        wrap.querySelectorAll(".menu-profile-option").forEach((btn) => {
+          btn.onclick = () => {
+            const photo = btn.dataset.photo || "";
+            const profile = getPlayerProfile();
+            try {
+              localStorage.setItem(
+                MINAMI_PROFILE_KEY,
+                JSON.stringify({ name: profile.name, photo }),
+              );
+            } catch (e) {}
+            applyPlayerProfile();
+          };
+        });
+      }
+
+      renderProfileOptions();
       applyPlayerProfile();
 
       const menuModal = document.getElementById("menuModal");
@@ -10577,6 +10711,7 @@
       document.getElementById("menuBtn").onclick = () => {
         // Tentukan isi menu setiap kali dibuka berdasarkan status game saat ini.
         menuModal.classList.toggle("game-active", !!game && !game.over);
+        renderProfileOptions();
         applyPlayerProfile();
         renderAccountUI();
         menuModal.classList.add("show");
