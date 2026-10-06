@@ -31,6 +31,22 @@
     getUser:()=>read(USER_KEY,null),setApiBase:v=>localStorage.setItem('minamiApiBase',String(v||'').replace(/\/$/,'')),
     login:async(u,p)=>{const j=await request('login',{username:u,password:p});write(TOKEN_KEY,j.token);write(USER_KEY,j.user);window.dispatchEvent(new CustomEvent('minami-profile-updated'));return j.user},
     register:async(u,p,n)=>request('register',{username:u,password:p,display_name:n}),
+    saveProfile:async(profileId)=>{
+      const id=String(profileId||'');
+      if(!/^cartoon_(0[1-9]|1[0-2])$/.test(id)) throw new Error('Profile tidak valid.');
+      const j=await request('profile',{profile_id:id});
+      const user=read(USER_KEY,{})||{};
+      user.profile_id=j.profile_id;
+      write(USER_KEY,user);
+      window.dispatchEvent(new CustomEvent('minami-profile-updated'));
+      return j.profile_id;
+    },
+    loadProfile:async()=>{
+      const j=await request('me',{});
+      const user=j.user||{};
+      write(USER_KEY,user);
+      return user.profile_id||'cartoon_01';
+    },
     logout:async()=>{try{await request('logout',{})}catch(e){}localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(USER_KEY);window.dispatchEvent(new CustomEvent('minami-profile-updated'))}
   };
 })();
