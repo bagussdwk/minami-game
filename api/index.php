@@ -104,7 +104,10 @@ function loginUser(PDO $db,array $b):never{
   if(!$row||!password_verify($p,$row['password_hash']))fail('Username atau password salah.',401);
   $token=bin2hex(random_bytes(32));$exp=(new DateTimeImmutable('+'.SESSION_DAYS.' days'))->format('Y-m-d H:i:s');
   $db->prepare('INSERT INTO login_sessions(token_hash,user_id,expires_at) VALUES(?,?,?)')->execute([hash('sha256',$token),$row['id'],$exp]);
-  ok(['token'=>$token,'user'=>['username'=>$row['username'],'display_name'=>$row['display_name']]]);
+  ensureUserProfileTable($db);
+  $pq=$db->prepare('SELECT profile_id FROM user_profiles WHERE user_id=? LIMIT 1');$pq->execute([$row['id']]);
+  $profileId=(string)($pq->fetchColumn()?:'cartoon_01');
+  ok(['token'=>$token,'user'=>['username'=>$row['username'],'display_name'=>$row['display_name'],'profile_id'=>$profileId]]);
 }
 function presence(PDO $db,array $b):never{
   $u=auth($db);
