@@ -8164,16 +8164,29 @@
         window.minamiNextOrder = arr;
         return arr;
       }
-      function markDead(i) {
-        if (!game.dead[i]) {
-          game.dead[i] = true;
-          if (game.round === 1 && !game.hasBase[i])
-            game.deadReason[i] = "NO_BASE";
-          game.deadOrder[i] = game.deathSeq++;
-          if (game.stats) game.stats.dead[i] = true;
-          setAIReaction(i, "Mati", false);
-          playMinamiSfx("dead");
-        }
+      function markDead(i, reason = null) {
+        if (game.dead[i]) return;
+
+        game.dead[i] = true;
+
+        // "Mati tangan" BUKAN semua kondisi player menjadi mati.
+        // Khusus MINAMI 2, statistik/achievement hanya menghitung:
+        // player tidak mempunyai DASAR legal pada giliran pembukaan pertama.
+        // Mati biasa setelah putaran awal (tidak punya langkah legal)
+        // tetap membuat player mati untuk gameplay, tetapi TIDAK dihitung
+        // sebagai mati tangan/statistik dead.
+        const noBase =
+          reason === "NO_BASE" ||
+          (reason == null && game.round === 1 && !game.hasBase[i]);
+
+        game.deadReason[i] = noBase ? "NO_BASE" : "NORMAL_DEAD";
+        game.deadOrder[i] = game.deathSeq++;
+
+        // stats.dead hanya untuk mati tangan NO_BASE.
+        if (game.stats) game.stats.dead[i] = noBase;
+
+        setAIReaction(i, "Mati", false);
+        playMinamiSfx("dead");
       }
       function playerLifeChance(playerIndex) {
         // Setiap player punya peluang:
