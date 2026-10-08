@@ -11946,6 +11946,16 @@
       function achievementLevelLabel(level) {
         return level > 0 ? ["", "I", "II", "III"][Math.min(3, level)] : "";
       }
+      // Hanya achievement yang benar-benar punya tier yang boleh menampilkan
+      // suffix I / II / III pada NAMANYA. Achievement progress-only selalu
+      // memakai nama aslinya tanpa suffix level, walaupun server memiliki
+      // field level legacy di database.
+      function achievementDisplayName(code, name, level) {
+        const tiers = MINAMI_ACHIEVEMENT_LEVELS[code];
+        if (!Array.isArray(tiers) || tiers.length !== 3) return String(name || "");
+        const roman = achievementLevelLabel(Number(level) || 0);
+        return roman ? String(name || "") + " " + roman : String(name || "");
+      }
 
       function getAchievementProgress(code) {
         const s = featureStats();
@@ -12613,11 +12623,7 @@
                   '<div class="featured-achievement-card"><div class="featured-achievement-icon">' +
                   x[1] +
                   "</div><div><b>" +
-                  x[2] +
-                  (MINAMI_ACHIEVEMENT_LEVELS[x[0]] && minamiServerAchievementLevels[x[0]]
-                    ? " " +
-                      achievementLevelLabel(minamiServerAchievementLevels[x[0]])
-                    : "") +
+                  achievementDisplayName(x[0], x[2], minamiServerAchievementLevels[x[0]]) +
                   "</b><span>" +
                   x[4] +
                   "</span></div></div>",
@@ -12642,11 +12648,7 @@
                 '<div class="achievement-icon">' +
                 x[1] +
                 '</div><div class="achievement-info"><b>' +
-                x[2] +
-                (MINAMI_ACHIEVEMENT_LEVELS[x[0]] && minamiServerAchievementLevels[x[0]]
-                  ? " " +
-                    achievementLevelLabel(minamiServerAchievementLevels[x[0]])
-                  : "") +
+                achievementDisplayName(x[0], x[2], minamiServerAchievementLevels[x[0]]) +
                 "</b><span>" +
                 x[3] +
                 " • " +
@@ -12970,10 +12972,7 @@
                     '<div class="leaderboard-featured-card"><div class="leaderboard-featured-icon">' +
                     leaderboardEscape(a.icon || "🏆") +
                     "</div><div><b>" +
-                    leaderboardEscape(a.name || "Achievement") +
-                    (MINAMI_ACHIEVEMENT_LEVELS[a.code] && Number(a.level)
-                      ? " " + achievementLevelLabel(Number(a.level))
-                      : "") +
+                    achievementDisplayName(a.code, leaderboardEscape(a.name || "Achievement"), a.level) +
                     "</b><span>" +
                     leaderboardEscape(a.mode || "GLOBAL") +
                     "</span></div></div>",
