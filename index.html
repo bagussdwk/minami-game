@@ -11644,7 +11644,13 @@
         renderAchievements();
       }
       function updateLifetimeStatsFromGame() {
-        if (!game || game._lifetimeCounted) return null;
+        if (!game) return null;
+        // Jika statistik lokal sudah dihitung tetapi sinkronisasi API sebelumnya
+        // gagal, kembalikan delta yang sama agar hasil match bisa dicoba kirim
+        // ulang tanpa menambah statistik lokal untuk kedua kalinya.
+        if (game._lifetimeCounted) {
+          return game._lastLifetimeApiDelta || null;
+        }
         game._lifetimeCounted = true;
         const s = featureStats(),
           st = game.stats || {};
@@ -11695,7 +11701,7 @@
         saveFeatureStats(s);
         updateAchievements();
 
-        return {
+        const apiDelta = {
           match_finished: 1,
           // Match Wins sengaja sama dengan Rank 1.
           match_wins:
@@ -11724,6 +11730,10 @@
           mvp: mvp?.i === 0 ? 1 : 0,
           best_streak: Number(localStorage.getItem("minamiWinStreak")) || 0,
         };
+        // Simpan delta hasil match yang sama supaya bila request API gagal,
+        // hasil ini dapat dikirim ulang tanpa menggandakan statistik lokal.
+        game._lastLifetimeApiDelta = apiDelta;
+        return apiDelta;
       }
       let minamiServerAchievementCodes = new Set();
       let minamiAccountAchievements = [];
