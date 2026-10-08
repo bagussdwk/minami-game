@@ -11852,6 +11852,30 @@
         if (!token) return false;
 
         const s = featureStats();
+
+        // Dead Hand berlaku global untuk MINAMI 1 + MINAMI 2.
+        // Syaratnya harus ada mati tangan awal (NO_BASE) di KEDUA mode,
+        // bukan sekadar total mati tangan >= 2. player_mode_stats sudah
+        // menyimpan statistik terpisah per mode, jadi achievement ini bisa
+        // diverifikasi tanpa mencampur Minami 1 dan Minami 2.
+        const mode1Dead = Number(minamiModeStats?.minami1?.dead) || 0;
+        const mode2Dead = Number(minamiModeStats?.minami2?.dead) || 0;
+        let deadHandMinami1 = mode1Dead;
+        let deadHandMinami2 = mode2Dead;
+
+        // Saat updateAchievements dipanggil tepat setelah match selesai,
+        // hasil match terakhir mungkin belum sempat masuk ke player_mode_stats.
+        // Tambahkan hanya NO_BASE dari game yang sedang selesai sebagai
+        // kandidat sementara agar achievement bisa langsung terbuka setelah
+        // sinkronisasi statistik match tersebut.
+        if (Array.isArray(game?.deadReason)) {
+          const currentDeadHand = game.deadReason.filter(
+            (x) => x === "NO_BASE",
+          ).length;
+          if (Number(game?.mode) === 1) deadHandMinami1 += currentDeadHand;
+          if (Number(game?.mode) === 2) deadHandMinami2 += currentDeadHand;
+        }
+
         const a = [
           [
             "first-win",
@@ -11923,7 +11947,8 @@
             "⚡",
             "Winning Streak",
             "Menang 3 match berturut-turut",
-            (Number(localStorage.getItem("minamiWinStreak")) || 0) >= 3,
+            (Number(localStorage.getItem("minami1WinStreak")) || 0) >= 3 &&
+              (Number(localStorage.getItem("minami2WinStreak")) || 0) >= 3,
           ],
           [
             "minami2-clean-5",
@@ -11931,6 +11956,13 @@
             "Clean Five",
             "Menyelesaikan 5 Game Minami 2 berturut-turut tanpa mati tangan",
             (Number(localStorage.getItem(MINAMI2_CLEAN_STREAK_KEY)) || 0) >= 5,
+          ],
+          [
+            "dead-hand",
+            "💀",
+            "Dead Hand",
+            "Mati tangan karena tidak memiliki Dasar legal pada putaran pertama di Minami 1 + 2",
+            deadHandMinami1 >= 1 && deadHandMinami2 >= 1,
           ],
         ];
         const localCandidates = a.filter((x) => x[4]).map((x) => x[0]);
