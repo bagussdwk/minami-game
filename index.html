@@ -12911,9 +12911,9 @@
                 : [
                     ["match_finished", "MATCH"],
                     ["games_finished", "GAME"],
+                    ["rank1", "RANK 1"],
+                    ["game_wins", "WIN GAME"],
                     ["tenho", "TENHO"],
-                    ["pots", "POT"],
-                    ["cards", "KARTU"],
                     ["jokers", "JOKER"],
                     ["best_combo", "COMBO"],
                     ["dead", "MATI"],
@@ -12937,9 +12937,11 @@
                 )
                 .join("") +
               "</div>" +
-              '<div class="leaderboard-mode-foot">' +
-              (matches ? Math.round(cards / matches) : 0) +
-              " kartu/match</div>" +
+              (k === "joker"
+                ? '<div class="leaderboard-mode-foot">' +
+                  (matches ? Math.round(cards / matches) : 0) +
+                  " kartu/match</div>"
+                : "") +
               "</div>"
             );
           })
