@@ -239,11 +239,21 @@ function leaderboard(PDO $db):never{
     ];
   }
   $players=[];
-  $fq=$db->query('SELECT ufa.user_id,ufa.slot,a.code,a.name,a.description,a.icon,a.mode,ua.level
+  // Schema lama mungkin belum memiliki kolom user_achievements.level.
+  // Jangan biarkan leaderboard menjadi 500 hanya karena migrasi level belum ada.
+  $hasLevel=false;
+  try{
+    $st=$db->query("SHOW COLUMNS FROM user_achievements");
+    foreach($st->fetchAll() as $col){
+      if(strtolower((string)$col['Field'])==='level'){$hasLevel=true;break;}
+    }
+  }catch(Throwable $e){}
+  $levelSelect=$hasLevel ? 'ua.level' : 'NULL AS level';
+  $fq=$db->query("SELECT ufa.user_id,ufa.slot,a.code,a.name,a.description,a.icon,a.mode,$levelSelect
     FROM user_featured_achievements ufa
     JOIN achievements a ON a.id=ufa.achievement_id
     JOIN user_achievements ua ON ua.user_id=ufa.user_id AND ua.achievement_id=ufa.achievement_id
-    ORDER BY ufa.user_id,ufa.slot');
+    ORDER BY ufa.user_id,ufa.slot");
   $featuredByUser=[];
   foreach($fq->fetchAll() as $fa){
     $uid=(int)$fa['user_id'];
@@ -639,7 +649,15 @@ function achievement(PDO $db,array $b):never{
     foreach($st->fetchAll() as $row){
       if(strtolower((string)$row['Field'])==='level'){$hasLevel=true;break;}
     }
-  }catch(Throwable $e){}
+    // Migrasi hanya sekali, tepat saat user menyimpan achievement level.
+    // Setelah kolom ada, request berikutnya tidak menjalankan ALTER TABLE lagi.
+    if(!$hasLevel){
+      $db->exec("ALTER TABLE user_achievements ADD COLUMN level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER achievement_id");
+      $hasLevel=true;
+    }
+  }catch(Throwable $e){
+    error_log('[MINAMI API] achievement level migration: '.$e->getMessage());
+  }
   $ins=$hasLevel
     ? $db->prepare('INSERT INTO user_achievements(user_id,achievement_id,level) VALUES(?,?,?)
       ON DUPLICATE KEY UPDATE level=GREATEST(level,VALUES(level))')
