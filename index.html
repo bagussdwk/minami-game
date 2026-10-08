@@ -11736,6 +11736,7 @@
         return apiDelta;
       }
       let minamiServerAchievementCodes = new Set();
+      let minamiServerAchievementLevels = {};
       let minamiAccountAchievements = [];
       let minamiFeaturedAchievementCodes = [];
       async function sendMinamiPresence() {
@@ -11785,6 +11786,15 @@
                 .filter((x) => x && x.unlocked)
                 .map((x) => x.code),
             );
+            minamiServerAchievementLevels = {};
+            minamiAccountAchievements.forEach((x) => {
+              if (x && x.unlocked) {
+                minamiServerAchievementLevels[x.code] = Math.max(
+                  1,
+                  Math.min(3, Number(x.level) || 1),
+                );
+              }
+            });
             minamiFeaturedAchievementCodes = Array.isArray(
               d.featured_achievements,
             )
@@ -11799,6 +11809,7 @@
         }
         minamiAccountAchievements = [];
         minamiServerAchievementCodes = new Set();
+        minamiServerAchievementLevels = {};
         minamiFeaturedAchievementCodes = [];
         return false;
       }
@@ -11870,7 +11881,7 @@
           return false;
         }
       }
-      async function syncAccountAchievements(ids) {
+      async function syncAccountAchievements(ids, levels = {}) {
         const token = localStorage.getItem(MINAMI_API_TOKEN_KEY);
         if (!token || !Array.isArray(ids) || !ids.length) return false;
         try {
@@ -11883,7 +11894,11 @@
                 "Content-Type": "text/plain;charset=UTF-8",
                 Accept: "application/json",
               },
-              body: JSON.stringify({ token, achievement_ids: unique }),
+              body: JSON.stringify({
+                token,
+                achievement_ids: unique,
+                achievement_levels: levels && typeof levels === "object" ? levels : {},
+              }),
             },
           );
           const d = await r.json();
@@ -11901,6 +11916,37 @@
         // harus berasal dari user_achievements di server.
         return [...minamiServerAchievementCodes];
       }
+      // Achievement bertingkat: satu achievement tetap satu kartu/ikon,
+      // tetapi levelnya bisa I, II, III. Nilai lama tetap kompatibel.
+      const MINAMI_ACHIEVEMENT_LEVELS = {
+        "first-win": [1, 5, 10],
+        "first-champion": [1, 5, 10],
+        tenho: [1, 5, 15],
+        "pot-master": [5, 15, 30],
+        "joker-master": [5, 25, 50],
+        "combo-master": [5, 7, 10],
+        mvp: [1, 5, 15],
+        "rank-climber": [10, 25, 50],
+        marathon: [10, 25, 50],
+        "triple-champion": [3, 10, 25],
+        veteran: [25, 50, 100],
+        "streak-3": [3, 5, 10],
+        "minami2-clean-5": [5, 10, 20],
+        "dead-hand": [1, 5, 10],
+      };
+      function achievementLevel(code, value) {
+        const t = MINAMI_ACHIEVEMENT_LEVELS[code];
+        if (!t) return 0;
+        const n = Number(value) || 0;
+        if (n >= t[2]) return 3;
+        if (n >= t[1]) return 2;
+        if (n >= t[0]) return 1;
+        return 0;
+      }
+      function achievementLevelLabel(level) {
+        return level > 0 ? ["", "I", "II", "III"][Math.min(3, level)] : "";
+      }
+
       async function updateAchievements() {
         const token = localStorage.getItem(MINAMI_API_TOKEN_KEY);
         if (!token) return false;
@@ -12019,7 +12065,36 @@
             deadHandMinami1 >= 1 && deadHandMinami2 >= 1,
           ],
         ];
-        const localCandidates = a.filter((x) => x[4]).map((x) => x[0]);
+        const achievementValues = {
+          "first-win": s.matchWins || 0,
+          "first-champion": s.gameWins || 0,
+          tenho: s.tenho || 0,
+          "pot-master": s.pots || 0,
+          "joker-master": s.jokers || 0,
+          "combo-master": s.bestCombo || 0,
+          mvp: s.mvp || 0,
+          "rank-climber": s.rank1 || 0,
+          marathon: s.games || 0,
+          "triple-champion": s.gameWins || 0,
+          veteran: s.matches || 0,
+          "streak-3":
+            Math.min(
+              Number(localStorage.getItem("minami1WinStreak")) || 0,
+              Number(localStorage.getItem("minami2WinStreak")) || 0,
+            ),
+          "minami2-clean-5":
+            Number(localStorage.getItem(MINAMI2_CLEAN_STREAK_KEY)) || 0,
+          "dead-hand": Math.min(deadHandMinami1, deadHandMinami2),
+        };
+        const achievementLevels = {};
+        const localCandidates = [];
+        for (const [code, value] of Object.entries(achievementValues)) {
+          const level = achievementLevel(code, value);
+          if (level > 0) {
+            achievementLevels[code] = level;
+            localCandidates.push(code);
+          }
+        }
         if (!localCandidates.length) {
           await loadAccountAchievements();
           renderAchievements();
@@ -12030,16 +12105,25 @@
         // memenuhi syarat berdasarkan statistik game, lalu baca ulang hasilnya
         // dari server. Jangan pernah menambahkan status unlock ke localStorage.
         const before = new Set(minamiServerAchievementCodes);
-        const ok = await syncAccountAchievements(localCandidates);
+        const ok = await syncAccountAchievements(localCandidates, achievementLevels);
         if (ok) {
           await loadAccountAchievements();
           for (const x of a) {
             if (
               x[4] &&
-              !before.has(x[0]) &&
+              (!before.has(x[0]) ||
+                Number(minamiServerAchievementLevels[x[0]] || 0) <
+                  Number(achievementLevels[x[0]] || 0)) &&
               minamiServerAchievementCodes.has(x[0])
             ) {
-              showPlayFeedback(x[1] + " ACHIEVEMENT: " + x[2], false);
+              showPlayFeedback(
+                x[1] +
+                  " ACHIEVEMENT " +
+                  (achievementLevelLabel(achievementLevels[x[0]]) || "") +
+                  ": " +
+                  x[2],
+                false,
+              );
             }
           }
           renderAchievements();
@@ -12474,6 +12558,10 @@
                   x[1] +
                   "</div><div><b>" +
                   x[2] +
+                  (minamiServerAchievementLevels[x[0]]
+                    ? " " +
+                      achievementLevelLabel(minamiServerAchievementLevels[x[0]])
+                    : "") +
                   "</b><span>" +
                   x[4] +
                   "</span></div></div>",
@@ -12499,6 +12587,10 @@
                 x[1] +
                 '</div><div class="achievement-info"><b>' +
                 x[2] +
+                (minamiServerAchievementLevels[x[0]]
+                  ? " " +
+                    achievementLevelLabel(minamiServerAchievementLevels[x[0]])
+                  : "") +
                 "</b><span>" +
                 x[3] +
                 " • " +
