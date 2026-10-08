@@ -482,11 +482,25 @@ function ensureAchievementTables(PDO $db):void{
   $db->exec("CREATE TABLE IF NOT EXISTS user_achievements (
     user_id BIGINT UNSIGNED NOT NULL,
     achievement_id $achIdType NOT NULL,
+    level TINYINT UNSIGNED NOT NULL DEFAULT 1,
     unlocked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(user_id,achievement_id),
     CONSTRAINT fk_user_ach_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_user_ach_achievement FOREIGN KEY(achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+  // Level achievement ditambahkan secara backward-compatible.
+  // Data unlock lama tetap ada dan otomatis dianggap level I.
+  try{
+    $st=$db->query("SHOW COLUMNS FROM user_achievements");
+    $hasLevel=false;
+    foreach($st->fetchAll() as $row){
+      if(strtolower((string)$row['Field'])==='level'){$hasLevel=true;break;}
+    }
+    if(!$hasLevel) $db->exec("ALTER TABLE user_achievements ADD COLUMN level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER achievement_id");
+  }catch(Throwable $e){
+    error_log('[MINAMI API] achievement level migration: '.$e->getMessage());
+  }
 
   $db->exec("CREATE TABLE IF NOT EXISTS user_featured_achievements (
     user_id BIGINT UNSIGNED NOT NULL,
@@ -548,10 +562,10 @@ function ensureAchievementTables(PDO $db):void{
 function achievementList(PDO $db):never{
   ensureAchievementTables($db);
   $u=auth($db);
-  $q=$db->prepare('SELECT a.code,a.name,a.description,a.icon,a.mode,ua.unlocked_at FROM achievements a LEFT JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=? ORDER BY a.sort_order,a.id');
+  $q=$db->prepare('SELECT a.code,a.name,a.description,a.icon,a.mode,ua.level,ua.unlocked_at FROM achievements a LEFT JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=? ORDER BY a.sort_order,a.id');
   $q->execute([$u['id']]);
   $rows=$q->fetchAll();
-  $out=[]; foreach($rows as $r){$out[]=['code'=>$r['code'],'name'=>$r['name'],'description'=>$r['description'],'icon'=>$r['icon'],'mode'=>$r['mode'],'unlocked'=>(bool)$r['unlocked_at'],'unlocked_at'=>$r['unlocked_at']];}
+  $out=[]; foreach($rows as $r){$out[]=['code'=>$r['code'],'name'=>$r['name'],'description'=>$r['description'],'icon'=>$r['icon'],'mode'=>$r['mode'],'level'=>(int)($r['level']??0),'unlocked'=>(bool)$r['unlocked_at'],'unlocked_at'=>$r['unlocked_at']];}
   // Featured sudah divalidasi saat disimpan hanya dari achievement yang unlocked.
   // Saat membaca ulang, cukup ambil dari tabel featured + master achievement.
   // Jangan JOIN ulang ke user_achievements karena perubahan/legacy ID dapat
@@ -593,9 +607,21 @@ function achievement(PDO $db,array $b):never{
   }
   $ids=$b['achievement_ids']??[$b['achievement_id']??''];
   if(!is_array($ids))$ids=[$ids];
+  $levels=is_array($b['achievement_levels']??null)?$b['achievement_levels']:[];
   $q=$db->prepare('SELECT id FROM achievements WHERE code=? LIMIT 1');
-  $ins=$db->prepare('INSERT IGNORE INTO user_achievements(user_id,achievement_id) VALUES(?,?)');
+  $ins=$db->prepare('INSERT INTO user_achievements(user_id,achievement_id,level) VALUES(?,?,?)
+    ON DUPLICATE KEY UPDATE level=GREATEST(level,VALUES(level))');
   $count=0;
-  foreach($ids as $id){$id=trim((string)$id);if(!preg_match('/^[a-z0-9_-]{1,64}$/',$id))continue;$q->execute([$id]);$a=$q->fetch();if($a){$ins->execute([$u['id'],$a['id']]);$count++;}}
+  foreach($ids as $id){
+    $id=trim((string)$id);
+    if(!preg_match('/^[a-z0-9_-]{1,64}$/',$id))continue;
+    $q->execute([$id]);$a=$q->fetch();
+    if($a){
+      $level=(int)($levels[$id]??1);
+      if($level<1)$level=1;
+      if($level>3)$level=3;
+      $ins->execute([$u['id'],$a['id'],$level]);$count++;
+    }
+  }
   ok(['saved'=>$count]);
 }
