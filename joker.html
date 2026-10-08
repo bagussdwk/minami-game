@@ -3613,7 +3613,8 @@ const localLv=jokerAchievementLevel(x[5],jpProgress[x[5]]);
 const serverLv=Number(jokerServerAchievementLevels[JOKER_ACH_CODE_MAP[x[5]]||x[5]])||0;
 const lv=Math.max(localLv,serverLv);
 const roman=lv?["","I","II","III"][Math.min(3,lv)]:"";
-return '<div class="joker-achievement '+(x[3]?"":"locked")+'"><div class="joker-achievement-icon">'+x[0]+'</div><div><b>'+x[1]+(roman?" "+roman:"")+'</b><small>'+x[2]+' • '+jpProgress[x[5]]+'/'+x[4]+' • '+(x[3]?"TERBUKA":"TERKUNCI")+'</small></div></div>';
+const status=lv>=3?"LEVEL III":lv===2?"LEVEL II":lv===1?"LEVEL I":"TERKUNCI";
+return '<div class="joker-achievement '+(lv?"":"locked")+'"><div class="joker-achievement-icon">'+x[0]+'</div><div><b>'+x[1]+(roman?" "+roman:"")+'</b><small>'+x[2]+' • <strong>'+status+'</strong></small></div></div>';
 }).join("");
 }modal("📊 STATISTIK & ACHIEVEMENT",'<div class="joker-feature-tabs"><button class="joker-feature-tab '+(tab==="global"?"active":"")+'" id="jFeatureGlobal">🌐 Global</button><button class="joker-feature-tab '+(tab==="joker"?"active":"")+'" id="jFeatureJoker">🃏 Joker</button><button class="joker-feature-tab '+(tab==="achievements"?"active":"")+'" id="jFeatureAchievements">🏆 Achievement</button></div><div id="jokerFeatureBody">'+body+'</div>',"Tutup",closeModal,true);$("jFeatureGlobal").onclick=()=>openJokerFeature("global");$("jFeatureJoker").onclick=()=>openJokerFeature("joker");$("jFeatureAchievements").onclick=()=>openJokerFeature("achievements")}
 function openJokerPoints(){if(!g?.p)return;const rows=g.p.map((p,i)=>{const v=Number(p.score)||0;return '<div class="joker-points-card"><b>'+((v>=0?"+":"")+v)+'</b><span>'+(i===0?"👤 ":"")+(p.name||("P"+(i+1)))+'</span></div>'}).join("");modal("🏆 POIN PERMAINAN",'<div class="joker-points-grid">'+rows+'</div><div class="joker-rule-note">Poin ini adalah skor permainan Joker saat ini.</div>',"Tutup",closeModal,true)}
