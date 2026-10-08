@@ -11221,6 +11221,35 @@
           b.className = "menu-account-message" + (kind ? " " + kind : "");
         }
       }
+      function updateAccountModeLocks(logged) {
+        const locked = !logged;
+        [
+          ["setupMinami2", "startMinami2Btn"],
+          ["setupJoker", "startJokerBtn"],
+        ].forEach(([cardId, buttonId]) => {
+          const card = document.getElementById(cardId);
+          const btn = document.getElementById(buttonId);
+          if (!card || !btn) return;
+
+          card.classList.toggle("account-locked-mode", locked);
+          btn.disabled = locked;
+          btn.setAttribute(
+            "aria-disabled",
+            locked ? "true" : "false",
+          );
+
+          if (!btn.dataset.accountDefaultText) {
+            btn.dataset.accountDefaultText = btn.textContent.trim();
+          }
+          btn.textContent = locked
+            ? "🔒 LOGIN UNTUK BERMAIN"
+            : btn.dataset.accountDefaultText;
+          btn.title = locked
+            ? "Login akun terlebih dahulu untuk memainkan mode ini"
+            : "";
+        });
+      }
+
       function renderAccountUI() {
         const out = document.getElementById("accountLoggedOut"),
           inn = document.getElementById("accountLoggedIn"),
@@ -11232,6 +11261,7 @@
         inn.style.display = logged ? "block" : "none";
         status.textContent = logged ? "● ONLINE" : "Belum login";
         status.style.color = logged ? "#7ff0b0" : "#9fc6b7";
+        updateAccountModeLocks(logged);
 
         // Sebelum login, hanya bagian Masuk/Daftar yang ditampilkan.
         // Profil, gelar, statistik, achievement, dan leaderboard muncul setelah login.
@@ -14246,6 +14276,39 @@
   .setup-mode-two .start-btn.setup-start {
     background: linear-gradient(145deg, #d8efff, #9bcde8);
     color: #13242d;
+  }
+  /* MINAMI 2 + JOKER hanya bisa dimainkan setelah login. */
+  .setup.account-locked-mode {
+    position: relative;
+  }
+  .setup.account-locked-mode::after {
+    content: "🔒 LOGIN UNTUK BERMAIN";
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    z-index: 4;
+    padding: 7px 11px;
+    border: 1px solid rgba(243, 207, 112, 0.45);
+    border-radius: 999px;
+    background: rgba(8, 28, 24, 0.88);
+    color: #f3cf70;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.7px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.18);
+  }
+  .setup.account-locked-mode .setup-start {
+    opacity: .72;
+    cursor: not-allowed;
+    filter: saturate(.65);
+  }
+  @media (max-width: 700px) {
+    .setup.account-locked-mode::after {
+      top: 12px;
+      right: 12px;
+      font-size: 8px;
+      padding: 6px 8px;
+    }
   }
 </style>
 
