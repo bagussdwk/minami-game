@@ -12968,6 +12968,7 @@
                     leaderboardEscape(a.icon || "🏆") +
                     "</div><div><b>" +
                     leaderboardEscape(a.name || "Achievement") +
+                    (Number(a.level) ? " " + achievementLevelLabel(Number(a.level)) : "") +
                     "</b><span>" +
                     leaderboardEscape(a.mode || "GLOBAL") +
                     "</span></div></div>",
