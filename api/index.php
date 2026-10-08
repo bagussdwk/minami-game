@@ -193,7 +193,8 @@ function stats(PDO $db):never{
   ok(['stats'=>$global,'mode_stats'=>$modeStats]);
 }
 function leaderboard(PDO $db):never{
-  ensureAchievementTables($db);
+  // Leaderboard hanya membaca data. Jangan menjalankan DDL/seed achievement di sini.
+
   // Leaderboard publik hanya memakai statistik global Rank 1 + Win Game,
   // sedangkan rincian match/statistik lain dikirim per mode.
   $q=$db->query('
@@ -560,7 +561,8 @@ function ensureAchievementTables(PDO $db):void{
 }
 
 function achievementList(PDO $db):never{
-  ensureAchievementTables($db);
+  // Endpoint baca harus ringan agar tidak timeout di shared hosting.
+
   $u=auth($db);
   $q=$db->prepare('SELECT a.code,a.name,a.description,a.icon,a.mode,ua.level,ua.unlocked_at FROM achievements a LEFT JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=? ORDER BY a.sort_order,a.id');
   $q->execute([$u['id']]);
@@ -576,7 +578,8 @@ function achievementList(PDO $db):never{
   ok(['achievements'=>$out,'featured_achievements'=>$featured]);
 }
 function achievement(PDO $db,array $b):never{
-  ensureAchievementTables($db);
+  // Endpoint tulis memakai tabel achievement yang sudah dipasang saat setup.
+
   $u=auth($db);
   if(array_key_exists('featured_codes',$b)){
     $codes=$b['featured_codes'];
@@ -609,18 +612,37 @@ function achievement(PDO $db,array $b):never{
   if(!is_array($ids))$ids=[$ids];
   $levels=is_array($b['achievement_levels']??null)?$b['achievement_levels']:[];
   $q=$db->prepare('SELECT id FROM achievements WHERE code=? LIMIT 1');
-  $ins=$db->prepare('INSERT INTO user_achievements(user_id,achievement_id,level) VALUES(?,?,?)
-    ON DUPLICATE KEY UPDATE level=GREATEST(level,VALUES(level))');
+
+  // Dukungan schema lama: bila kolom level belum ada, tetap simpan unlock
+  // menggunakan format lama. Ini mencegah 500/502 hanya karena migrasi level
+  // belum sempat dijalankan di shared hosting.
+  $hasLevel=false;
+  try{
+    $st=$db->query("SHOW COLUMNS FROM user_achievements");
+    foreach($st->fetchAll() as $row){
+      if(strtolower((string)$row['Field'])==='level'){$hasLevel=true;break;}
+    }
+  }catch(Throwable $e){}
+  $ins=$hasLevel
+    ? $db->prepare('INSERT INTO user_achievements(user_id,achievement_id,level) VALUES(?,?,?)
+      ON DUPLICATE KEY UPDATE level=GREATEST(level,VALUES(level))')
+    : $db->prepare('INSERT INTO user_achievements(user_id,achievement_id) VALUES(?,?)
+      ON DUPLICATE KEY UPDATE achievement_id=VALUES(achievement_id)');
   $count=0;
   foreach($ids as $id){
     $id=trim((string)$id);
     if(!preg_match('/^[a-z0-9_-]{1,64}$/',$id))continue;
     $q->execute([$id]);$a=$q->fetch();
     if($a){
-      $level=(int)($levels[$id]??1);
-      if($level<1)$level=1;
-      if($level>3)$level=3;
-      $ins->execute([$u['id'],$a['id'],$level]);$count++;
+      if($hasLevel){
+        $level=(int)($levels[$id]??1);
+        if($level<1)$level=1;
+        if($level>3)$level=3;
+        $ins->execute([$u['id'],$a['id'],$level]);
+      }else{
+        $ins->execute([$u['id'],$a['id']]);
+      }
+      $count++;
     }
   }
   ok(['saved'=>$count]);
