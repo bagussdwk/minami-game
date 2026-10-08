@@ -11970,6 +11970,14 @@
 
       function getAchievementProgress(code) {
         const s = featureStats();
+        // Progress khusus achievement Joker (mis. Triple Set / Perfect Close)
+        // dibaca dari progress server agar tetap konsisten antar perangkat.
+        const serverProgress = (code) => {
+          const row = Array.isArray(minamiAccountAchievements)
+            ? minamiAccountAchievements.find((x) => x && x.code === code)
+            : null;
+          return Math.max(0, Number(row?.progress) || 0);
+        };
         const m1 = Number(minamiModeStats?.minami1?.dead) || 0;
         const m2 = Number(minamiModeStats?.minami2?.dead) || 0;
         const values = {
@@ -11994,8 +12002,8 @@
           "set-master": Number(minamiModeStats?.joker?.joker_sets) || 0,
           "joker-collector": Number(minamiModeStats?.joker?.jokers) || 0,
           "joker-hoarder": Number(minamiModeStats?.joker?.jokers) || 0,
-          "triple-set": Number(localStorage.getItem("minamiJokerTripleSetCountV1")) || 0,
-          "perfect-close": Number(localStorage.getItem("minamiJokerPerfectCloseCountV1")) || 0,
+          "triple-set": serverProgress("triple-set"),
+          "perfect-close": serverProgress("perfect-close"),
           gotcha: Number(minamiModeStats?.joker?.caught) || 0,
           payback: Number(minamiModeStats?.joker?.caught_by) || 0,
           "hot-streak": Number(minamiModeStats?.joker?.best_streak) || 0,
@@ -12186,8 +12194,8 @@
           "set-master": Number(minamiModeStats?.joker?.joker_sets) || 0,
           "joker-collector": Number(minamiModeStats?.joker?.jokers) || 0,
           "joker-hoarder": Number(minamiModeStats?.joker?.jokers) || 0,
-          "triple-set": Number(localStorage.getItem("minamiJokerTripleSetCountV1")) || 0,
-          "perfect-close": Number(localStorage.getItem("minamiJokerPerfectCloseCountV1")) || 0,
+          "triple-set": serverProgress("triple-set"),
+          "perfect-close": serverProgress("perfect-close"),
           gotcha: Number(minamiModeStats?.joker?.caught) || 0,
           payback: Number(minamiModeStats?.joker?.caught_by) || 0,
           "hot-streak": Number(minamiModeStats?.joker?.best_streak) || 0,
