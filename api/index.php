@@ -17,17 +17,23 @@ if ($_SERVER['REQUEST_METHOD']==='OPTIONS') { http_response_code(204); exit; }
 if (!is_file(__DIR__.'/config.php')) fail('API belum dikonfigurasi.',500);
 $c=require __DIR__.'/config.php';
 try {
+  // Request statistik/game-result dibuat sering. Jangan jalankan CREATE TABLE/seed
+  // pada setiap request karena shared hosting bisa menjadi lambat atau timeout.
+  // Struktur tabel diasumsikan sudah dipasang dari schema.sql; endpoint yang
+  // memang membutuhkan tabel legacy/setup tetap melakukan ensure secara lokal.
   $db=new PDO(
     'mysql:host='.$c['db_host'].';dbname='.$c['db_name'].';charset=utf8mb4',
     $c['db_user'],$c['db_pass'],
-    [PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC]
+    [
+      PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
+      PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,
+      PDO::ATTR_TIMEOUT=>8
+    ]
   );
-  // Selalu sinkronkan tabel dan master achievement setiap API dijalankan.
-  // Aman dijalankan berulang karena seed memakai INSERT IGNORE.
-  ensureAchievementTables($db);
-  ensurePresenceTable($db);
-  ensureUserProfileTable($db);
-} catch(Throwable $e) { fail('Database tidak dapat dihubungkan.',500); }
+} catch(Throwable $e) {
+  error_log('[MINAMI API] DB connect failed: '.$e->getMessage());
+  fail('Database tidak dapat dihubungkan.',500);
+}
 
 $path=trim(parse_url($_SERVER['REQUEST_URI']??'/',PHP_URL_PATH)??'/','/');
 // Some shared hosts do not support PATH_INFO/rewrite for /api/me. Allow ?action=me too.
@@ -414,6 +420,9 @@ function gameResult(PDO $db,array $b):never{
     ok();
   }catch(Throwable $e){
     if($db->inTransaction())$db->rollBack();
+    // Jangan tampilkan detail SQL ke client, tetapi simpan di error log hosting
+    // agar kegagalan game-result bisa ditelusuri tanpa membocorkan struktur DB.
+    error_log('[MINAMI API] game-result failed: '.$e->getMessage());
     fail('Statistik gagal disimpan.',500);
   }
 }
