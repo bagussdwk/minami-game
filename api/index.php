@@ -594,11 +594,31 @@ function achievementList(PDO $db):never{
     ORDER BY a.sort_order,a.id");
   $q->execute([$u['id']]);
   $rows=$q->fetchAll();
-  $out=[]; foreach($rows as $r){$out[]=['code'=>$r['code'],'name'=>$r['name'],'description'=>$r['description'],'icon'=>$r['icon'],'mode'=>$r['mode'],'level'=>(int)($r['level']??0),'unlocked'=>(bool)$r['unlocked_at'],'unlocked_at'=>$r['unlocked_at']];}
+  $progress=[];
+  try{
+    $pq=$db->prepare('SELECT achievement_code,progress FROM user_achievement_progress WHERE user_id=?');
+    $pq->execute([$u['id']]);
+    foreach($pq->fetchAll() as $pr)$progress[(string)$pr['achievement_code']]=(int)$pr['progress'];
+  }catch(Throwable $e){}
+  $out=[]; foreach($rows as $r){$code=(string)$r['code'];$out[]=['code'=>$code,'name'=>$r['name'],'description'=>$r['description'],'icon'=>$r['icon'],'mode'=>$r['mode'],'level'=>(int)($r['level']??0),'progress'=>(int)($progress[$code]??0),'unlocked'=>(bool)$r['unlocked_at'],'unlocked_at'=>$r['unlocked_at']];}
   // Featured sudah divalidasi saat disimpan hanya dari achievement yang unlocked.
   // Saat membaca ulang, cukup ambil dari tabel featured + master achievement.
   // Jangan JOIN ulang ke user_achievements karena perubahan/legacy ID dapat
   // membuat pilihan yang sebenarnya tersimpan terlihat hilang setelah refresh.
+  // Progress achievement disimpan terpisah dari status unlock, sehingga
+  // achievement progress-only (mis. Payback/Gotcha) tidak dianggap unlocked
+  // hanya karena memiliki nilai progress.
+  try{
+    $db->exec("CREATE TABLE IF NOT EXISTS user_achievement_progress (
+      user_id BIGINT UNSIGNED NOT NULL,
+      achievement_code VARCHAR(64) NOT NULL,
+      progress INT UNSIGNED NOT NULL DEFAULT 0,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY(user_id,achievement_code),
+      CONSTRAINT fk_uap_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+  }catch(Throwable $e){}
+
   $f=$db->prepare('SELECT a.code FROM user_featured_achievements f JOIN achievements a ON a.id=f.achievement_id WHERE f.user_id=? ORDER BY f.slot');
   $f->execute([$u['id']]);
   $featured=array_map(fn($x)=>(string)$x['code'],$f->fetchAll());
@@ -637,6 +657,32 @@ function achievement(PDO $db,array $b):never{
   }
   $ids=$b['achievement_ids']??[$b['achievement_id']??''];
   if(!is_array($ids))$ids=[$ids];
+
+  // Simpan progress tanpa membuka achievement. Nilai hanya boleh naik.
+  $progressInput=is_array($b['achievement_progress']??null)?$b['achievement_progress']:[];
+  if($progressInput){
+    try{
+      $db->exec("CREATE TABLE IF NOT EXISTS user_achievement_progress (
+        user_id BIGINT UNSIGNED NOT NULL,
+        achievement_code VARCHAR(64) NOT NULL,
+        progress INT UNSIGNED NOT NULL DEFAULT 0,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY(user_id,achievement_code),
+        CONSTRAINT fk_uap_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+      $findProgress=$db->prepare('SELECT code FROM achievements WHERE code=? LIMIT 1');
+      $saveProgress=$db->prepare('INSERT INTO user_achievement_progress(user_id,achievement_code,progress) VALUES(?,?,?) ON DUPLICATE KEY UPDATE progress=GREATEST(progress,VALUES(progress))');
+      foreach($progressInput as $code=>$value){
+        $code=trim((string)$code);
+        if(!preg_match('/^[a-z0-9_-]{1,64}$/',$code))continue;
+        $value=max(0,min(2147483647,(int)$value));
+        $findProgress->execute([$code]);
+        if($findProgress->fetch())$saveProgress->execute([$u['id'],$code,$value]);
+      }
+    }catch(Throwable $e){
+      error_log('[MINAMI API] achievement progress save: '.$e->getMessage());
+    }
+  }
   $levels=is_array($b['achievement_levels']??null)?$b['achievement_levels']:[];
   $q=$db->prepare('SELECT id FROM achievements WHERE code=? LIMIT 1');
 
