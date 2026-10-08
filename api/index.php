@@ -162,6 +162,14 @@ function ensureUserProfileTable(PDO $db):void{
 }
 function stats(PDO $db):never{
   $u=auth($db);
+  // Repair/synchronize achievement progress from the authoritative stats tables.
+  // player_mode_stats/player_global_stats remain the source of truth.
+  try{
+    ensureAchievementTables($db);
+    syncAchievementProgress($db,(int)$u['id']);
+  }catch(Throwable $e){
+    error_log('[MINAMI API] stats achievement sync failed: '.$e->getMessage());
+  }
   $q=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=?');
   $q->execute([$u['id']]);
   $global=$q->fetch()?:[];
@@ -393,6 +401,14 @@ function gameResult(PDO $db,array $b):never{
     $q->execute([$u['id'],$eventId]);
     if($q->rowCount()===0){
       $db->commit();
+      // A duplicate event must not prevent a repair of stale achievement progress.
+      try{
+        ensureAchievementTables($db);
+        syncAchievementProgress($db,(int)$u['id']);
+      }catch(Throwable $e){
+        error_log('[MINAMI API] duplicate game-result achievement sync failed: '.$e->getMessage());
+        fail('Progress achievement gagal disinkronkan.',500);
+      }
       ok(['duplicate'=>true]);
     }
 
@@ -432,6 +448,17 @@ function gameResult(PDO $db,array $b):never{
       $vals['best_combo'],$vals['dead'],$vals['mvp'],$vals['best_streak'],$u['id']
     ]);
     $db->commit();
+
+    // Statistics are committed first. Then rebuild achievement progress from
+    // the newly committed player_mode_stats/player_global_stats values.
+    // This keeps player_achievement_stats synchronized with the real statistics.
+    try{
+      ensureAchievementTables($db);
+      syncAchievementProgress($db,(int)$u['id']);
+    }catch(Throwable $e){
+      error_log('[MINAMI API] game-result achievement sync failed: '.$e->getMessage());
+      fail('Statistik tersimpan, tetapi progress achievement gagal disinkronkan.',500);
+    }
     ok();
   }catch(Throwable $e){
     if($db->inTransaction())$db->rollBack();
@@ -572,6 +599,138 @@ function ensureAchievementTables(PDO $db):void{
       $ins->execute([$x[0],$x[0],$x[1],$x[2],$x[3],$x[4],$x[5]]);
     }
   }
+}
+
+function ensureAchievementProgressTable(PDO $db):void{
+  $db->exec('CREATE TABLE IF NOT EXISTS player_achievement_stats (
+    user_id BIGINT UNSIGNED NOT NULL,
+    achievement_id VARCHAR(64) NOT NULL,
+    mode VARCHAR(16) NOT NULL,
+    progress INT UNSIGNED NOT NULL DEFAULT 0,
+    level TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY(user_id,achievement_id),
+    INDEX idx_player_achievement_mode(user_id,mode),
+    CONSTRAINT fk_player_achievement_stats_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_player_achievement_stats_achievement FOREIGN KEY(achievement_id) REFERENCES achievements(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+}
+
+function syncAchievementProgress(PDO $db,int $userId):void{
+  ensureAchievementProgressTable($db);
+
+  $q=$db->query('SELECT id,code,mode FROM achievements ORDER BY sort_order,id');
+  $rows=$q->fetchAll();
+  if(!$rows)return;
+
+  $up=$db->prepare('INSERT INTO player_achievement_stats
+    (user_id,achievement_id,mode,progress,level)
+    VALUES(?,?,?,?,?)
+    ON DUPLICATE KEY UPDATE
+      mode=VALUES(mode),
+      progress=VALUES(progress),
+      level=VALUES(level)');
+
+  foreach($rows as $a){
+    $code=(string)$a['code'];
+    $progress=achievementProgressValue($db,$userId,$code);
+    $level=achievementRequiredLevel($code,$progress);
+    $up->execute([
+      $userId,
+      (string)$a['id'],
+      (string)$a['mode'],
+      $progress,
+      $level
+    ]);
+  }
+}
+
+function achievementProgressValue(PDO $db,int $userId,string $code):int{
+  static $cache=[];
+  if(isset($cache[$userId][$code]))return $cache[$userId][$code];
+
+  if(!isset($cache[$userId])){
+    $cache[$userId]=[];
+
+    $g=$db->prepare('SELECT * FROM player_global_stats WHERE user_id=? LIMIT 1');
+    $g->execute([$userId]);
+    $cache[$userId]['__global']=$g->fetch()?:[];
+
+    $m=$db->prepare('SELECT * FROM player_mode_stats WHERE user_id=?');
+    $m->execute([$userId]);
+    foreach($m->fetchAll() as $row){
+      $cache[$userId]['__mode_'.(string)$row['mode']]=$row;
+    }
+  }
+
+  $g=$cache[$userId]['__global']??[];
+  $m1=$cache[$userId]['__mode_minami1']??[];
+  $m2=$cache[$userId]['__mode_minami2']??[];
+  $j=$cache[$userId]['__mode_joker']??[];
+
+  $v=match($code){
+    'first-win'       => (int)($g['match_wins']??0),
+    'first-champion'  => (int)($g['game_wins']??0),
+    'tenho'           => (int)($g['tenho']??0),
+    'pot-master'      => (int)($g['pots']??0),
+    'joker-master'    => (int)($g['jokers']??0),
+    'combo-master'    => (int)($g['best_combo']??0),
+    'mvp'             => (int)($g['mvp']??0),
+    'rank-climber'    => (int)($g['rank1']??0),
+    'marathon'        => (int)($g['games_finished']??0),
+    'triple-champion' => (int)($g['game_wins']??0),
+    'veteran'         => (int)($g['match_finished']??0),
+    'streak-3'        => (int)($g['best_streak']??0),
+    'first-joker'     => (int)($j['jokers']??0),
+    'set-master'      => (int)($j['joker_sets']??0),
+    'joker-collector' => (int)($j['jokers']??0),
+    'joker-hoarder'   => (int)($j['jokers']??0),
+    'triple-set'      => (int)($j['triple_sets']??0),
+    'perfect-close'   => (int)($j['perfect_closes']??0),
+    'gotcha'          => (int)($j['caught']??0),
+    'payback'         => (int)($j['caught_by']??0),
+    'hot-streak'      => (int)($j['best_streak']??0),
+    'unstoppable'     => (int)($j['best_streak']??0),
+    'dead-hand'       => max((int)($m1['dead']??0),(int)($m2['dead']??0)),
+    default           => 0
+  };
+
+  $cache[$userId][$code]=max(0,$v);
+  return $cache[$userId][$code];
+}
+
+function achievementRequiredLevel(string $code,int $value):int{
+  $tiers=[
+    'first-win'=>[1,5,10],
+    'first-champion'=>[1,5,10],
+    'tenho'=>[1,5,15],
+    'pot-master'=>[5,15,30],
+    'joker-master'=>[5,25,50],
+    'combo-master'=>[5,7,10],
+    'mvp'=>[1,5,15],
+    'rank-climber'=>[10,25,50],
+    'marathon'=>[10,25,50],
+    'triple-champion'=>[3,10,25],
+    'veteran'=>[25,50,100],
+    'streak-3'=>[3,5,10],
+    'first-joker'=>[1,5,10],
+    'set-master'=>[1,5,10],
+    'joker-collector'=>[10,25,50],
+    'joker-hoarder'=>[25,50,100],
+    'triple-set'=>[1,5,10],
+    'perfect-close'=>[1,5,10],
+    'gotcha'=>[1,5,10],
+    'payback'=>[1,5,10],
+    'hot-streak'=>[3,5,10],
+    'unstoppable'=>[5,10,20],
+    'dead-hand'=>[1,5,10]
+  ];
+  if(!isset($tiers[$code]))return 0;
+  $t=$tiers[$code];
+  if($value>=$t[2])return 3;
+  if($value>=$t[1])return 2;
+  if($value>=$t[0])return 1;
+  return 0;
 }
 
 function achievementList(PDO $db):never{
