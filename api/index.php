@@ -239,7 +239,7 @@ function leaderboard(PDO $db):never{
     ];
   }
   $players=[];
-  $fq=$db->query('SELECT ufa.user_id,ufa.slot,a.code,a.name,a.description,a.icon,a.mode
+  $fq=$db->query('SELECT ufa.user_id,ufa.slot,a.code,a.name,a.description,a.icon,a.mode,ua.level
     FROM user_featured_achievements ufa
     JOIN achievements a ON a.id=ufa.achievement_id
     JOIN user_achievements ua ON ua.user_id=ufa.user_id AND ua.achievement_id=ufa.achievement_id
@@ -249,7 +249,7 @@ function leaderboard(PDO $db):never{
     $uid=(int)$fa['user_id'];
     $featuredByUser[$uid][]=[
       'slot'=>(int)$fa['slot'],'code'=>$fa['code'],'name'=>$fa['name'],
-      'description'=>$fa['description'],'icon'=>$fa['icon'],'mode'=>$fa['mode']
+      'description'=>$fa['description'],'icon'=>$fa['icon'],'mode'=>$fa['mode'],'level'=>(int)($fa['level']??1)
     ];
   }
   foreach($rows as $row){
