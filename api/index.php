@@ -566,9 +566,22 @@ function ensureAchievementTables(PDO $db):void{
 
 function achievementList(PDO $db):never{
   // Endpoint baca harus ringan agar tidak timeout di shared hosting.
-
+  // Jangan mengasumsikan kolom level sudah ada: schema lama masih mungkin
+  // belum bermigrasi. Jika level belum ada, achievement lama tetap dibaca
+  // sebagai Level I tanpa memicu error SQL/502.
   $u=auth($db);
-  $q=$db->prepare('SELECT a.code,a.name,a.description,a.icon,a.mode,ua.level,ua.unlocked_at FROM achievements a LEFT JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=? ORDER BY a.sort_order,a.id');
+  $hasLevel=false;
+  try{
+    $st=$db->query("SHOW COLUMNS FROM user_achievements");
+    foreach($st->fetchAll() as $row){
+      if(strtolower((string)$row['Field'])==='level'){$hasLevel=true;break;}
+    }
+  }catch(Throwable $e){}
+  $levelSelect=$hasLevel ? 'ua.level' : 'NULL AS level';
+  $q=$db->prepare("SELECT a.code,a.name,a.description,a.icon,a.mode,$levelSelect,ua.unlocked_at
+    FROM achievements a
+    LEFT JOIN user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=?
+    ORDER BY a.sort_order,a.id");
   $q->execute([$u['id']]);
   $rows=$q->fetchAll();
   $out=[]; foreach($rows as $r){$out[]=['code'=>$r['code'],'name'=>$r['name'],'description'=>$r['description'],'icon'=>$r['icon'],'mode'=>$r['mode'],'level'=>(int)($r['level']??0),'unlocked'=>(bool)$r['unlocked_at'],'unlocked_at'=>$r['unlocked_at']];}
