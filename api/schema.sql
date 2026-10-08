@@ -58,6 +58,7 @@ CREATE TABLE achievements (
 CREATE TABLE user_achievements (
   user_id BIGINT UNSIGNED NOT NULL,
   achievement_id VARCHAR(64) NOT NULL,
+  level TINYINT UNSIGNED NOT NULL DEFAULT 1,
   unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id, achievement_id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
