@@ -11933,6 +11933,17 @@
         "streak-3": [3, 5, 10],
         "minami2-clean-5": [5, 10, 20],
         "dead-hand": [1, 5, 10],
+        // Achievement JOKER juga memakai sistem I / II / III.
+        "first-joker": [1, 5, 10],
+        "set-master": [1, 5, 10],
+        "joker-collector": [10, 25, 50],
+        "joker-hoarder": [25, 50, 100],
+        "triple-set": [1, 5, 10],
+        "perfect-close": [1, 5, 10],
+        gotcha: [1, 5, 10],
+        payback: [1, 5, 10],
+        "hot-streak": [3, 5, 10],
+        unstoppable: [5, 10, 20],
       };
       function achievementLevel(code, value) {
         const t = MINAMI_ACHIEVEMENT_LEVELS[code];
@@ -11978,7 +11989,17 @@
             Number(localStorage.getItem("minami2WinStreak")) || 0
           ),
           "minami2-clean-5": Number(localStorage.getItem(MINAMI2_CLEAN_STREAK_KEY)) || 0,
-          "dead-hand": Math.min(m1, m2)
+          "dead-hand": Math.min(m1, m2),
+          "first-joker": Number(minamiModeStats?.joker?.jokers) || 0,
+          "set-master": Number(minamiModeStats?.joker?.joker_sets) || 0,
+          "joker-collector": Number(minamiModeStats?.joker?.jokers) || 0,
+          "joker-hoarder": Number(minamiModeStats?.joker?.jokers) || 0,
+          "triple-set": Number(localStorage.getItem("minamiJokerTripleSetCountV1")) || 0,
+          "perfect-close": Number(localStorage.getItem("minamiJokerPerfectCloseCountV1")) || 0,
+          gotcha: Number(minamiModeStats?.joker?.caught) || 0,
+          payback: Number(minamiModeStats?.joker?.caught_by) || 0,
+          "hot-streak": Number(minamiModeStats?.joker?.best_streak) || 0,
+          unstoppable: Number(minamiModeStats?.joker?.best_streak) || 0
         };
         const value = Math.max(0, Number(values[code]) || 0);
         const tiers = MINAMI_ACHIEVEMENT_LEVELS[code] || [];
@@ -12130,6 +12151,16 @@
             "Mati tangan karena tidak memiliki Dasar legal pada putaran pertama di Minami 1 + 2",
             deadHandMinami1 >= 1 && deadHandMinami2 >= 1,
           ],
+          ["first-joker","🃏","First Joker","Menggunakan Joker.",(Number(minamiModeStats?.joker?.jokers)||0)>=1],
+          ["set-master","🎯","Set Master","Membuat set.",(Number(minamiModeStats?.joker?.joker_sets)||0)>=1],
+          ["joker-collector","🔥","Joker Collector","Menggunakan 10 Joker.",(Number(minamiModeStats?.joker?.jokers)||0)>=10],
+          ["joker-hoarder","💎","Joker Hoarder","Menggunakan 25 Joker.",(Number(minamiModeStats?.joker?.jokers)||0)>=25],
+          ["triple-set","🎴","Triple Set","Membuat 3 set dalam satu match.",(Number(localStorage.getItem("minamiJokerTripleSetCountV1"))||0)>=1],
+          ["perfect-close","⚡","Perfect Close","Menutup dengan Joker.",(Number(localStorage.getItem("minamiJokerPerfectCloseCountV1"))||0)>=1],
+          ["gotcha","🪤","Gotcha!","Mengambil buangan lalu langsung menutup.",(Number(minamiModeStats?.joker?.caught)||0)>=1],
+          ["payback","😈","Payback","Buanganmu diambil lawan lalu lawan menutup.",(Number(minamiModeStats?.joker?.caught_by)||0)>=1],
+          ["hot-streak","🔥","Hot Streak","Rank 1 dalam 3 match berturut-turut.",(Number(minamiModeStats?.joker?.best_streak)||0)>=3],
+          ["unstoppable","👑","Unstoppable","Rank 1 dalam 5 match berturut-turut.",(Number(minamiModeStats?.joker?.best_streak)||0)>=5],
         ];
         const achievementValues = {
           "first-win": s.matchWins || 0,
@@ -12151,6 +12182,16 @@
           "minami2-clean-5":
             Number(localStorage.getItem(MINAMI2_CLEAN_STREAK_KEY)) || 0,
           "dead-hand": Math.min(deadHandMinami1, deadHandMinami2),
+          "first-joker": Number(minamiModeStats?.joker?.jokers) || 0,
+          "set-master": Number(minamiModeStats?.joker?.joker_sets) || 0,
+          "joker-collector": Number(minamiModeStats?.joker?.jokers) || 0,
+          "joker-hoarder": Number(minamiModeStats?.joker?.jokers) || 0,
+          "triple-set": Number(localStorage.getItem("minamiJokerTripleSetCountV1")) || 0,
+          "perfect-close": Number(localStorage.getItem("minamiJokerPerfectCloseCountV1")) || 0,
+          gotcha: Number(minamiModeStats?.joker?.caught) || 0,
+          payback: Number(minamiModeStats?.joker?.caught_by) || 0,
+          "hot-streak": Number(minamiModeStats?.joker?.best_streak) || 0,
+          unstoppable: Number(minamiModeStats?.joker?.best_streak) || 0,
         };
         const achievementLevels = {};
         const localCandidates = [];
