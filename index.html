@@ -11983,17 +11983,20 @@
         const modal = document.createElement("div");
         modal.id = "achievementProgressModal";
         modal.style.cssText = "position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:18px";
-        const progress = p.next == null
-          ? (p.level >= 3 ? "MAX • Level III" : String(p.value))
-          : p.value + " / " + p.next;
+        const hasLevels = p.tiers.length > 0;
+        const progress = !hasLevels
+          ? String(p.value)
+          : p.next == null
+            ? (p.level >= 3 ? "MAX • Level III" : String(p.value))
+            : p.value + " / " + p.next;
         modal.innerHTML =
           '<div style="width:min(420px,100%);background:#13231d;border:1px solid rgba(243,207,112,.35);border-radius:18px;padding:20px;color:#fff">' +
-          '<div style="display:flex;gap:12px;align-items:center"><div style="font-size:34px">' + icon + '</div><div><b style="font-size:16px">' + name + '</b><div style="color:#f3cf70;font-size:11px;font-weight:900;margin-top:3px">' + (p.level ? "LEVEL " + achievementLevelLabel(p.level) : "BELUM TERBUKA") + " • " + scope + '</div></div></div>' +
+          '<div style="display:flex;gap:12px;align-items:center"><div style="font-size:34px">' + icon + '</div><div><b style="font-size:16px">' + name + '</b><div style="color:#f3cf70;font-size:11px;font-weight:900;margin-top:3px">' + (hasLevels ? (p.level ? "LEVEL " + achievementLevelLabel(p.level) : "BELUM TERBUKA") : "PROGRESS") + " • " + scope + '</div></div></div>' +
           '<div style="margin-top:14px;color:#a9c6ba;font-size:12px;line-height:1.5">' + description + '</div>' +
           '<div style="margin-top:15px;padding:13px;border-radius:12px;background:rgba(255,255,255,.045)"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:900"><span>PROGRESS</span><span style="color:#f3cf70">' + progress + '</span></div>' +
-          '<div style="display:flex;gap:6px;margin-top:10px">' +
+          (hasLevels ? '<div style="display:flex;gap:6px;margin-top:10px">' +
           p.tiers.map((t,i) => '<div style="flex:1;text-align:center;padding:7px 3px;border-radius:8px;background:' + (p.level >= i+1 ? "rgba(243,207,112,.16)" : "rgba(255,255,255,.035)") + '"><b style="display:block;color:' + (p.level >= i+1 ? "#f3cf70" : "#789f90") + '">' + ["I","II","III"][i] + '</b><span style="font-size:9px;color:#9fb8ad">' + t + '</span></div>').join("") +
-          '</div></div><button type="button" id="achievementProgressClose" style="width:100%;margin-top:15px;padding:11px;border:0;border-radius:10px;background:#e3bf65;color:#17231e;font-weight:900">Tutup</button></div>';
+          '</div>' : '') + '</div></div><button type="button" id="achievementProgressClose" style="width:100%;margin-top:15px;padding:11px;border:0;border-radius:10px;background:#e3bf65;color:#17231e;font-weight:900">Tutup</button></div>';
         document.body.appendChild(modal);
         const close=()=>modal.remove();
         document.getElementById("achievementProgressClose").onclick=close;
@@ -12611,7 +12614,7 @@
                   x[1] +
                   "</div><div><b>" +
                   x[2] +
-                  (minamiServerAchievementLevels[x[0]]
+                  (MINAMI_ACHIEVEMENT_LEVELS[x[0]] && minamiServerAchievementLevels[x[0]]
                     ? " " +
                       achievementLevelLabel(minamiServerAchievementLevels[x[0]])
                     : "") +
@@ -12640,7 +12643,7 @@
                 x[1] +
                 '</div><div class="achievement-info"><b>' +
                 x[2] +
-                (minamiServerAchievementLevels[x[0]]
+                (MINAMI_ACHIEVEMENT_LEVELS[x[0]] && minamiServerAchievementLevels[x[0]]
                   ? " " +
                     achievementLevelLabel(minamiServerAchievementLevels[x[0]])
                   : "") +
@@ -12968,7 +12971,9 @@
                     leaderboardEscape(a.icon || "🏆") +
                     "</div><div><b>" +
                     leaderboardEscape(a.name || "Achievement") +
-                    (Number(a.level) ? " " + achievementLevelLabel(Number(a.level)) : "") +
+                    (MINAMI_ACHIEVEMENT_LEVELS[a.code] && Number(a.level)
+                      ? " " + achievementLevelLabel(Number(a.level))
+                      : "") +
                     "</b><span>" +
                     leaderboardEscape(a.mode || "GLOBAL") +
                     "</span></div></div>",
