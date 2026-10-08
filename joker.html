@@ -3550,21 +3550,36 @@ function getJokerPlayerProfile(){try{const s=JSON.parse(localStorage.getItem("mi
 function updateJokerProfileUI(){const r=jokerRankInfo(jokerAccountStats.global),p=getJokerPlayerProfile();$("jokerMenuName").textContent=p.name;$("jokerRankIcon").textContent=r.icon;$("jokerRankName").textContent=r.name;$("jokerRankSub").textContent=r.sub;$("jokerRankProgress").style.width=r.progress+"%";$("jokerRankPercent").textContent=Math.round(r.progress)+"%";$("jokerRankNext").textContent=r.next||"Gelar tertinggi";$("jokerMenuAvatar").innerHTML=g?.p?.[0]?.photo?'<img src="'+g.p[0].photo+'">':"👤";const i=$("jokerProfileNameInput");if(i&&document.activeElement!==i)i.value=p.name==="Anda"?"":p.name}
 function openJokerFeature(tab){const g0=jokerAccountStats.global||{},s=jokerAccountStats.mode||{},global=[["rank1","Rank 1"],["game_wins","Win Game"],["match_finished","Match Selesai"]],jok=[["match_finished","Match Selesai"],["rank1","Rank 1"],["game_wins","Win Game"],["jokers","Joker Digunakan"],["joker_sets","Set"],["caught","Menangkap"],["caught_by","Ditangkap"],["best_streak","Best Streak"]];let body;if(tab==="global")body='<div class="joker-feature-grid">'+global.map(x=>'<div class="joker-feature-stat"><b>'+Number(g0[x[0]]||0)+'</b><span>'+x[1]+'</span></div>').join("")+'</div>';else if(tab==="joker")body='<div class="joker-feature-grid">'+jok.map(x=>'<div class="joker-feature-stat"><b>'+Number(s[x[0]]||0)+'</b><span>'+x[1]+'</span></div>').join("")+'</div>';else {
 const a=jokerAchievements();
+const jp=jokerAccountStats.mode||{},jg=jokerAccountStats.global||{};
+const jpProgress={
+  firstJoker:Number(jp.jokers||0),
+  firstWin:Number(jg.rank1||0),
+  firstChampion:Number(jg.game_wins||0),
+  setMaster:Number(jp.joker_sets||0),
+  collector:Number(jp.jokers||0),
+  hoarder:Number(jp.jokers||0),
+  tripleSet:Number(jokerServerAchievementProgress["triple-set"]||0),
+  perfectClose:Number(jokerServerAchievementProgress["perfect-close"]||0),
+  gotcha:Number(jp.caught||0),
+  payback:Number(jp.caught_by||0),
+  hotStreak:Number(jp.best_streak||0),
+  unstoppable:Number(jp.best_streak||0)
+};
 const list=[
-["🃏","First Joker","Menggunakan Joker pertama dalam kombinasi",a.firstJoker],
-["🏆","First Win","Menang 1 Match Joker",a.firstWin],
-["👑","First Champion","Memenangkan Game Joker",a.firstChampion],
-["🎯","Set Master","Membuat set pertama",a.setMaster],
-["🔥","Joker Collector","Menggunakan 10 Joker",a.collector],
-["💎","Joker Hoarder","Menggunakan 25 Joker",a.hoarder],
-["🎴","Triple Set","Membuat 3 set dalam satu match",a.tripleSet],
-["⚡","Perfect Close","Menutup dengan Joker",a.perfectClose],
-["🪤","Gotcha!","Mengambil buangan lalu langsung menutup",a.gotcha],
-["😈","Payback","Buanganmu diambil lawan lalu lawan menutup",a.payback],
-["🔥","Hot Streak","Rank 1 dalam 3 match berturut-turut",a.hotStreak],
-["👑","Unstoppable","Rank 1 dalam 5 match berturut-turut",a.unstoppable]
+["🃏","First Joker","Menggunakan Joker pertama dalam kombinasi",a.firstJoker,1,"firstJoker"],
+["🏆","First Win","Menang 1 Match Joker",a.firstWin,1,"firstWin"],
+["👑","First Champion","Memenangkan Game Joker",a.firstChampion,1,"firstChampion"],
+["🎯","Set Master","Membuat set pertama",a.setMaster,1,"setMaster"],
+["🔥","Joker Collector","Menggunakan 10 Joker",a.collector,10,"collector"],
+["💎","Joker Hoarder","Menggunakan 25 Joker",a.hoarder,25,"hoarder"],
+["🎴","Triple Set","Membuat 3 set dalam satu match",a.tripleSet,1,"tripleSet"],
+["⚡","Perfect Close","Menutup dengan Joker",a.perfectClose,1,"perfectClose"],
+["🪤","Gotcha!","Mengambil buangan lalu langsung menutup",a.gotcha,1,"gotcha"],
+["😈","Payback","Buanganmu diambil lawan lalu lawan menutup",a.payback,1,"payback"],
+["🔥","Hot Streak","Rank 1 dalam 3 match berturut-turut",a.hotStreak,3,"hotStreak"],
+["👑","Unstoppable","Rank 1 dalam 5 match berturut-turut",a.unstoppable,5,"unstoppable"]
 ];
-body=list.map(x=>'<div class="joker-achievement '+(x[3]?"":"locked")+'"><div class="joker-achievement-icon">'+x[0]+'</div><div><b>'+x[1]+'</b><small>'+x[2]+' • '+(x[3]?"TERBUKA":"TERKUNCI")+'</small></div></div>').join("");
+body=list.map(x=>'<div class="joker-achievement '+(x[3]?"":"locked")+'"><div class="joker-achievement-icon">'+x[0]+'</div><div><b>'+x[1]+'</b><small>'+x[2]+' • '+jpProgress[x[5]]+'/'+x[4]+' • '+(x[3]?"TERBUKA":"TERKUNCI")+'</small></div></div>').join("");
 }modal("📊 STATISTIK & ACHIEVEMENT",'<div class="joker-feature-tabs"><button class="joker-feature-tab '+(tab==="global"?"active":"")+'" id="jFeatureGlobal">🌐 Global</button><button class="joker-feature-tab '+(tab==="joker"?"active":"")+'" id="jFeatureJoker">🃏 Joker</button><button class="joker-feature-tab '+(tab==="achievements"?"active":"")+'" id="jFeatureAchievements">🏆 Achievement</button></div><div id="jokerFeatureBody">'+body+'</div>',"Tutup",closeModal,true);$("jFeatureGlobal").onclick=()=>openJokerFeature("global");$("jFeatureJoker").onclick=()=>openJokerFeature("joker");$("jFeatureAchievements").onclick=()=>openJokerFeature("achievements")}
 function openJokerPoints(){if(!g?.p)return;const rows=g.p.map((p,i)=>{const v=Number(p.score)||0;return '<div class="joker-points-card"><b>'+((v>=0?"+":"")+v)+'</b><span>'+(i===0?"👤 ":"")+(p.name||("P"+(i+1)))+'</span></div>'}).join("");modal("🏆 POIN PERMAINAN",'<div class="joker-points-grid">'+rows+'</div><div class="joker-rule-note">Poin ini adalah skor permainan Joker saat ini.</div>',"Tutup",closeModal,true)}
 function setJokerPointsVisible(show){const b=$("jokerPointsBtn");if(b)b.style.display=show?"flex":"none"}
