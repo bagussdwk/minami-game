@@ -101,13 +101,3 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   PRIMARY KEY (user_id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Progress achievement disimpan terpisah dari status unlock.
-CREATE TABLE IF NOT EXISTS user_achievement_progress (
-  user_id BIGINT UNSIGNED NOT NULL,
-  achievement_code VARCHAR(64) NOT NULL,
-  progress INT UNSIGNED NOT NULL DEFAULT 0,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (user_id, achievement_code),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
