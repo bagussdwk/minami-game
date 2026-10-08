@@ -12382,20 +12382,8 @@
             "<div><b>" +
             gameWinRate +
             "%</b><span>WIN RATE GAME</span></div>" +
-            '<div><b>' +
-            (Number(modeData.minami1?.rank1) || 0) +
-            '</b><span>MINAMI 1 • RANK 1</span></div>' +
-            '<div><b>' +
-            (Number(modeData.minami1?.game_wins) || 0) +
-            '</b><span>MINAMI 1 • WIN GAME</span></div>' +
-            '<div><b>' +
-            (Number(modeData.minami2?.rank1) || 0) +
-            '</b><span>MINAMI 2 • RANK 1</span></div>' +
-            '<div><b>' +
-            (Number(modeData.minami2?.game_wins) || 0) +
-            '</b><span>MINAMI 2 • WIN GAME</span></div>' +
-            "</div>" +
-            '<div class="feature-current-card">🌐 <b>Statistik Global</b>Rank 1 dan Win Game adalah akumulasi seluruh permainan. Ringkasan Minami 1 dan Minami 2 di atas memisahkan jumlah masing-masing mode.</div>';
+"</div>" +
+            '<div class="feature-current-card">🌐 <b>Statistik Global</b>Rank 1 dan Win Game adalah akumulasi dari seluruh permainan.</div>';
         } else {
           const s = modeData[minamiStatsModeView];
           const matches = Number(s.match_finished) || 0;
@@ -12417,6 +12405,8 @@
               : [
                   ["match_finished", "Match selesai"],
                   ["games_finished", "Game selesai"],
+                  ["rank1", "Rank 1"],
+                  ["game_wins", "Win Game"],
                   ["tenho", "TENHO"],
                   ["pots", "POT"],
                   ["cards", "Kartu dimainkan"],
