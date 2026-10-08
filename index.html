@@ -8330,6 +8330,18 @@
           game.stats.reason = reason;
           game.stats.delta = scoreDelta.slice();
         }
+        // Winning Streak achievement disimpan terpisah per mode.
+        // Streak Minami 1 tidak tercampur/reset saat bermain Minami 2,
+        // dan sebaliknya. Achievement global baru aktif jika KEDUANYA >= 3.
+        const streakModeKey =
+          Number(game?.mode) === 2 ? "minami2WinStreak" : "minami1WinStreak";
+        const currentModeStreak =
+          winner === 0
+            ? (Number(localStorage.getItem(streakModeKey)) || 0) + 1
+            : 0;
+        localStorage.setItem(streakModeKey, String(currentModeStreak));
+
+        // Tetap pertahankan streak global lama untuk statistik best streak.
         window.minamiWinStreak =
           winner === 0
             ? (Number(localStorage.getItem("minamiWinStreak")) || 0) + 1
