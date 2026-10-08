@@ -12006,7 +12006,7 @@
           '<div style="margin-top:15px;padding:13px;border-radius:12px;background:rgba(255,255,255,.045)"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:900"><span>PROGRESS</span><span style="color:#f3cf70">' + progress + '</span></div>' +
           (hasLevels ? '<div style="display:flex;gap:6px;margin-top:10px">' +
           p.tiers.map((t,i) => '<div style="flex:1;text-align:center;padding:7px 3px;border-radius:8px;background:' + (p.level >= i+1 ? "rgba(243,207,112,.16)" : "rgba(255,255,255,.035)") + '"><b style="display:block;color:' + (p.level >= i+1 ? "#f3cf70" : "#789f90") + '">' + ["I","II","III"][i] + '</b><span style="font-size:9px;color:#9fb8ad">' + t + '</span></div>').join("") +
-          '</div>' : '') + '</div></div><button type="button" id="achievementProgressClose" style="width:100%;margin-top:15px;padding:11px;border:0;border-radius:10px;background:#e3bf65;color:#17231e;font-weight:900">Tutup</button></div>';
+          '</div>' : '') + '</div><button type="button" id="achievementProgressClose" style="width:100%;margin-top:15px;padding:11px;border:0;border-radius:10px;background:#e3bf65;color:#17231e;font-weight:900">Tutup</button></div>';
         document.body.appendChild(modal);
         const close=()=>modal.remove();
         document.getElementById("achievementProgressClose").onclick=close;
