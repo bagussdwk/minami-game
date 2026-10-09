@@ -1528,9 +1528,6 @@ function jokerAchievements(){
               ledger.push(resultId);
               saveJokerApiSyncLedger(ledger);
               saveJokerPendingResults(jokerPendingResults().filter(x=>x&&x.id!==resultId));
-              // Refresh server-authoritative lifetime Rank 1 and GM title immediately.
-              await loadJokerAccountStats();
-              if(typeof updateJokerProfileUI==="function")updateJokerProfileUI();
               return true;
             }
           }catch(e){}
