@@ -10128,7 +10128,7 @@
           const rank = getMinamiRankInfo();
           t.textContent =
             rank.name === "GRANDMASTER"
-              ? "GRANDMASTER " + (["I", "II", "III", "IV", "V"][Math.max(0, Math.min(4, 5 - Number(rank.level || 1)))] || "V")
+              ? "GRANDMASTER " + rank.level
               : rank.name;
         }
         if (game?.aiProfilesData) {
