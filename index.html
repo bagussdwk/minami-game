@@ -10120,7 +10120,17 @@
 
       function refreshPlayerTitles() {
         const t = document.getElementById("playerTitle1");
-        if (t) t.textContent = minamiRankTitle(featureStats().rank1);
+        // Gunakan sumber perhitungan gelar yang sama dengan profil/menu:
+        // Rank 1, game selesai, dan win game harus lolos sebagai satu paket.
+        // Sebelumnya gelar di meja hanya membaca localStorage sehingga bisa
+        // berbeda dari gelar profil yang menghitung statistik server juga.
+        if (t) {
+          const rank = getMinamiRankInfo();
+          t.textContent =
+            rank.name === "GRANDMASTER"
+              ? "GRANDMASTER " + (["I", "II", "III", "IV", "V"][Math.max(0, Math.min(4, 5 - Number(rank.level || 1)))] || "V")
+              : rank.name;
+        }
         if (game?.aiProfilesData) {
           for (let i = 1; i < playerCount; i++) {
             const p = game.aiProfilesData[i];
