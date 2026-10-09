@@ -8347,7 +8347,7 @@
             ? (Number(localStorage.getItem("minamiWinStreak")) || 0) + 1
             : 0;
         localStorage.setItem("minamiWinStreak", String(window.minamiWinStreak));
-        const featureDelta = updateLifetimeStatsFromGame();
+        const featureDelta = updateLifetimeStatsFromGame(resultId);
         updateAchievements();
         renderFeatureStats();
         renderAchievements();
@@ -11682,14 +11682,18 @@
         renderFeatureStats();
         renderAchievements();
       }
-      function updateLifetimeStatsFromGame() {
+      function updateLifetimeStatsFromGame(resultId) {
         if (!game) return null;
-        // Jika statistik lokal sudah dihitung tetapi sinkronisasi API sebelumnya
-        // gagal, kembalikan delta yang sama agar hasil match bisa dicoba kirim
-        // ulang tanpa menambah statistik lokal untuk kedua kalinya.
-        if (game._lifetimeCounted) {
+        // Cegah penghitungan ganda untuk hasil match yang sama, bukan untuk
+        // seluruh objek game. Objek game dipakai lintas beberapa match.
+        const resultKey = String(resultId || "");
+        if (
+          resultKey &&
+          game._lifetimeCountedResultId === resultKey
+        ) {
           return game._lastLifetimeApiDelta || null;
         }
+        game._lifetimeCountedResultId = resultKey;
         game._lifetimeCounted = true;
         const s = featureStats(),
           st = game.stats || {};
