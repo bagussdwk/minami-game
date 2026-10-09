@@ -10036,12 +10036,14 @@
       const MINAMI_AI_ROSTER_KEY = "minamiAIRosterV2";
 
       function minamiRankTitleFromStats(rank1, games = 0, gameWins = 0) {
-        const rank = Number(rank1) || 0;
+        const rank = Math.max(0, Number(rank1) || 0);
         const finished = Math.max(0, Number(games) || 0);
         const wins = Math.max(0, Number(gameWins) || 0);
-        if (rank >= 100 && finished >= 25 && wins >= 10) {
-          return "GRANDMASTER " + (Math.floor((rank - 100) / 50) + 1);
-        }
+        if (rank >= 400 && finished >= 60 && wins >= 50) return "GRANDMASTER I";
+        if (rank >= 300 && finished >= 40 && wins >= 25) return "GRANDMASTER II";
+        if (rank >= 250 && finished >= 35 && wins >= 20) return "GRANDMASTER III";
+        if (rank >= 200 && finished >= 30 && wins >= 15) return "GRANDMASTER IV";
+        if (rank >= 150 && finished >= 25 && wins >= 10) return "GRANDMASTER V";
         if (rank >= 60) return "MASTER";
         if (rank >= 30) return "EXPERT";
         if (rank >= 15) return "PLAYER";
@@ -12320,23 +12322,29 @@
           { name: "EXPERT", icon: "🔥", min: 30, next: 60 },
           { name: "MASTER", icon: "💎", min: 60, next: 100 },
         ];
-        const grandmasterReady = rank1 >= 100 && games >= 25 && gameWins >= 10;
-        if (grandmasterReady) {
-          const gmLevel = Math.floor((rank1 - 100) / 50) + 1;
-          const currentMin = 100 + (gmLevel - 1) * 50;
-          const next = currentMin + 50;
+        const grandmasterTiers = [
+          { roman: "I", min: 400, games: 60, wins: 50 },
+          { roman: "II", min: 300, games: 40, wins: 25 },
+          { roman: "III", min: 250, games: 35, wins: 20 },
+          { roman: "IV", min: 200, games: 30, wins: 15 },
+          { roman: "V", min: 150, games: 25, wins: 10 },
+        ];
+        const gm = grandmasterTiers.find(
+          (x) => rank1 >= x.min && games >= x.games && gameWins >= x.wins,
+        );
+        if (gm) {
+          const nextTier = grandmasterTiers.find((x) => x.min < gm.min);
           return {
             name: "GRANDMASTER",
             icon: "👑",
-            level: gmLevel,
-            min: currentMin,
-            next,
+            level: gm.roman,
+            min: gm.min,
+            next: nextTier ? nextTier.min : gm.min,
             current: rank1,
-            nextLabel: "GRANDMASTER " + (gmLevel + 1),
-            progress: Math.min(
-              100,
-              Math.round(((rank1 - currentMin) / (next - currentMin)) * 100),
-            ),
+            nextLabel: nextTier ? "GRANDMASTER " + nextTier.roman : "Gelar tertinggi",
+            progress: nextTier
+              ? Math.min(100, Math.round(((rank1 - gm.min) / (nextTier.min - gm.min)) * 100))
+              : 100,
             eligible: true,
           };
         }
@@ -13370,27 +13378,12 @@
           ["🃏", "NOVICE", "5–14 Rank 1"],
           ["⚔️", "PLAYER", "15–29 Rank 1"],
           ["🔥", "EXPERT", "30–59 Rank 1"],
-          ["💎", "MASTER", "60–99 Rank 1"],
-          [
-            "👑",
-            "GRANDMASTER I",
-            "100 Rank 1 + minimal 25 Game selesai + 10 Win Game",
-          ],
-          [
-            "👑",
-            "GRANDMASTER II",
-            "150 Rank 1 + minimal 25 Game selesai + 10 Win Game",
-          ],
-          [
-            "👑",
-            "GRANDMASTER III",
-            "200 Rank 1 + minimal 25 Game selesai + 10 Win Game",
-          ],
-          [
-            "👑",
-            "GRANDMASTER IV",
-            "250 Rank 1 + minimal 25 Game selesai + 10 Win Game",
-          ],
+          ["💎", "MASTER", "60–149 Rank 1"],
+          ["👑", "GRANDMASTER V", "150 Rank 1 + minimal 25 Game selesai + 10 Win Game"],
+          ["👑", "GRANDMASTER IV", "200 Rank 1 + minimal 30 Game selesai + 15 Win Game"],
+          ["👑", "GRANDMASTER III", "250 Rank 1 + minimal 35 Game selesai + 20 Win Game"],
+          ["👑", "GRANDMASTER II", "300 Rank 1 + minimal 40 Game selesai + 25 Win Game"],
+          ["👑", "GRANDMASTER I", "400 Rank 1 + minimal 60 Game selesai + 50 Win Game"],
         ];
         box.innerHTML = rows
           .map(
@@ -13412,11 +13405,10 @@
               "</div></div></div>",
           )
           .join("");
-        if (r >= 300)
-          box.insertAdjacentHTML(
-            "beforeend",
-            '<div class="rank-guide-note">Setelah Grandmaster IV, setiap tambahan 50 Rank 1 menaikkan level Grandmaster berikutnya.</div>',
-          );
+        box.insertAdjacentHTML(
+          "beforeend",
+          '<div class="rank-guide-note">Syarat Grandmaster harus memenuhi Rank 1, Game selesai, dan Win Game sekaligus. Grandmaster I adalah gelar tertinggi.</div>',
+        );
       }
       document.getElementById("menuProfileRank").onclick = () => {
         renderRankGuide();
