@@ -11063,23 +11063,60 @@
       }
       async function minamiApiPost(action, payload = {}) {
         const body = { ...(payload || {}) };
-        const r = await fetch(
-          MINAMI_API_URL + "?action=" + encodeURIComponent(action),
-          {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=UTF-8" },
-            body: JSON.stringify(body),
-          },
-        );
-        let d = null;
-        try {
-          d = await r.json();
-        } catch (e) {
-          throw new Error("Respons API tidak valid.");
+        const url = MINAMI_API_URL + "?action=" + encodeURIComponent(action);
+        // Shared hosting kadang lambat merespons setelah lama tidak aktif.
+        // Ulangi hanya kegagalan sementara; jangan ulangi error akun 4xx.
+        // Pendaftaran tidak diulang otomatis untuk menghindari respons ganda
+        // "username sudah dipakai" jika request pertama sebenarnya berhasil.
+        const maxAttempts = action === "register" ? 1 : 3;
+        let lastError = null;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 15000);
+          try {
+            const r = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "text/plain;charset=UTF-8",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(body),
+              cache: "no-store",
+              signal: controller.signal,
+            });
+            const raw = await r.text();
+            let d = null;
+            try {
+              d = JSON.parse(raw);
+            } catch (e) {
+              throw new Error("Respons API tidak valid.");
+            }
+            if (!r.ok || !d?.ok) {
+              const error = new Error(d?.error || "Permintaan akun gagal.");
+              error.status = r.status;
+              // 4xx biasanya berarti input/sesi tidak valid, bukan hosting lambat.
+              if (r.status >= 400 && r.status < 500) throw error;
+              if (attempt === maxAttempts - 1) throw error;
+              lastError = error;
+            } else {
+              return d;
+            }
+          } catch (e) {
+            lastError = e;
+            const status = Number(e?.status || 0);
+            if (status >= 400 && status < 500) throw e;
+            if (attempt === maxAttempts - 1) {
+              if (e?.name === "AbortError") {
+                throw new Error("Server masih lambat merespons. Coba lagi sebentar.");
+              }
+              throw e instanceof Error ? e : new Error("Koneksi API gagal.");
+            }
+          } finally {
+            clearTimeout(timer);
+          }
+          await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
         }
-        if (!r.ok || !d?.ok)
-          throw new Error(d?.error || "Permintaan akun gagal.");
-        return d;
+        throw lastError || new Error("Koneksi API gagal.");
       }
       let minamiCloudTimers = {};
       let minamiCloudPending = {};
