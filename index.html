@@ -11390,6 +11390,7 @@
           mergeServerStatsIntoFeatureStats(window.minamiGlobalStats);
           renderAccountUI();
           applyPlayerProfile();
+          refreshPlayerTitles();
           renderFeatureStats();
           renderAchievements();
           return window.minamiGlobalStats;
@@ -11743,6 +11744,11 @@
         s.cardsPerMatch = s.matches ? Math.round(s.cards / s.matches) : 0;
         saveFeatureStats(s);
         updateAchievements();
+
+        // Perbarui gelar/profil segera setelah penghitung lokal berubah,
+        // termasuk ketika match ini menyelesaikan satu GAME dan membuka syarat GM.
+        refreshPlayerTitles();
+        applyPlayerProfile();
 
         const apiDelta = {
           match_finished: 1,
@@ -12307,13 +12313,28 @@
       function getMinamiRankInfo() {
         const local = featureStats(),
           remote = window.minamiGlobalStats;
+        // Tampilkan kenaikan lokal langsung setelah hasil match. Respons API
+        // yang masih memakai cache lama tidak boleh menurunkan Rank 1/gelar
+        // sebelum sinkronisasi hasil match selesai.
         const s = remote
           ? {
               ...local,
-              matches: Number(remote.match_finished) || 0,
-              games: Number(remote.games_finished) || 0,
-              gameWins: Number(remote.game_wins) || 0,
-              rank1: Number(remote.rank1) || 0,
+              matches: Math.max(
+                Number(local.matches) || 0,
+                Number(remote.match_finished) || 0,
+              ),
+              games: Math.max(
+                Number(local.games) || 0,
+                Number(remote.games_finished) || 0,
+              ),
+              gameWins: Math.max(
+                Number(local.gameWins) || 0,
+                Number(remote.game_wins) || 0,
+              ),
+              rank1: Math.max(
+                Number(local.rank1) || 0,
+                Number(remote.rank1) || 0,
+              ),
             }
           : local;
         const rank1 = Math.max(0, Number(s.rank1) || 0);
