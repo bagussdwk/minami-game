@@ -12431,12 +12431,17 @@
         const totalGames = sum("games_finished");
         const globalRank1 = Number(remote.rank1);
         const globalGameWins = Number(remote.game_wins);
-        const rank1 = Number.isFinite(globalRank1)
-          ? globalRank1
-          : Number(local.rank1) || 0;
-        const gameWins = Number.isFinite(globalGameWins)
-          ? globalGameWins
-          : Number(local.gameWins) || 0;
+        // API stats dapat tertinggal satu request dari hasil match yang baru
+        // selesai. Untuk tampilan realtime, jangan biarkan nilai server yang
+        // lama menimpa hitungan lokal yang sudah naik.
+        const rank1 = Math.max(
+          Number.isFinite(globalRank1) ? globalRank1 : 0,
+          Number(local.rank1) || 0,
+        );
+        const gameWins = Math.max(
+          Number.isFinite(globalGameWins) ? globalGameWins : 0,
+          Number(local.gameWins) || 0,
+        );
         const rank1Rate = totalMatches
           ? Math.round((rank1 / totalMatches) * 100)
           : 0;
