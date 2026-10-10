@@ -47,6 +47,7 @@ switch($path){
   case 'login': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); loginUser($db,$body); break;
   case 'logout': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); logoutUser($db); break;
   case 'me': me($db); break;
+  case 'profile-photo': if($_SERVER['REQUEST_METHOD']!=='GET')fail('Method tidak valid.',405); profilePhoto($db); break;
   case 'profile': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); profile($db,$body); break;
   case 'stats': stats($db); break;
   case 'presence': if($_SERVER['REQUEST_METHOD']!=='POST')fail('Method tidak valid.',405); presence($db,$body); break;
@@ -113,7 +114,9 @@ function loginUser(PDO $db,array $b):never{
   ensureUserProfileTable($db);
   $pq=$db->prepare('SELECT profile_id FROM user_profiles WHERE user_id=? LIMIT 1');$pq->execute([$row['id']]);
   $profileId=(string)($pq->fetchColumn()?:'cartoon_01');
-  ok(['token'=>$token,'user'=>['username'=>$row['username'],'display_name'=>$row['display_name'],'profile_id'=>$profileId]]);
+  $photoQ=$db->prepare('SELECT profile_photo FROM user_profiles WHERE user_id=? LIMIT 1');$photoQ->execute([$row['id']]);
+  $photoUrl=$photoQ->fetchColumn() ? 'api/index.php?action=profile-photo&user_id='.(int)$row['id'] : null;
+  ok(['token'=>$token,'user'=>['username'=>$row['username'],'display_name'=>$row['display_name'],'profile_id'=>$profileId,'profile_photo_url'=>$photoUrl]]);
 }
 function presence(PDO $db,array $b):never{
   $u=auth($db);
@@ -139,26 +142,63 @@ function logoutUser(PDO $db):never{
 }
 function me(PDO $db):never{
   $u=auth($db); ensureUserProfileTable($db);
-  $q=$db->prepare('SELECT profile_id FROM user_profiles WHERE user_id=? LIMIT 1');$q->execute([$u['id']]);
-  $profile=(string)($q->fetchColumn()?:'cartoon_01');
-  ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name'],'profile_id'=>$profile]]);
+  $q=$db->prepare('SELECT profile_id,profile_photo FROM user_profiles WHERE user_id=? LIMIT 1');$q->execute([$u['id']]);
+  $profileRow=$q->fetch()?:[]; $profile=(string)($profileRow['profile_id']??'cartoon_01');
+  $photoUrl=!empty($profileRow['profile_photo']) ? 'api/index.php?action=profile-photo&user_id='.(int)$u['id'] : null;
+  ok(['user'=>['username'=>$u['username'],'display_name'=>$u['display_name'],'profile_id'=>$profile,'profile_photo_url'=>$photoUrl]]);
 }
 function profile(PDO $db,array $b):never{
   $u=auth($db); ensureUserProfileTable($db);
-  $id=trim((string)($b['profile_id']??''));
+  $id=trim((string)($b['profile_id']??'cartoon_01'));
   if(!preg_match('/^cartoon_(0[1-9]|1[0-2])$/',$id))fail('Profile tidak valid.');
+  $uid=(int)$u['id'];
+  if(!empty($b['remove_photo'])){
+    $q=$db->prepare('INSERT INTO user_profiles(user_id,profile_id,profile_photo,photo_mime) VALUES(?,?,NULL,NULL)
+      ON DUPLICATE KEY UPDATE profile_id=VALUES(profile_id),profile_photo=NULL,photo_mime=NULL');
+    $q->execute([$uid,$id]); ok(['profile_id'=>$id,'profile_photo_url'=>null,'photo_removed'=>true]);
+  }
+  if(isset($b['photo_data'])){
+    $data=(string)$b['photo_data'];
+    if(strlen($data)>700000) fail('Foto terlalu besar setelah diperkecil. Coba foto lain.');
+    if(!preg_match('#^data:(image/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$#',$data,$m))fail('Format foto tidak valid.');
+    $binary=base64_decode($m[2],true);
+    if($binary===false||strlen($binary)<16||strlen($binary)>500000)fail('Ukuran foto maksimal 500 KB.');
+    $info=@getimagesizefromstring($binary);
+    if(!$info||!in_array($info['mime'],['image/jpeg','image/png','image/webp'],true)||$info['mime']!==$m[1])fail('Isi file bukan gambar yang valid.');
+    $q=$db->prepare('INSERT INTO user_profiles(user_id,profile_id,profile_photo,photo_mime) VALUES(?,?,?,?)
+      ON DUPLICATE KEY UPDATE profile_id=VALUES(profile_id),profile_photo=VALUES(profile_photo),photo_mime=VALUES(photo_mime)');
+    $q->execute([$uid,$id,$binary,$info['mime']]);
+    ok(['profile_id'=>$id,'profile_photo_url'=>'api/index.php?action=profile-photo&user_id='.$uid,'photo_saved'=>true]);
+  }
   $q=$db->prepare('INSERT INTO user_profiles(user_id,profile_id) VALUES(?,?) ON DUPLICATE KEY UPDATE profile_id=VALUES(profile_id)');
-  $q->execute([$u['id'],$id]);
-  ok(['profile_id'=>$id]);
+  $q->execute([$uid,$id]); ok(['profile_id'=>$id]);
 }
 function ensureUserProfileTable(PDO $db):void{
   $db->exec('CREATE TABLE IF NOT EXISTS user_profiles (
     user_id BIGINT UNSIGNED NOT NULL,
     profile_id VARCHAR(32) NOT NULL DEFAULT "cartoon_01",
+    profile_photo MEDIUMBLOB NULL,
+    photo_mime VARCHAR(32) NULL,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id),
     CONSTRAINT fk_user_profiles_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+  $columns=[];
+  foreach($db->query("SHOW COLUMNS FROM user_profiles")->fetchAll() as $col) $columns[strtolower((string)$col['Field'])]=true;
+  if(!isset($columns['profile_photo'])) $db->exec('ALTER TABLE user_profiles ADD COLUMN profile_photo MEDIUMBLOB NULL AFTER profile_id');
+  if(!isset($columns['photo_mime'])) $db->exec('ALTER TABLE user_profiles ADD COLUMN photo_mime VARCHAR(32) NULL AFTER profile_photo');
+}
+function profilePhoto(PDO $db):never{
+  ensureUserProfileTable($db);
+  $uid=filter_var($_GET['user_id']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]);
+  if(!$uid){ http_response_code(400); exit; }
+  $q=$db->prepare('SELECT profile_photo,photo_mime FROM user_profiles WHERE user_id=? LIMIT 1');
+  $q->execute([$uid]); $row=$q->fetch();
+  if(!$row||empty($row['profile_photo'])){ http_response_code(404); exit; }
+  $mime=(string)($row['photo_mime']??'image/jpeg');
+  if(!in_array($mime,['image/jpeg','image/png','image/webp'],true)){ http_response_code(404); exit; }
+  header('Content-Type: '.$mime); header('Cache-Control: public, max-age=300'); header('X-Content-Type-Options: nosniff');
+  echo $row['profile_photo']; exit;
 }
 function stats(PDO $db):never{
   $u=auth($db);
@@ -211,6 +251,7 @@ function leaderboard(PDO $db):never{
       u.id AS user_id,
       u.display_name,
       COALESCE(uf.profile_id,"cartoon_01") AS profile_id,
+      CASE WHEN uf.profile_photo IS NOT NULL THEN CONCAT("api/index.php?action=profile-photo&user_id=",u.id) ELSE NULL END AS profile_photo_url,
       CASE WHEN up.last_seen >= (CURRENT_TIMESTAMP - INTERVAL 120 SECOND) THEN 1 ELSE 0 END AS online,
       COALESCE(s.games_finished,0) AS games_finished,
       COALESCE(s.game_wins,0) AS game_wins,
@@ -278,6 +319,7 @@ function leaderboard(PDO $db):never{
     $players[]=[
       'name'=>mb_substr((string)$row['display_name'],0,40),
       'profile_id'=>(string)($row['profile_id']??'cartoon_01'),
+      'profile_photo_url'=>$row['profile_photo_url'] ? (string)$row['profile_photo_url'] : null,
       'online'=>(bool)$row['online'],
       'games_finished'=>(int)$row['games_finished'],
       'game_wins'=>(int)$row['game_wins'],
