@@ -11979,6 +11979,29 @@
         s.rank1 = (Number(s.rank1) || 0) + 1;
         saveFeatureStats(s);
 
+        // Perbarui statistik mode secara optimistis agar tab Minami 1/2
+        // langsung berubah pada saat hasil match ditetapkan, tanpa menunggu
+        // round-trip API. Ledger di atas memastikan hasil yang sama tidak
+        // menambah angka dua kali. Respons server setelah sinkronisasi akan
+        // mengganti cache ini dengan nilai resmi dari database.
+        try {
+          const modeKey = minamiModeKey(game?.mode ?? minamiMode);
+          const currentModes =
+            minamiModeStats && typeof minamiModeStats === "object"
+              ? minamiModeStats
+              : {};
+          const currentMode = currentModes[modeKey] || {};
+          minamiModeStats = {
+            ...currentModes,
+            [modeKey]: {
+              ...currentMode,
+              rank1: (Number(currentMode.rank1) || 0) + 1,
+            },
+          };
+        } catch (e) {
+          // Jangan sampai kegagalan cache statistik menghentikan permainan.
+        }
+
         // Rank 1 adalah statistik LIFETIME: langsung simpan dan render.
         refreshPlayerTitles();
         applyPlayerProfile();
