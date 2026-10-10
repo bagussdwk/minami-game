@@ -10693,6 +10693,9 @@
 
         const tableAvatar = document.querySelector("#player1 .avatar");
         if (tableAvatar) {
+          tableAvatar.style.cursor = "zoom-in";
+          tableAvatar.title = "Klik untuk memperbesar foto profil";
+          tableAvatar.onclick = () => openProfilePhotoPreview(photo, "Foto Profil • " + name);
           if (photo) {
             tableAvatar.innerHTML = '<img src="' + photo + '" alt="" />';
             tableAvatar.classList.add("profile-photo");
@@ -10703,6 +10706,9 @@
         }
         const menuAvatar = document.getElementById("menuProfileAvatar");
         if (menuAvatar) {
+          menuAvatar.style.cursor = "zoom-in";
+          menuAvatar.title = "Klik untuk memperbesar foto profil";
+          menuAvatar.onclick = () => openProfilePhotoPreview(photo, "Foto Profil • " + name);
           if (photo) {
             menuAvatar.innerHTML = '<img src="' + photo + '" alt="" />';
             menuAvatar.classList.add("profile-photo");
@@ -10797,12 +10803,9 @@
           custom.title = "Foto unggahan saat ini";
           custom.setAttribute("aria-label", "Foto unggahan saat ini");
           custom.innerHTML = '<img src="' + profile.photo + '" alt="" loading="lazy" />';
-          custom.disabled = true;
+          custom.onclick = () => openProfilePhotoPreview(profile.photo, "Foto Profil");
           wrap.prepend(custom);
         }
-        wrap.querySelectorAll(".menu-profile-option img").forEach((img) => {
-          img.onclick = (e) => { e.stopPropagation(); openProfilePhotoPreview(img.src, "Foto Profil"); };
-        });
         wrap.querySelectorAll(".menu-profile-option[data-profile-id]").forEach((btn) => {
           btn.onclick = async () => {
             const profileId = btn.dataset.profileId || "cartoon_01";
