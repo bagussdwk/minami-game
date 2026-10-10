@@ -97,7 +97,32 @@ CREATE TABLE IF NOT EXISTS player_stat_events (
 CREATE TABLE IF NOT EXISTS user_profiles (
   user_id BIGINT UNSIGNED NOT NULL,
   profile_id VARCHAR(32) NOT NULL DEFAULT 'cartoon_01',
+  profile_photo MEDIUMBLOB NULL,
+  photo_mime VARCHAR(32) NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Upgrade aman jika tabel user_profiles versi lama sudah ada.
+SET @profile_photo_exists := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profiles' AND COLUMN_NAME = 'profile_photo'
+);
+SET @profile_photo_sql := IF(@profile_photo_exists = 0,
+  'ALTER TABLE user_profiles ADD COLUMN profile_photo MEDIUMBLOB NULL AFTER profile_id',
+  'SELECT 1');
+PREPARE profile_photo_stmt FROM @profile_photo_sql;
+EXECUTE profile_photo_stmt;
+DEALLOCATE PREPARE profile_photo_stmt;
+
+SET @photo_mime_exists := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profiles' AND COLUMN_NAME = 'photo_mime'
+);
+SET @photo_mime_sql := IF(@photo_mime_exists = 0,
+  'ALTER TABLE user_profiles ADD COLUMN photo_mime VARCHAR(32) NULL AFTER profile_photo',
+  'SELECT 1');
+PREPARE photo_mime_stmt FROM @photo_mime_sql;
+EXECUTE photo_mime_stmt;
+DEALLOCATE PREPARE photo_mime_stmt;
