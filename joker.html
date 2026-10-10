@@ -3571,11 +3571,25 @@ function advance() {
 let jokerAccountStats={global:{},mode:{}};
 let jokerServerAchievementCodes=new Set(),jokerServerAchievementLevels={};
 const JOKER_ACH_CODE_MAP={firstJoker:"first-joker",firstWin:"first-win",firstChampion:"first-champion",setMaster:"set-master",collector:"joker-collector",hoarder:"joker-hoarder",tripleSet:"triple-set",perfectClose:"perfect-close",gotcha:"gotcha",payback:"payback",hotStreak:"hot-streak",unstoppable:"unstoppable"};
-async function loadJokerAchievements(){const token=localStorage.getItem(JOKER_API_TOKEN_KEY);if(!token)return false;try{const r=await fetch(JOKER_API_URL+"?action=achievement",{headers:{Authorization:"Bearer "+token}});const d=await r.json();if(r.ok&&d?.ok){
-jokerServerAchievementCodes=new Set((d.achievements||[]).filter(x=>x.unlocked).map(x=>x.code));
-jokerServerAchievementLevels={};
-(d.achievements||[]).forEach(x=>{if(x.unlocked&&x.level)jokerServerAchievementLevels[x.code]=Math.max(1,Math.min(3,Number(x.level)||1))});
-return true}}catch(e){}return false}
+async function loadJokerAchievements(){
+  const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
+  if(!token)return false;
+  try{
+    const r=await fetch(JOKER_API_URL+"?action=achievement",{headers:{Authorization:"Bearer "+token}});
+    const d=await r.json();
+    if(r.ok&&d?.ok){
+      jokerServerAchievementCodes=new Set((d.achievements||[]).filter(x=>x.unlocked).map(x=>x.code));
+      jokerServerAchievementLevels={};
+      (d.achievements||[]).forEach(x=>{
+        if(x.unlocked&&x.level)jokerServerAchievementLevels[x.code]=Math.max(1,Math.min(3,Number(x.level)||1));
+      });
+      return true;
+    }
+  }catch(e){
+    console.warn("load Joker achievements",e);
+  }
+  return false;
+}
 async function syncJokerAchievements(keys=[],levels={}){
 const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
 if(!token)return false;
