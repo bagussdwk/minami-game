@@ -10725,7 +10725,7 @@
           }
         }
         document.querySelectorAll(".menu-profile-option").forEach((el) => {
-          el.classList.toggle("active", el.dataset.profileId === profile.profile_id);
+          el.classList.toggle("active", el.classList.contains("custom-photo") ? profile.custom_photo : el.dataset.profileId === profile.profile_id);
         });
 
         const current = document.getElementById("profileCurrentName");
