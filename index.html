@@ -10677,7 +10677,10 @@
           const savedId = saved?.profile_id || accountUser.profile_id || "cartoon_01";
           const profileId = /^cartoon_(0[1-9]|1[0-2])$/.test(savedId) ? savedId : "cartoon_01";
           const selected = MINAMI_USER_PROFILE_POOL.find(p => p.id === profileId) || MINAMI_USER_PROFILE_POOL[0];
-          const customPhotoUrl = saved?.custom_photo_url || accountUser.profile_photo_url || "";
+          const savedPhotoUrl = saved?.custom_photo_url || "";
+          const customPhotoUrl = accountUser.profile_photo_active === false
+            ? ""
+            : (savedPhotoUrl || accountUser.profile_photo_url || "");
           return { name: name || "Anda", profile_id: profileId, photo: customPhotoUrl || selected.photo, custom_photo: !!customPhotoUrl };
         } catch (e) {
           const p = MINAMI_USER_PROFILE_POOL[0];
@@ -10768,7 +10771,7 @@
         applyPlayerProfile();
         const token = localStorage.getItem(MINAMI_API_TOKEN_KEY);
         if (token && window.minamiApiPost) {
-          minamiApiPost("profile", { token, profile_id: currentProfile.profile_id })
+          minamiApiPost("profile", { token, profile_id: currentProfile.profile_id, use_photo: !!currentProfile.custom_photo })
             .catch((e) => console.warn("Nama tersimpan lokal, sinkron profil gagal:", e.message));
         }
         if (note) {
@@ -10795,22 +10798,50 @@
         const wrap = document.getElementById("profileOptions");
         if (!wrap) return;
         const profile = getPlayerProfile();
-        wrap.innerHTML = MINAMI_USER_PROFILE_POOL.map((p) => {
+        const accountUser = loadAccountUser() || {};
+        let savedPhotoUrl = "";
+        try { savedPhotoUrl = JSON.parse(localStorage.getItem(MINAMI_PROFILE_KEY) || "{}")?.custom_photo_url || ""; } catch (e) {}
+        const uploadedPhotoUrl = accountUser.profile_photo_url || savedPhotoUrl || (profile.custom_photo ? profile.photo : "");
+        const uploadedTile = uploadedPhotoUrl
+          ? '<button type="button" class="menu-profile-option uploaded-photo' + (profile.custom_photo ? ' active' : '') +
+            '" data-uploaded-profile-photo="1" title="Foto Unggahan Saya" aria-label="Pilih foto unggahan saya">' +
+            '<img src="' + uploadedPhotoUrl + '" alt="" loading="lazy" /></button>'
+          : "";
+        wrap.innerHTML = uploadedTile + MINAMI_USER_PROFILE_POOL.map((p) => {
           const active = !profile.custom_photo && p.id === profile.profile_id ? " active" : "";
           return '<button type="button" class="menu-profile-option' + active +
             '" data-profile-id="' + p.id + '" title="' + p.name + '" aria-label="' + p.name + '">' +
             '<img src="' + p.photo + '" alt="" loading="lazy" /></button>';
         }).join("");
+        const uploadedBtn = wrap.querySelector("[data-uploaded-profile-photo]");
+        if (uploadedBtn) uploadedBtn.onclick = async () => {
+          const current = getPlayerProfile();
+          const token = localStorage.getItem(MINAMI_API_TOKEN_KEY);
+          uploadedBtn.disabled = true;
+          try {
+            if (token && window.minamiApiPost) await minamiApiPost("profile", { token, profile_id: current.profile_id, use_photo: true });
+            const user = loadAccountUser() || {};
+            user.profile_id = current.profile_id;
+            user.profile_photo_url = uploadedPhotoUrl;
+            user.profile_photo_active = true;
+            saveAccountUser(user);
+            localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({ name: current.name, profile_id: current.profile_id, custom_photo_url: uploadedPhotoUrl }));
+            setProfilePhotoNote("Foto unggahan dipilih kembali.", "success");
+            renderProfileOptions(); applyPlayerProfile();
+          } catch (e) {
+            setProfilePhotoNote("Tidak dapat memilih foto unggahan: " + (e.message || "koneksi gagal"), "error");
+          } finally { uploadedBtn.disabled = false; }
+        };
         wrap.querySelectorAll(".menu-profile-option[data-profile-id]").forEach((btn) => {
           btn.onclick = async () => {
             const profileId = btn.dataset.profileId || "cartoon_01";
             const oldProfile = getPlayerProfile();
             const token = localStorage.getItem(MINAMI_API_TOKEN_KEY);
             try {
-              if (token && window.minamiApiPost) await minamiApiPost("profile", { token, profile_id: profileId, remove_photo: true });
+              if (token && window.minamiApiPost) await minamiApiPost("profile", { token, profile_id: profileId });
               localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({ name: oldProfile.name, profile_id: profileId, custom_photo_url: "" }));
               const user = loadAccountUser() || {};
-              user.profile_id = profileId; user.profile_photo_url = "";
+              user.profile_id = profileId; user.profile_photo_active = false;
               saveAccountUser(user);
               setProfilePhotoNote("Avatar bawaan dipilih.", "success");
             } catch (e) {
@@ -10969,6 +11000,7 @@
           const result = await minamiApiPost("profile", { token, profile_id: getPlayerProfile().profile_id, photo_data: photoData });
           const user = loadAccountUser() || {};
           user.profile_photo_url = result.profile_photo_url || "";
+          user.profile_photo_active = true;
           user.profile_id = result.profile_id || user.profile_id || "cartoon_01";
           saveAccountUser(user);
           const oldProfile = getPlayerProfile();
@@ -13163,7 +13195,7 @@
                 .map((p, i) => {
                   const rank = leaderboardRankForPlayer(p);
                   const presetProfile = MINAMI_USER_PROFILE_POOL.find((item) => item.id === p.profile_id) || MINAMI_USER_PROFILE_POOL[0];
-                  const profilePhoto = p.profile_photo_url || presetProfile.photo;
+                  const profilePhoto = p.profile_photo_active === false ? presetProfile.photo : (p.profile_photo_url || presetProfile.photo);
                   const isMe =
                     me &&
                     String(p.name || "")
@@ -13216,7 +13248,13 @@
                     minamiLeaderboardCache?.[
                       Number(btn.dataset.leaderboardIndex)
                     ];
-                  if (p) renderLeaderboardPlayer(p);
+                  if (p) {
+                    renderLeaderboardPlayer(p);
+                    const modalBox = document.querySelector("#featureModal .feature-modal-box");
+                    if (modalBox) modalBox.scrollTop = 0;
+                    const panelEl = document.getElementById("featureLeaderboardPanel");
+                    if (panelEl) panelEl.scrollIntoView({ block: "start", behavior: "smooth" });
+                  }
                 };
               });
           })
@@ -13321,7 +13359,7 @@
           '<div class="leaderboard-detail-profile">' +
           '<button type="button" class="leaderboard-detail-avatar-button" id="leaderboardDetailPhotoBtn" aria-label="Perbesar foto profil">' +
           '<img class="leaderboard-detail-avatar" src="' +
-          (p.profile_photo_url || ((MINAMI_USER_PROFILE_POOL.find((item) => item.id === p.profile_id) || MINAMI_USER_PROFILE_POOL[0]).photo)) +
+          ((p.profile_photo_active === false ? "" : p.profile_photo_url) || ((MINAMI_USER_PROFILE_POOL.find((item) => item.id === p.profile_id) || MINAMI_USER_PROFILE_POOL[0]).photo)) +
           '" alt="Foto profil ' + leaderboardEscape(p.name || "Pemain") + '">' +
           "</button>" +
           '<div><div class="leaderboard-detail-name">' +
