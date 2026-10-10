@@ -8412,14 +8412,14 @@
         const streakModeKey =
           Number(game?.mode) === 2 ? "minami2WinStreak" : "minami1WinStreak";
         const currentModeStreak =
-          winner === 0
+          isRank1Result(scoreDelta, reason, 0)
             ? (Number(localStorage.getItem(streakModeKey)) || 0) + 1
             : 0;
         localStorage.setItem(streakModeKey, String(currentModeStreak));
 
         // Tetap pertahankan streak global lama untuk statistik best streak.
         window.minamiWinStreak =
-          winner === 0
+          isRank1Result(scoreDelta, reason, 0)
             ? (Number(localStorage.getItem("minamiWinStreak")) || 0) + 1
             : 0;
         localStorage.setItem("minamiWinStreak", String(window.minamiWinStreak));
@@ -12023,15 +12023,17 @@
         return "r-" + Date.now() + "-" + Math.random().toString(36).slice(2);
       }
 
-      function recordLifetimeRank1(delta, reason, winner, resultId) {
-        if (!Array.isArray(delta) || delta.length !== playerCount) return;
+      function isRank1Result(delta, reason, playerIndex = 0) {
+        if (!Array.isArray(delta) || delta.length !== playerCount) return false;
         if (reason === "ALL_DEAD" || delta.every((v) => Number(v) === -2))
-          return;
+          return false;
+        const numericDelta = delta.map((v) => Number(v));
+        const highestDelta = Math.max(...numericDelta);
+        return Number(numericDelta[playerIndex]) === highestDelta;
+      }
 
-        // Rank 1 ditentukan dari pemenang hasil match, bukan membandingkan
-        // angka delta. Ini menghindari tie/bonus scoring membuat pencatatan
-        // Rank 1 salah atau terlewat.
-        if (Number(winner) !== 0) return;
+      function recordLifetimeRank1(delta, reason, winner, resultId) {
+        if (!isRank1Result(delta, reason, 0)) return;
 
         // Setiap hasil punya ID sendiri. Jika fungsi terpanggil lagi karena
         // restore/refresh, hasil yang sama tidak boleh dihitung dua kali.
@@ -12105,11 +12107,12 @@
         s.matches++;
         // Match Wins = Rank 1: pemenang match adalah pemain yang finis Rank 1.
         // Keduanya sengaja memakai definisi yang sama agar statistik tidak berbeda.
-        if (
-          game.lastResult?.reason !== "ALL_DEAD" &&
-          game.lastResult?.winner === 0
-        )
-          s.matchWins++;
+        const playerRank1 = isRank1Result(
+          game.lastResult?.delta,
+          game.lastResult?.reason,
+          0,
+        );
+        if (playerRank1) s.matchWins++;
 
         const finalGame =
           Array.isArray(game.scores) &&
@@ -12151,21 +12154,13 @@
         const apiDelta = {
           match_finished: 1,
           // Match Wins sengaja sama dengan Rank 1.
-          match_wins:
-            game.lastResult?.reason !== "ALL_DEAD" &&
-            Number(game.lastResult?.winner) === 0
-              ? 1
-              : 0,
+          match_wins: playerRank1 ? 1 : 0,
           games_finished: finalGame ? 1 : 0,
           game_wins:
             finalGame && game.scores.findIndex((x) => Number(x) >= 25) === 0
               ? 1
               : 0,
-          rank1:
-            game.lastResult?.reason !== "ALL_DEAD" &&
-            Number(game.lastResult?.winner) === 0
-              ? 1
-              : 0,
+          rank1: playerRank1 ? 1 : 0,
           tenho: game.lastResult?.reason === "TENHO" ? 1 : 0,
           pots: Number(st.pots?.[0]) || 0,
           cards: Number(st.cardsPlayed?.[0]) || 0,
