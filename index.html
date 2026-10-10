@@ -3936,6 +3936,13 @@
         object-fit: cover;
         object-position: center top;
       }
+      .menu-profile-preview-hit {
+        position:absolute; right:0; bottom:0; z-index:2; width:21px; height:21px;
+        display:flex; align-items:center; justify-content:center; border-radius:50%;
+        border:1px solid rgba(255,255,255,.7); background:rgba(4,25,17,.9);
+        color:#f3cf70; font-size:18px; line-height:1; cursor:zoom-in;
+      }
+      .menu-profile-preview-hit:focus-visible { outline:2px solid #f3cf70; outline-offset:1px; }
       .menu-profile-option.active {
         border-color: #f3cf70;
         box-shadow: 0 0 0 2px rgba(243, 207, 112, 0.18);
@@ -10794,7 +10801,8 @@
           const active = !profile.custom_photo && p.id === profile.profile_id ? " active" : "";
           return '<button type="button" class="menu-profile-option' + active +
             '" data-profile-id="' + p.id + '" title="' + p.name + '" aria-label="' + p.name + '">' +
-            '<img src="' + p.photo + '" alt="" loading="lazy" /></button>';
+            '<img src="' + p.photo + '" alt="" loading="lazy" />' +
+            '<span class="menu-profile-preview-hit" role="button" tabindex="0" title="Pratinjau foto" aria-label="Pratinjau ' + p.name + '">⌕</span></button>';
         }).join("");
         if (profile.custom_photo) {
           const custom = document.createElement("button");
@@ -10806,6 +10814,16 @@
           custom.onclick = () => openProfilePhotoPreview(profile.photo, "Foto Profil");
           wrap.prepend(custom);
         }
+        wrap.querySelectorAll(".menu-profile-preview-hit").forEach((hit) => {
+          const preview = (e) => {
+            e.preventDefault(); e.stopPropagation();
+            const btn = hit.closest(".menu-profile-option");
+            const img = btn?.querySelector("img");
+            if (img) openProfilePhotoPreview(img.src, "Pratinjau Avatar");
+          };
+          hit.onclick = preview;
+          hit.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") preview(e); };
+        });
         wrap.querySelectorAll(".menu-profile-option[data-profile-id]").forEach((btn) => {
           btn.onclick = async () => {
             const profileId = btn.dataset.profileId || "cartoon_01";
