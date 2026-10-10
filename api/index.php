@@ -197,7 +197,7 @@ function profilePhoto(PDO $db):never{
   if(!$row||empty($row['profile_photo'])){ http_response_code(404); exit; }
   $mime=(string)($row['photo_mime']??'image/jpeg');
   if(!in_array($mime,['image/jpeg','image/png','image/webp'],true)){ http_response_code(404); exit; }
-  header('Content-Type: '.$mime); header('Cache-Control: public, max-age=300'); header('X-Content-Type-Options: nosniff');
+  header('Content-Type: '.$mime); header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0'); header('Pragma: no-cache'); header('X-Content-Type-Options: nosniff');
   echo $row['profile_photo']; exit;
 }
 function stats(PDO $db):never{
