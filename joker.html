@@ -3824,6 +3824,48 @@ $("jokerResetBtn").onclick=async()=>{
           loadJokerAccountStats().then(updateJokerProfileUI).catch(()=>{});
         })();
       })();
+    
+      // Pemeriksa versi ringan: pertahankan akun, statistik, dan save pertandingan.
+      const CARD_ARENA_BUILD_VERSION = "2026.10.10.1";
+      (function installCardArenaVersionCheck() {
+        let checking = false;
+        async function checkForNewBuild() {
+          if (checking || document.visibilityState === "hidden") return;
+          checking = true;
+          try {
+            const response = await fetch(
+              window.location.pathname + "?__ca_version_check=" + Date.now(),
+              { cache: "no-store", credentials: "same-origin" },
+            );
+            if (!response.ok) return;
+            const html = await response.text();
+            const match = html.match(/CARD_ARENA_BUILD_VERSION\s*=\s*["']([^"']+)["']/);
+            const latestVersion = match && match[1];
+            if (!latestVersion || latestVersion === CARD_ARENA_BUILD_VERSION) return;
+            try {
+              if (typeof saveJokerCloudImmediately === "function") {
+                await Promise.race([
+                  saveJokerCloudImmediately(),
+                  new Promise((resolve) => setTimeout(resolve, 2500)),
+                ]);
+              }
+            } catch (e) {}
+            window.location.replace(
+              window.location.pathname + "?__ca_build=" + encodeURIComponent(latestVersion),
+            );
+          } catch (e) {
+            // Kegagalan jaringan tidak mengganggu permainan.
+          } finally {
+            checking = false;
+          }
+        }
+        window.setInterval(checkForNewBuild, 60000);
+        window.setTimeout(checkForNewBuild, 20000);
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") checkForNewBuild();
+        });
+      })();
+
     </script>
   </body>
 </html>
