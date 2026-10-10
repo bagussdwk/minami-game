@@ -4971,10 +4971,17 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 11px;
+        overflow: hidden;
+        border-radius: 50%;
         background: rgba(243, 207, 112, 0.08);
-        border: 1px solid rgba(243, 207, 112, 0.13);
-        font-size: 22px;
+        border: 2px solid rgba(243, 207, 112, 0.35);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+      }
+      .leaderboard-icon img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
       }
       .leaderboard-main {
         min-width: 0;
@@ -5006,11 +5013,27 @@
         transform: translateY(-1px);
       }
       .leaderboard-title {
-        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        margin-top: 4px;
         color: #f3cf70;
         font-size: 8px;
         font-weight: 900;
         letter-spacing: 0.55px;
+        line-height: 1.2;
+      }
+      .leaderboard-title-icon {
+        flex: 0 0 auto;
+        font-size: 10px;
+        line-height: 1;
+      }
+      .leaderboard-title-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .leaderboard-rank1 {
         text-align: right;
@@ -12935,6 +12958,10 @@
               players
                 .map((p, i) => {
                   const rank = leaderboardRankForPlayer(p);
+                  const profile =
+                    MINAMI_USER_PROFILE_POOL.find(
+                      (item) => item.id === p.profile_id,
+                    ) || MINAMI_USER_PROFILE_POOL[0];
                   const isMe =
                     me &&
                     String(p.name || "")
@@ -12951,9 +12978,11 @@
                     '">' +
                     (i + 1) +
                     "</div>" +
-                    '<div class="leaderboard-icon">' +
-                    rank.icon +
-                    "</div>" +
+                    '<div class="leaderboard-icon"><img src="' +
+                    profile.photo +
+                    '" alt="Foto profil ' +
+                    leaderboardEscape(p.name || "Pemain") +
+                    '" loading="lazy"></div>' +
                     '<div class="leaderboard-main"><div class="leaderboard-name">' +
                     leaderboardEscape(p.name || "Pemain") +
                     '<span class="online-dot ' +
@@ -12961,10 +12990,11 @@
                     '" title="' +
                     (p.online ? "Online" : "Offline") +
                     '"></span>' +
-                    '</div><div class="leaderboard-title">' +
-                    rank.name +
-                    (rank.level ? " " + rank.level : "") +
-                    "</div></div>" +
+                    '</div><div class="leaderboard-title"><span class="leaderboard-title-icon">' +
+                    rank.icon +
+                    '</span><span class="leaderboard-title-name">' +
+                    leaderboardEscape(rank.name + (rank.level ? " " + rank.level : "")) +
+                    "</span></div></div>" +
                     '<div class="leaderboard-rank1"><b>' +
                     Number(p.rank1 || 0) +
                     "</b><span>RANK 1</span></div>" +
