@@ -3521,22 +3521,14 @@ function advance() {
         function gameOver() {
           clearTimeout(gameOverTimer);
           clearInterval(gameOverCountdown);
-
-          let left = 5;
-          const startNewGame = () => {
-            clearTimeout(gameOverTimer);
-            clearInterval(gameOverCountdown);
-            closeModal();
-            // Game baru harus benar-benar dimulai dari 0 poin.
-            newMatch(0, 1, false);
-          };
-
+          // Saat target 1.500 tercapai, pemain memilih sendiri kembali ke
+          // menu utama. Jangan otomatis membuat match baru setelah 5 detik.
           modal(
             "GAME SELESAI",
             g.p
               .map(
                 (x) =>
-                  '<div class="row"><b>' +
+                  '<div class="row"><b">' +
                   x.name +
                   "</b><span>" +
                   x.score +
@@ -3545,23 +3537,22 @@ function advance() {
                   "</b></div>",
               )
               .join("") +
-              '<div class="note">🏆 Target 1.500 tercapai. Match berikutnya akan dimulai otomatis dalam <b id="gameOverCountdown">5</b> detik.</div>',
-            "Main Lagi (5)",
-            startNewGame,
-          );
-
-          gameOverCountdown = setInterval(() => {
-            left--;
-            const el = $("gameOverCountdown");
-            if (el) el.textContent = Math.max(0, left);
-            $("mp").textContent = "Main Lagi (" + Math.max(0, left) + ")";
-            if (left <= 0) {
+              '<div class="note">🏆 Target 1.500 tercapai. Tekan tombol di bawah untuk kembali ke menu utama.</div>',
+            "Kembali ke Menu",
+            async () => {
+              clearTimeout(gameOverTimer);
               clearInterval(gameOverCountdown);
-              startNewGame();
-            }
-          }, 1000);
-
-          gameOverTimer = setTimeout(startNewGame, 5000);
+              closeModal();
+              clearSavedGame();
+              clearJokerWinPending();
+              await deleteJokerCloudSave();
+              g = null;
+              sel = -1;
+              $("game").style.display = "none";
+              setJokerPointsVisible(false);
+              window.location.href = "index.html";
+            },
+          );
         }
         function modal(t, b, ok, fn, singleButton = false, closeFn = closeModal, closeLabel = "Tutup") {
           $("mt").textContent = t;
@@ -3768,14 +3759,43 @@ $("jokerResetBtn").onclick=async()=>{
             }
           }catch(e){
             console.warn("auto-load",e);
+            // Jangan biarkan halaman hanya menampilkan latar hijau jika save
+            // lama/Cloud gagal dipulihkan. Coba lagi dari penyimpanan lokal,
+            // lalu buat meja baru sebagai pemulihan terakhir.
+            try{
+              restored=!!(g?.p?.length===n);
+              if(!restored) restored=loadGame();
+              if(!restored){
+                newMatch();
+                restored=!!(g?.p?.length===n);
+              }else{
+                render();
+              }
+            }catch(recoveryError){
+              console.error("joker startup recovery",recoveryError);
+              try{
+                if(!g?.p?.length) newMatch();
+                render();
+                restored=!!(g?.p?.length===n);
+              }catch(finalError){
+                console.error("joker final recovery",finalError);
+              }
+            }
           }
           if(restored && g?.p?.length===n){
             jokerLocalRestoredThisLoad=true;
             $("game").style.display="block";
             setJokerPointsVisible(true);
           }else{
-            $("game").style.display="none";
-            setJokerPointsVisible(false);
+            // Lebih baik tampilkan meja yang bisa dimainkan daripada
+            // menyembunyikan semuanya dan meninggalkan layar hijau kosong.
+            try{
+              if(!g?.p?.length) newMatch();
+              render();
+              restored=!!(g?.p?.length===n);
+            }catch(e){console.error("joker show fallback",e)}
+            $("game").style.display=restored?"block":"none";
+            setJokerPointsVisible(restored);
           }
 
           $("back").onclick = () => {
