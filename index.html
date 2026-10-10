@@ -6101,6 +6101,24 @@
                   ><span id="menuRankPercent">0%</span>
                 </div>
               </div>
+
+              <div id="profileCropModal" class="profile-photo-modal" aria-hidden="true">
+                <div class="profile-photo-dialog profile-crop-dialog" role="dialog" aria-modal="true" aria-label="Potong foto profil">
+                  <div class="profile-photo-dialog-head"><b>Atur Foto Profil</b><button type="button" id="profileCropClose" aria-label="Tutup">×</button></div>
+                  <div class="profile-crop-help">Geser foto untuk mengatur posisi, lalu atur pembesaran.</div>
+                  <div id="profileCropViewport" class="profile-crop-viewport"><img id="profileCropImage" alt="Pratinjau crop foto" draggable="false"></div>
+                  <label class="profile-crop-zoom-label" for="profileCropZoom">Pembesaran</label>
+                  <input id="profileCropZoom" class="profile-crop-zoom" type="range" min="1" max="3" step="0.01" value="1">
+                  <div class="profile-photo-dialog-actions"><button type="button" id="profileCropCancel">Batal</button><button type="button" id="profileCropApply">Gunakan Foto</button></div>
+                </div>
+              </div>
+              <div id="profilePhotoPreviewModal" class="profile-photo-modal" aria-hidden="true">
+                <div class="profile-photo-dialog profile-photo-preview-dialog" role="dialog" aria-modal="true" aria-label="Pratinjau foto profil">
+                  <div class="profile-photo-dialog-head"><b id="profilePhotoPreviewName">Foto Profil</b><button type="button" id="profilePhotoPreviewClose" aria-label="Tutup">×</button></div>
+                  <img id="profilePhotoPreviewImage" class="profile-photo-preview-image" alt="Foto profil ukuran besar">
+                  <div class="profile-photo-dialog-actions"><button type="button" id="profilePhotoPreviewDone">Tutup</button></div>
+                </div>
+              </div>
               <div class="menu-profile-selector">
                 <div class="menu-profile-selector-title">Pilih Foto Profil</div>
                 <div class="menu-profile-options" id="profileOptions"></div>
@@ -10782,6 +10800,9 @@
           custom.disabled = true;
           wrap.prepend(custom);
         }
+        wrap.querySelectorAll(".menu-profile-option img").forEach((img) => {
+          img.onclick = (e) => { e.stopPropagation(); openProfilePhotoPreview(img.src, "Foto Profil"); };
+        });
         wrap.querySelectorAll(".menu-profile-option[data-profile-id]").forEach((btn) => {
           btn.onclick = async () => {
             const profileId = btn.dataset.profileId || "cartoon_01";
@@ -10802,29 +10823,116 @@
           };
         });
       }
-      function resizeProfilePhoto(file) {
+      // Crop/preview UI: semua foto di-crop persegi sebelum dikirim ke akun.
+      const profileCropModal = document.getElementById("profileCropModal");
+      const profileCropViewport = document.getElementById("profileCropViewport");
+      const profileCropImage = document.getElementById("profileCropImage");
+      const profileCropZoom = document.getElementById("profileCropZoom");
+      const profileCropApply = document.getElementById("profileCropApply");
+      const profilePhotoPreviewModal = document.getElementById("profilePhotoPreviewModal");
+      const profilePhotoPreviewImage = document.getElementById("profilePhotoPreviewImage");
+      let pendingProfileImage = null;
+      let cropScale = 1, cropX = 0, cropY = 0, cropStart = null;
+      function openProfilePhotoPreview(src, name) {
+        if (!src) return;
+        document.getElementById("profilePhotoPreviewName").textContent = name || "Foto Profil";
+        profilePhotoPreviewImage.src = src;
+        profilePhotoPreviewModal.classList.add("show");
+        profilePhotoPreviewModal.setAttribute("aria-hidden", "false");
+      }
+      function closeProfilePhotoPreview() {
+        profilePhotoPreviewModal.classList.remove("show");
+        profilePhotoPreviewModal.setAttribute("aria-hidden", "true");
+        profilePhotoPreviewImage.removeAttribute("src");
+      }
+      document.getElementById("profilePhotoPreviewClose").onclick = closeProfilePhotoPreview;
+      document.getElementById("profilePhotoPreviewDone").onclick = closeProfilePhotoPreview;
+      profilePhotoPreviewModal.onclick = (e) => { if (e.target === profilePhotoPreviewModal) closeProfilePhotoPreview(); };
+      function drawCropImage() {
+        if (!pendingProfileImage) return;
+        const box = profileCropViewport.getBoundingClientRect();
+        const base = Math.max(box.width / pendingProfileImage.naturalWidth, box.height / pendingProfileImage.naturalHeight);
+        const scale = base * cropScale;
+        const width = pendingProfileImage.naturalWidth * scale;
+        const height = pendingProfileImage.naturalHeight * scale;
+        cropX = Math.min(0, Math.max(box.width - width, cropX));
+        cropY = Math.min(0, Math.max(box.height - height, cropY));
+        profileCropImage.style.width = width + "px";
+        profileCropImage.style.height = height + "px";
+        profileCropImage.style.left = cropX + "px";
+        profileCropImage.style.top = cropY + "px";
+      }
+      function openProfileCrop(file) {
         return new Promise((resolve, reject) => {
           if (!file || !/^image\/(jpeg|png|webp)$/i.test(file.type || "")) { reject(new Error("Pilih file JPG, PNG, atau WebP.")); return; }
-          if (file.size > 12 * 1024 * 1024) { reject(new Error("Ukuran foto maksimal 12 MB sebelum diperkecil.")); return; }
+          if (file.size > 12 * 1024 * 1024) { reject(new Error("Ukuran foto maksimal 12 MB.")); return; }
           const reader = new FileReader();
           reader.onerror = () => reject(new Error("Foto tidak dapat dibaca."));
           reader.onload = () => {
             const img = new Image();
             img.onerror = () => reject(new Error("File bukan gambar yang valid."));
             img.onload = () => {
-              const scale = Math.min(1, 512 / Math.max(img.naturalWidth, img.naturalHeight));
-              const canvas = document.createElement("canvas");
-              canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
-              canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
-              const ctx = canvas.getContext("2d");
-              if (!ctx) { reject(new Error("Browser tidak mendukung pengolahan foto.")); return; }
-              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-              resolve(canvas.toDataURL("image/jpeg", 0.78));
+              pendingProfileImage = img; cropScale = 1;
+              const box = profileCropViewport.getBoundingClientRect();
+              const base = Math.max(box.width / img.naturalWidth, box.height / img.naturalHeight);
+              cropX = (box.width - img.naturalWidth * base) / 2;
+              cropY = (box.height - img.naturalHeight * base) / 2;
+              profileCropZoom.value = "1";
+              profileCropImage.src = String(reader.result || "");
+              profileCropModal.classList.add("show");
+              profileCropModal.setAttribute("aria-hidden", "false");
+              requestAnimationFrame(drawCropImage);
+              resolve();
             };
             img.src = String(reader.result || "");
           };
           reader.readAsDataURL(file);
         });
+      }
+      function closeProfileCrop() {
+        profileCropModal.classList.remove("show");
+        profileCropModal.setAttribute("aria-hidden", "true");
+        pendingProfileImage = null;
+        profileCropImage.removeAttribute("src");
+      }
+      document.getElementById("profileCropClose").onclick = closeProfileCrop;
+      document.getElementById("profileCropCancel").onclick = closeProfileCrop;
+      profileCropModal.onclick = (e) => { if (e.target === profileCropModal) closeProfileCrop(); };
+      profileCropZoom.oninput = () => {
+        const oldScale = cropScale;
+        cropScale = Number(profileCropZoom.value) || 1;
+        const box = profileCropViewport.getBoundingClientRect();
+        const cx = box.width / 2, cy = box.height / 2;
+        cropX = cx - (cx - cropX) * cropScale / oldScale;
+        cropY = cy - (cy - cropY) * cropScale / oldScale;
+        drawCropImage();
+      };
+      profileCropViewport.addEventListener("pointerdown", (e) => {
+        if (!pendingProfileImage) return;
+        cropStart = { x:e.clientX, y:e.clientY, left:cropX, top:cropY };
+        profileCropViewport.setPointerCapture(e.pointerId);
+      });
+      profileCropViewport.addEventListener("pointermove", (e) => {
+        if (!cropStart) return;
+        cropX = cropStart.left + e.clientX - cropStart.x;
+        cropY = cropStart.top + e.clientY - cropStart.y;
+        drawCropImage();
+      });
+      profileCropViewport.addEventListener("pointerup", () => { cropStart = null; });
+      profileCropViewport.addEventListener("pointercancel", () => { cropStart = null; });
+      function makeCroppedProfilePhoto() {
+        if (!pendingProfileImage) throw new Error("Pilih foto terlebih dahulu.");
+        const box = profileCropViewport.getBoundingClientRect();
+        const scale = profileCropImage.getBoundingClientRect().width / pendingProfileImage.naturalWidth;
+        const sourceSize = box.width / scale;
+        const sx = Math.max(0, Math.min(pendingProfileImage.naturalWidth - sourceSize, -cropX / scale));
+        const sy = Math.max(0, Math.min(pendingProfileImage.naturalHeight - sourceSize, -cropY / scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Browser tidak mendukung crop foto.");
+        ctx.drawImage(pendingProfileImage, sx, sy, sourceSize, sourceSize, 0, 0, 512, 512);
+        return canvas.toDataURL("image/jpeg", 0.78);
       }
       const profilePhotoInput = document.getElementById("profilePhotoInput");
       const profilePhotoUploadBtn = document.getElementById("profilePhotoUploadBtn");
@@ -10840,30 +10948,44 @@
         profilePhotoInput.onchange = async () => {
           const file = profilePhotoInput.files && profilePhotoInput.files[0];
           if (!file) return;
-          const token = localStorage.getItem(MINAMI_API_TOKEN_KEY);
-          profilePhotoUploadBtn.disabled = true;
-          profilePhotoUploadBtn.textContent = "Mengunggah...";
-          setProfilePhotoNote("Foto sedang diperkecil dan disimpan ke akun...");
           try {
-            const photoData = await resizeProfilePhoto(file);
-            const result = await minamiApiPost("profile", { token, profile_id: getPlayerProfile().profile_id, photo_data: photoData });
-            const user = loadAccountUser() || {};
-            user.profile_photo_url = result.profile_photo_url || "";
-            user.profile_id = result.profile_id || user.profile_id || "cartoon_01";
-            saveAccountUser(user);
-            const oldProfile = getPlayerProfile();
-            localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({ name: oldProfile.name, profile_id: user.profile_id, custom_photo_url: user.profile_photo_url }));
-            setProfilePhotoNote("Foto profil berhasil disimpan. Profil ini ikut tampil di leaderboard.", "success");
-            renderProfileOptions(); applyPlayerProfile();
+            await openProfileCrop(file);
+            setProfilePhotoNote("Atur posisi foto dengan menggeser gambar. Tekan Gunakan Foto jika sudah sesuai.", "success");
           } catch (e) {
-            setProfilePhotoNote(e.message || "Gagal mengunggah foto.", "error");
-          } finally {
+            setProfilePhotoNote(e.message || "Foto tidak dapat dibuka.", "error");
             profilePhotoInput.value = "";
-            profilePhotoUploadBtn.disabled = false;
-            profilePhotoUploadBtn.textContent = "＋ Unggah / Ganti Foto";
           }
         };
       }
+      profileCropApply.onclick = async () => {
+        const token = localStorage.getItem(MINAMI_API_TOKEN_KEY);
+        if (!token || !pendingProfileImage) {
+          setProfilePhotoNote("Login kembali untuk menyimpan foto.", "error");
+          closeProfileCrop();
+          return;
+        }
+        profileCropApply.disabled = true;
+        profileCropApply.textContent = "Menyimpan...";
+        try {
+          const photoData = makeCroppedProfilePhoto();
+          closeProfileCrop();
+          const result = await minamiApiPost("profile", { token, profile_id: getPlayerProfile().profile_id, photo_data: photoData });
+          const user = loadAccountUser() || {};
+          user.profile_photo_url = result.profile_photo_url || "";
+          user.profile_id = result.profile_id || user.profile_id || "cartoon_01";
+          saveAccountUser(user);
+          const oldProfile = getPlayerProfile();
+          localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({ name: oldProfile.name, profile_id: user.profile_id, custom_photo_url: user.profile_photo_url }));
+          setProfilePhotoNote("Foto berhasil di-crop dan disimpan ke akun. Klik foto untuk melihat pratinjau.", "success");
+          renderProfileOptions(); applyPlayerProfile();
+        } catch (e) {
+          setProfilePhotoNote(e.message || "Gagal menyimpan foto.", "error");
+        } finally {
+          profileCropApply.disabled = false;
+          profileCropApply.textContent = "Gunakan Foto";
+          profilePhotoInput.value = "";
+        }
+      };
       if (profilePhotoResetBtn) {
         profilePhotoResetBtn.onclick = async () => {
           const token = localStorage.getItem(MINAMI_API_TOKEN_KEY);
@@ -13105,6 +13227,9 @@
                 })
                 .join("") +
               "</div>";
+            panel.querySelectorAll(".leaderboard-icon img").forEach((img) => {
+              img.onclick = (e) => { e.stopPropagation(); openProfilePhotoPreview(img.src, img.alt || "Foto Pemain"); };
+            });
             panel
               .querySelectorAll("[data-leaderboard-index]")
               .forEach((btn) => {
@@ -13216,9 +13341,11 @@
         panel.innerHTML =
           '<button type="button" class="leaderboard-detail-back" id="leaderboardBackBtn">‹ Kembali ke Leaderboard</button>' +
           '<div class="leaderboard-detail-profile">' +
-          '<div class="leaderboard-detail-icon">' +
-          rank.icon +
-          "</div>" +
+          '<button type="button" class="leaderboard-detail-avatar-button" id="leaderboardDetailPhotoBtn" aria-label="Perbesar foto profil">' +
+          '<img class="leaderboard-detail-avatar" src="' +
+          (p.profile_photo_url || ((MINAMI_USER_PROFILE_POOL.find((item) => item.id === p.profile_id) || MINAMI_USER_PROFILE_POOL[0]).photo)) +
+          '" alt="Foto profil ' + leaderboardEscape(p.name || "Pemain") + '">' +
+          "</button>" +
           '<div><div class="leaderboard-detail-name">' +
           leaderboardEscape(p.name || "Pemain") +
           "</div>" +
@@ -13276,6 +13403,10 @@
           '<div class="leaderboard-mode-list">' +
           modeCards +
           "</div>";
+        document.getElementById("leaderboardDetailPhotoBtn").onclick = () => {
+          const img = document.querySelector("#leaderboardDetailPhotoBtn img");
+          if (img) openProfilePhotoPreview(img.src, "Foto Profil • " + (p.name || "Pemain"));
+        };
         document.getElementById("leaderboardBackBtn").onclick =
           renderLeaderboard;
       }
@@ -13869,7 +14000,32 @@
         justify-content: center !important;
       }
     </style>
-  </body>
+  
+    <style id="profile-photo-crop-preview-style">
+      .profile-photo-modal { position:fixed; inset:0; z-index:30000; display:none; align-items:center; justify-content:center; padding:14px; background:rgba(0,0,0,.78); backdrop-filter:blur(7px); }
+      .profile-photo-modal.show { display:flex; }
+      .profile-photo-dialog { width:min(420px,100%); max-height:92vh; overflow:auto; padding:16px; border-radius:18px; background:linear-gradient(150deg,#0b3929,#061f17); border:1px solid rgba(243,207,112,.32); box-shadow:0 24px 80px rgba(0,0,0,.55); color:#fff; }
+      .profile-photo-dialog-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; color:#f3cf70; font-size:15px; }
+      .profile-photo-dialog-head button { width:34px; height:34px; padding:0; border-radius:50%; background:rgba(255,255,255,.09); color:white; font-size:24px; }
+      .profile-crop-help { color:#b8d8ca; font-size:12px; line-height:1.5; margin-bottom:12px; }
+      .profile-crop-viewport { position:relative; width:min(300px,100%); aspect-ratio:1; margin:0 auto 14px; overflow:hidden; border-radius:14px; border:2px solid #f3cf70; background:#06160f; touch-action:none; cursor:grab; }
+      .profile-crop-viewport:active { cursor:grabbing; }
+      .profile-crop-viewport img { position:absolute; max-width:none; max-height:none; user-select:none; pointer-events:none; }
+      .profile-crop-zoom-label { display:block; margin:5px 0 6px; color:#d8eee3; font-size:12px; font-weight:800; }
+      .profile-crop-zoom { display:block; width:100%; accent-color:#f3cf70; }
+      .profile-photo-dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
+      .profile-photo-dialog-actions button { min-height:39px; padding:9px 14px; border-radius:9px; background:rgba(255,255,255,.09); color:#fff; font-weight:800; }
+      #profileCropApply { background:linear-gradient(145deg,#f3cf70,#d9a441); color:#17251d; }
+      .profile-photo-preview-image { display:block; width:min(340px,100%); max-height:62vh; aspect-ratio:1; object-fit:contain; margin:8px auto; border-radius:14px; background:rgba(0,0,0,.25); }
+      .menu-profile-option img, .leaderboard-icon img, .leaderboard-detail-avatar { cursor:zoom-in; }
+      .leaderboard-detail-avatar { display:block; width:88px; height:88px; object-fit:cover; border-radius:50%; border:3px solid rgba(243,207,112,.78); box-shadow:0 8px 24px rgba(0,0,0,.3); }
+      .leaderboard-detail-avatar-button { display:block; padding:0; border:0; border-radius:50%; background:transparent; }
+      .leaderboard-detail-avatar-button:focus-visible { outline:2px solid #f3cf70; outline-offset:4px; }
+      .leaderboard-detail-profile { align-items:center; }
+      @media(max-width:480px) { .profile-photo-dialog { padding:13px; } .leaderboard-detail-avatar { width:74px; height:74px; } }
+    </style>
+
+</body>
 </html>
 <style id="mobile-hand-fixed-footer-final">
   @media (max-width: 700px),
