@@ -10880,14 +10880,31 @@
       let cropScale = 1, cropX = 0, cropY = 0, cropStart = null;
       function openProfilePhotoPreview(src, name) {
         if (!src) return;
+        // Pratinjau foto harus menjadi modal teratas, bukan tertahan di belakang
+        // modal rincian leaderboard atau overlay hamburger.
+        if (profilePhotoPreviewModal.parentElement !== document.body) {
+          document.body.appendChild(profilePhotoPreviewModal);
+        }
         document.getElementById("profilePhotoPreviewName").textContent = name || "Foto Profil";
         profilePhotoPreviewImage.src = src;
-        profilePhotoPreviewModal.classList.add("show");
         profilePhotoPreviewModal.setAttribute("aria-hidden", "false");
+        profilePhotoPreviewModal.classList.add("show");
+        profilePhotoPreviewModal.style.setProperty("display", "flex", "important");
+        profilePhotoPreviewModal.style.setProperty("position", "fixed", "important");
+        profilePhotoPreviewModal.style.setProperty("inset", "0", "important");
+        profilePhotoPreviewModal.style.setProperty("z-index", "30000", "important");
+        profilePhotoPreviewModal.style.setProperty("visibility", "visible", "important");
+        profilePhotoPreviewModal.style.setProperty("opacity", "1", "important");
       }
       function closeProfilePhotoPreview() {
         profilePhotoPreviewModal.classList.remove("show");
         profilePhotoPreviewModal.setAttribute("aria-hidden", "true");
+        profilePhotoPreviewModal.style.removeProperty("display");
+        profilePhotoPreviewModal.style.removeProperty("position");
+        profilePhotoPreviewModal.style.removeProperty("inset");
+        profilePhotoPreviewModal.style.removeProperty("z-index");
+        profilePhotoPreviewModal.style.removeProperty("visibility");
+        profilePhotoPreviewModal.style.removeProperty("opacity");
         profilePhotoPreviewImage.removeAttribute("src");
       }
       document.getElementById("profilePhotoPreviewClose").onclick = closeProfilePhotoPreview;
