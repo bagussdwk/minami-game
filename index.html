@@ -10792,7 +10792,7 @@
               localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({ name: oldProfile.name, profile_id: profileId, custom_photo_url: "" }));
               const user = loadAccountUser() || {};
               user.profile_id = profileId; user.profile_photo_url = "";
-              localStorage.setItem(MINAMI_API_USER_KEY, JSON.stringify(user));
+              saveAccountUser(user);
               setProfilePhotoNote("Avatar bawaan dipilih.", "success");
             } catch (e) {
               setProfilePhotoNote("Tidak dapat menyimpan pilihan ke akun: " + (e.message || "koneksi gagal"), "error");
@@ -10850,7 +10850,7 @@
             const user = loadAccountUser() || {};
             user.profile_photo_url = result.profile_photo_url || "";
             user.profile_id = result.profile_id || user.profile_id || "cartoon_01";
-            localStorage.setItem(MINAMI_API_USER_KEY, JSON.stringify(user));
+            saveAccountUser(user);
             const oldProfile = getPlayerProfile();
             localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({ name: oldProfile.name, profile_id: user.profile_id, custom_photo_url: user.profile_photo_url }));
             setProfilePhotoNote("Foto profil berhasil disimpan. Profil ini ikut tampil di leaderboard.", "success");
@@ -10873,7 +10873,7 @@
             if (token && window.minamiApiPost) await minamiApiPost("profile", { token, profile_id: profile.profile_id, remove_photo: true });
             const user = loadAccountUser() || {};
             user.profile_photo_url = "";
-            localStorage.setItem(MINAMI_API_USER_KEY, JSON.stringify(user));
+            saveAccountUser(user);
             localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({ name: profile.name, profile_id: profile.profile_id, custom_photo_url: "" }));
             renderProfileOptions(); applyPlayerProfile();
             setProfilePhotoNote("Foto unggahan dihapus. Avatar bawaan sekarang digunakan.", "success");
