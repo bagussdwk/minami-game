@@ -11663,11 +11663,18 @@
           mvp: "mvp",
           bestStreak: "best_streak",
         };
-        // Database adalah sumber utama statistik lifetime akun.
-        // Cache localStorage hanya dipakai sementara sebelum data akun berhasil dimuat.
+        // Statistik lifetime bersifat akumulatif. Respons API yang terlambat
+        // tidak boleh menurunkan angka lokal yang baru dihitung saat match
+        // selesai. Server tetap mengisi angka awal jika cache lokal kosong.
         for (const [localKey, serverKey] of Object.entries(map)) {
           const serverValue = Number(serverStats[serverKey]);
-          if (Number.isFinite(serverValue)) s[localKey] = serverValue;
+          const localValue = Number(s[localKey]);
+          if (Number.isFinite(serverValue)) {
+            s[localKey] = Math.max(
+              Number.isFinite(localValue) ? localValue : 0,
+              serverValue,
+            );
+          }
         }
         s.cardsPerMatch = s.matches
           ? Math.round((Number(s.cards) || 0) / s.matches)
@@ -11684,10 +11691,49 @@
         try {
           const d = await minamiApiPost("stats", { token });
           window.minamiGlobalStats = d.stats || {};
-          minamiModeStats =
+          // Jangan mengganti cache mode secara mentah: response stats lama
+          // dapat datang setelah Rank 1 baru dihitung dan menghapus kenaikan UI.
+          const serverModeStats =
             d.mode_stats && typeof d.mode_stats === "object"
               ? d.mode_stats
               : {};
+          const previousModeStats =
+            minamiModeStats && typeof minamiModeStats === "object"
+              ? minamiModeStats
+              : {};
+          const monotonicFields = [
+            "games_finished", "game_wins", "rank1", "match_finished",
+            "match_wins", "tenho", "pots", "cards", "jokers", "dead", "mvp",
+            "caught", "caught_by"
+          ];
+          const mergedModeStats = {};
+          for (const modeKey of ["minami1", "minami2", "joker"]) {
+            const previous = previousModeStats[modeKey] || {};
+            const server = serverModeStats[modeKey] || {};
+            const merged = { ...previous, ...server };
+            for (const field of monotonicFields) {
+              const oldValue = Number(previous[field]);
+              const serverValue = Number(server[field]);
+              if (Number.isFinite(oldValue) || Number.isFinite(serverValue)) {
+                merged[field] = Math.max(
+                  Number.isFinite(oldValue) ? oldValue : 0,
+                  Number.isFinite(serverValue) ? serverValue : 0,
+                );
+              }
+            }
+            for (const field of ["best_combo", "best_streak"]) {
+              const oldValue = Number(previous[field]);
+              const serverValue = Number(server[field]);
+              if (Number.isFinite(oldValue) || Number.isFinite(serverValue)) {
+                merged[field] = Math.max(
+                  Number.isFinite(oldValue) ? oldValue : 0,
+                  Number.isFinite(serverValue) ? serverValue : 0,
+                );
+              }
+            }
+            mergedModeStats[modeKey] = merged;
+          }
+          minamiModeStats = mergedModeStats;
           await loadAccountAchievements();
           mergeServerStatsIntoFeatureStats(window.minamiGlobalStats);
           renderAccountUI();
