@@ -201,7 +201,8 @@ function stats(PDO $db):never{
   ok(['stats'=>$global,'mode_stats'=>$modeStats]);
 }
 function leaderboard(PDO $db):never{
-  // Leaderboard hanya membaca data. Jangan menjalankan DDL/seed achievement di sini.
+  // Pastikan tabel profil tersedia agar foto profil pilihan akun ikut dikirim.
+  ensureUserProfileTable($db);
 
   // Leaderboard publik hanya memakai statistik global Rank 1 + Win Game,
   // sedangkan rincian match/statistik lain dikirim per mode.
@@ -209,6 +210,7 @@ function leaderboard(PDO $db):never{
     SELECT
       u.id AS user_id,
       u.display_name,
+      COALESCE(uf.profile_id,"cartoon_01") AS profile_id,
       CASE WHEN up.last_seen >= (CURRENT_TIMESTAMP - INTERVAL 120 SECOND) THEN 1 ELSE 0 END AS online,
       COALESCE(s.games_finished,0) AS games_finished,
       COALESCE(s.game_wins,0) AS game_wins,
@@ -216,6 +218,7 @@ function leaderboard(PDO $db):never{
     FROM users u
     LEFT JOIN player_global_stats s ON s.user_id=u.id
     LEFT JOIN user_presence up ON up.user_id=u.id
+    LEFT JOIN user_profiles uf ON uf.user_id=u.id
     ORDER BY rank1 DESC, games_finished DESC, game_wins DESC, u.display_name ASC
   ');
   $rows=$q->fetchAll();
@@ -274,6 +277,7 @@ function leaderboard(PDO $db):never{
     $uid=(int)$row['user_id'];
     $players[]=[
       'name'=>mb_substr((string)$row['display_name'],0,40),
+      'profile_id'=>(string)($row['profile_id']??'cartoon_01'),
       'online'=>(bool)$row['online'],
       'games_finished'=>(int)$row['games_finished'],
       'game_wins'=>(int)$row['game_wins'],
