@@ -11653,17 +11653,24 @@
 
         if (logged) {
           const u = loadAccountUser() || {},
-            gs = window.minamiGlobalStats || {};
+            gs = window.minamiGlobalStats || {},
+            local = featureStats();
           document.getElementById("accountDisplayName").textContent =
             u.display_name || u.username || "Pemain";
           document.getElementById("accountUsernameLabel").textContent =
             "@" + (u.username || "");
-          document.getElementById("accountGameWins").textContent =
-            Number(gs.game_wins) || 0;
-          document.getElementById("accountRank1").textContent =
-            Number(gs.rank1) || 0;
-          document.getElementById("accountGames").textContent =
-            Number(gs.games_finished) || 0;
+          document.getElementById("accountGameWins").textContent = Math.max(
+            Number(gs.game_wins) || 0,
+            Number(local.gameWins) || 0,
+          );
+          document.getElementById("accountRank1").textContent = Math.max(
+            Number(gs.rank1) || 0,
+            Number(local.rank1) || 0,
+          );
+          document.getElementById("accountGames").textContent = Math.max(
+            Number(gs.games_finished) || 0,
+            Number(local.games) || 0,
+          );
         }
       }
       function mergeServerStatsIntoFeatureStats(serverStats) {
@@ -12082,6 +12089,7 @@
         applyPlayerProfile();
         renderFeatureStats();
         renderAchievements();
+        renderAccountUI();
       }
       function updateLifetimeStatsFromGame(resultId) {
         if (!game) return null;
@@ -12145,6 +12153,7 @@
         s.cardsPerMatch = s.matches ? Math.round(s.cards / s.matches) : 0;
         saveFeatureStats(s);
         updateAchievements();
+        renderAccountUI();
 
         // Perbarui gelar/profil segera setelah penghitung lokal berubah,
         // termasuk ketika match ini menyelesaikan satu GAME dan membuka syarat GM.
