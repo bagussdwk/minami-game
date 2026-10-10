@@ -6045,6 +6045,18 @@
         <div id="featureLeaderboardPanel" style="display: none"></div>
       </div>
     </div>
+    <div class="modal" id="leaderboardPlayerModal" style="z-index: 10004;">
+      <div class="modal-box feature-modal-box leaderboard-player-modal-box">
+        <div class="score-modal-head">
+          <div>
+            <h2 class="score-modal-title">👤 Profil Pemain</h2>
+            <div class="score-modal-subtitle">Rincian pemain dari leaderboard</div>
+          </div>
+          <button type="button" class="score-modal-close" id="leaderboardPlayerModalClose" aria-label="Tutup profil">×</button>
+        </div>
+        <div id="leaderboardPlayerPanel"></div>
+      </div>
+    </div>
     <div class="modal" id="resultModal">
       <div class="modal-box">
         <h2 id="resultTitle">Hasil Game</h2>
@@ -13252,8 +13264,10 @@
                       Number(btn.dataset.leaderboardIndex)
                     ];
                   if (p) {
-                    // Buka detail sebagai tampilan aktif, bukan sekadar mengubah isi panel.
+                    // Detail pemain memiliki modal sendiri di atas modal Leaderboard,
+                    // terpisah dari bagian Profil Saya pada hamburger.
                     const featureModal = document.getElementById("featureModal");
+                    const playerModal = document.getElementById("leaderboardPlayerModal");
                     const leaderboardPanel = document.getElementById("featureLeaderboardPanel");
                     document.querySelectorAll(".feature-tab").forEach((tab) => {
                       tab.classList.toggle("active", tab.dataset.featureTab === "leaderboard");
@@ -13261,18 +13275,15 @@
                     document.getElementById("featureStatsPanel").style.display = "none";
                     document.getElementById("featureAchievementsPanel").style.display = "none";
                     leaderboardPanel.style.display = "";
-                    // Tutup overlay hamburger dan lepaskan class yang dapat mengunci tampilan.
                     closeMenu();
                     document.body.classList.remove("menu-open");
                     featureModal.style.setProperty("z-index", "10003", "important");
                     featureModal.classList.add("show");
-                    // Render setelah browser menerapkan penutupan menu/modal; cegah UI lama menimpa detail.
-                    requestAnimationFrame(() => {
-                      featureModal.classList.add("show");
-                      renderLeaderboardPlayer(p);
-                      const modalBox = document.querySelector("#featureModal .feature-modal-box");
-                      if (modalBox) modalBox.scrollTop = 0;
-                    });
+                    playerModal.style.setProperty("z-index", "10004", "important");
+                    renderLeaderboardPlayer(p, "leaderboardPlayerPanel");
+                    playerModal.classList.add("show");
+                    const detailBox = document.querySelector("#leaderboardPlayerModal .leaderboard-player-modal-box");
+                    if (detailBox) detailBox.scrollTop = 0;
                   }
                 };
               });
@@ -13290,8 +13301,8 @@
               };
           });
       }
-      function renderLeaderboardPlayer(p) {
-        const panel = document.getElementById("featureLeaderboardPanel");
+      function renderLeaderboardPlayer(p, targetPanelId = "featureLeaderboardPanel") {
+        const panel = document.getElementById(targetPanelId);
         if (!panel) return;
         const rank = leaderboardRankForPlayer(p);
         const games = Math.max(0, Number(p.games_finished) || 0);
@@ -13444,8 +13455,10 @@
           const img = document.querySelector("#leaderboardDetailPhotoBtn img");
           if (img) openProfilePhotoPreview(img.src, "Foto Profil • " + (p.name || "Pemain"));
         };
-        document.getElementById("leaderboardBackBtn").onclick =
-          renderLeaderboard;
+        document.getElementById("leaderboardBackBtn").onclick = () => {
+          document.getElementById("leaderboardPlayerModal").classList.remove("show");
+          renderLeaderboard();
+        };
       }
       function getAIReactionText(i, label, joker) {
         const p = game?.aiProfiles?.[i] || "balanced";
@@ -13785,6 +13798,13 @@
       document.getElementById("featureModalClose").onclick = () => {
         document.getElementById("featureModal").classList.remove("show");
         setYourHandOverlayHidden(false);
+      };
+      const leaderboardPlayerModal = document.getElementById("leaderboardPlayerModal");
+      document.getElementById("leaderboardPlayerModalClose").onclick = () => {
+        leaderboardPlayerModal.classList.remove("show");
+      };
+      leaderboardPlayerModal.onclick = (e) => {
+        if (e.target === leaderboardPlayerModal) leaderboardPlayerModal.classList.remove("show");
       };
       document.getElementById("featureModal").onclick = (e) => {
         if (e.target.id === "featureModal") {
