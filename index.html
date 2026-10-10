@@ -11262,7 +11262,28 @@
         const m = Number(mode);
         return m === 3 ? "joker" : m === 2 ? "minami2" : "minami1";
       }
-      let minamiModeStats = {};
+      const MINAMI_MODE_STATS_CACHE_KEY = "minamiModeStatsLocalV1";
+      function loadMinamiModeStatsCache() {
+        try {
+          const value = JSON.parse(
+            localStorage.getItem(MINAMI_MODE_STATS_CACHE_KEY) || "{}",
+          );
+          return value && typeof value === "object" && !Array.isArray(value)
+            ? value
+            : {};
+        } catch (e) {
+          return {};
+        }
+      }
+      function saveMinamiModeStatsCache(value) {
+        try {
+          localStorage.setItem(
+            MINAMI_MODE_STATS_CACHE_KEY,
+            JSON.stringify(value && typeof value === "object" ? value : {}),
+          );
+        } catch (e) {}
+      }
+      let minamiModeStats = loadMinamiModeStatsCache();
       let minamiStatsModeView = "global";
       function minamiApiSyncLedger() {
         try {
@@ -11734,6 +11755,7 @@
             mergedModeStats[modeKey] = merged;
           }
           minamiModeStats = mergedModeStats;
+          saveMinamiModeStatsCache(minamiModeStats);
           await loadAccountAchievements();
           mergeServerStatsIntoFeatureStats(window.minamiGlobalStats);
           renderAccountUI();
@@ -12044,6 +12066,11 @@
               rank1: (Number(currentMode.rank1) || 0) + 1,
             },
           };
+          // Simpan hitungan per-mode juga ke localStorage. Sebelumnya angka
+          // ini hanya hidup di memori, sehingga render/refresh yang memuat
+          // ulang statistik sebelum server menyimpan hasil dapat membuatnya
+          // terlihat tidak berubah atau kembali ke angka lama.
+          saveMinamiModeStatsCache(minamiModeStats);
         } catch (e) {
           // Jangan sampai kegagalan cache statistik menghentikan permainan.
         }
