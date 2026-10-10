@@ -10726,7 +10726,7 @@
           }
         }
         document.querySelectorAll(".menu-profile-option").forEach((el) => {
-          el.classList.toggle("active", el.classList.contains("custom-photo") ? profile.custom_photo : el.dataset.profileId === profile.profile_id);
+          el.classList.toggle("active", (el.classList.contains("uploaded-photo") || el.classList.contains("custom-photo")) ? profile.custom_photo : el.dataset.profileId === profile.profile_id);
         });
 
         const current = document.getElementById("profileCurrentName");
@@ -13237,9 +13237,8 @@
                 })
                 .join("") +
               "</div>";
-            panel.querySelectorAll(".leaderboard-icon img").forEach((img) => {
-              img.onclick = (e) => { e.stopPropagation(); openProfilePhotoPreview(img.src, img.alt || "Foto Pemain"); };
-            });
+            // Klik avatar pada baris leaderboard membuka rincian pemain seperti klik area baris lainnya.
+            // Pratinjau foto tetap tersedia dari avatar di halaman rincian pemain.
             panel
               .querySelectorAll("[data-leaderboard-index]")
               .forEach((btn) => {
@@ -13249,11 +13248,21 @@
                       Number(btn.dataset.leaderboardIndex)
                     ];
                   if (p) {
+                    // Pastikan tab dan modal rincian benar-benar terlihat pada klik pertama.
+                    document.querySelectorAll(".feature-tab").forEach((tab) => {
+                      tab.classList.toggle("active", tab.dataset.featureTab === "leaderboard");
+                    });
+                    document.getElementById("featureStatsPanel").style.display = "none";
+                    document.getElementById("featureAchievementsPanel").style.display = "none";
+                    const leaderboardPanel = document.getElementById("featureLeaderboardPanel");
+                    leaderboardPanel.style.display = "";
+                    document.getElementById("featureModal").classList.add("show");
                     renderLeaderboardPlayer(p);
                     const modalBox = document.querySelector("#featureModal .feature-modal-box");
-                    if (modalBox) modalBox.scrollTop = 0;
-                    const panelEl = document.getElementById("featureLeaderboardPanel");
-                    if (panelEl) panelEl.scrollIntoView({ block: "start", behavior: "smooth" });
+                    if (modalBox) {
+                      modalBox.scrollTop = 0;
+                      requestAnimationFrame(() => { modalBox.scrollTop = 0; });
+                    }
                   }
                 };
               });
