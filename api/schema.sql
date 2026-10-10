@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   profile_id VARCHAR(32) NOT NULL DEFAULT 'cartoon_01',
   profile_photo MEDIUMBLOB NULL,
   photo_mime VARCHAR(32) NULL,
+  photo_active TINYINT(1) NOT NULL DEFAULT 1,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -126,3 +127,14 @@ SET @photo_mime_sql := IF(@photo_mime_exists = 0,
 PREPARE photo_mime_stmt FROM @photo_mime_sql;
 EXECUTE photo_mime_stmt;
 DEALLOCATE PREPARE photo_mime_stmt;
+
+SET @photo_active_exists := (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profiles' AND COLUMN_NAME = 'photo_active'
+);
+SET @photo_active_sql := IF(@photo_active_exists = 0,
+  'ALTER TABLE user_profiles ADD COLUMN photo_active TINYINT(1) NOT NULL DEFAULT 1',
+  'SELECT 1');
+PREPARE photo_active_stmt FROM @photo_active_sql;
+EXECUTE photo_active_stmt;
+DEALLOCATE PREPARE photo_active_stmt;
