@@ -3909,14 +3909,12 @@
         grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 6px;
       }
-      .menu-profile-upload-row { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:9px; }
-      .menu-profile-upload-btn,.menu-profile-reset-btn { min-width:0; padding:9px 7px; border-radius:8px; font-size:10px; font-weight:900; cursor:pointer; }
+      .menu-profile-upload-row { display:grid; grid-template-columns:1fr; gap:7px; margin-top:9px; }
+      .menu-profile-upload-btn { min-width:0; padding:9px 7px; border-radius:8px; font-size:10px; font-weight:900; cursor:pointer; }
       .menu-profile-upload-btn { color:#173f2d; background:linear-gradient(135deg,#f3cf70,#dcae46); border:1px solid rgba(243,207,112,.45); }
-      .menu-profile-reset-btn { color:#c6ddd3; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.12); }
       .menu-profile-upload-note { margin-top:7px; color:#789f90; font-size:8px; line-height:1.45; }
       .menu-profile-upload-note.error { color:#ff8d8d; }
       .menu-profile-upload-note.success { color:#7ff0b0; }
-      .menu-profile-option.custom-photo { border-color:#f3cf70; box-shadow:0 0 0 2px rgba(243,207,112,.13); }
       .menu-profile-option {
         position: relative;
         width: 100%;
@@ -3936,13 +3934,6 @@
         object-fit: cover;
         object-position: center top;
       }
-      .menu-profile-preview-hit {
-        position:absolute; right:0; bottom:0; z-index:2; width:21px; height:21px;
-        display:flex; align-items:center; justify-content:center; border-radius:50%;
-        border:1px solid rgba(255,255,255,.7); background:rgba(4,25,17,.9);
-        color:#f3cf70; font-size:18px; line-height:1; cursor:zoom-in;
-      }
-      .menu-profile-preview-hit:focus-visible { outline:2px solid #f3cf70; outline-offset:1px; }
       .menu-profile-option.active {
         border-color: #f3cf70;
         box-shadow: 0 0 0 2px rgba(243, 207, 112, 0.18);
@@ -5122,11 +5113,19 @@
         font-weight: 900;
       }
       .leaderboard-detail-title {
+        display: flex;
+        align-items: center;
+        gap: 4px;
         margin-top: 3px;
         color: #f3cf70;
         font-size: 9px;
         font-weight: 900;
         letter-spacing: 0.7px;
+      }
+      .leaderboard-detail-title-icon {
+        flex: 0 0 auto;
+        font-size: 11px;
+        line-height: 1;
       }
       .leaderboard-detail-rank {
         margin-top: 3px;
@@ -6132,7 +6131,6 @@
                 <div class="menu-profile-upload-row">
                   <input type="file" id="profilePhotoInput" accept="image/jpeg,image/png,image/webp" hidden />
                   <button type="button" class="menu-profile-upload-btn" id="profilePhotoUploadBtn">＋ Unggah / Ganti Foto</button>
-                  <button type="button" class="menu-profile-reset-btn" id="profilePhotoResetBtn">↺ Avatar Bawaan</button>
                 </div>
                 <div class="menu-profile-upload-note" id="profilePhotoNote">Unggah JPG, PNG, atau WebP. Foto akan diperkecil otomatis dan disimpan ke akun online.</div>
               </div>
@@ -10801,29 +10799,8 @@
           const active = !profile.custom_photo && p.id === profile.profile_id ? " active" : "";
           return '<button type="button" class="menu-profile-option' + active +
             '" data-profile-id="' + p.id + '" title="' + p.name + '" aria-label="' + p.name + '">' +
-            '<img src="' + p.photo + '" alt="" loading="lazy" />' +
-            '<span class="menu-profile-preview-hit" role="button" tabindex="0" title="Pratinjau foto" aria-label="Pratinjau ' + p.name + '">⌕</span></button>';
+            '<img src="' + p.photo + '" alt="" loading="lazy" /></button>';
         }).join("");
-        if (profile.custom_photo) {
-          const custom = document.createElement("button");
-          custom.type = "button";
-          custom.className = "menu-profile-option active custom-photo";
-          custom.title = "Foto unggahan saat ini";
-          custom.setAttribute("aria-label", "Foto unggahan saat ini");
-          custom.innerHTML = '<img src="' + profile.photo + '" alt="" loading="lazy" />';
-          custom.onclick = () => openProfilePhotoPreview(profile.photo, "Foto Profil");
-          wrap.prepend(custom);
-        }
-        wrap.querySelectorAll(".menu-profile-preview-hit").forEach((hit) => {
-          const preview = (e) => {
-            e.preventDefault(); e.stopPropagation();
-            const btn = hit.closest(".menu-profile-option");
-            const img = btn?.querySelector("img");
-            if (img) openProfilePhotoPreview(img.src, "Pratinjau Avatar");
-          };
-          hit.onclick = preview;
-          hit.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") preview(e); };
-        });
         wrap.querySelectorAll(".menu-profile-option[data-profile-id]").forEach((btn) => {
           btn.onclick = async () => {
             const profileId = btn.dataset.profileId || "cartoon_01";
@@ -10957,7 +10934,6 @@
       }
       const profilePhotoInput = document.getElementById("profilePhotoInput");
       const profilePhotoUploadBtn = document.getElementById("profilePhotoUploadBtn");
-      const profilePhotoResetBtn = document.getElementById("profilePhotoResetBtn");
       if (profilePhotoUploadBtn && profilePhotoInput) {
         profilePhotoUploadBtn.onclick = () => {
           if (!localStorage.getItem(MINAMI_API_TOKEN_KEY)) {
@@ -11007,25 +10983,6 @@
           profilePhotoInput.value = "";
         }
       };
-      if (profilePhotoResetBtn) {
-        profilePhotoResetBtn.onclick = async () => {
-          const token = localStorage.getItem(MINAMI_API_TOKEN_KEY);
-          const profile = getPlayerProfile();
-          profilePhotoResetBtn.disabled = true;
-          try {
-            if (token && window.minamiApiPost) await minamiApiPost("profile", { token, profile_id: profile.profile_id, remove_photo: true });
-            const user = loadAccountUser() || {};
-            user.profile_photo_url = "";
-            saveAccountUser(user);
-            localStorage.setItem(MINAMI_PROFILE_KEY, JSON.stringify({ name: profile.name, profile_id: profile.profile_id, custom_photo_url: "" }));
-            renderProfileOptions(); applyPlayerProfile();
-            setProfilePhotoNote("Foto unggahan dihapus. Avatar bawaan sekarang digunakan.", "success");
-          } catch (e) {
-            setProfilePhotoNote(e.message || "Gagal menghapus foto.", "error");
-          } finally { profilePhotoResetBtn.disabled = false; }
-        };
-      }
-
       renderProfileOptions();
       applyPlayerProfile();
 
@@ -13370,9 +13327,11 @@
           '<div><div class="leaderboard-detail-name">' +
           leaderboardEscape(p.name || "Pemain") +
           "</div>" +
-          '<div class="leaderboard-detail-title">' +
-          rank.name +
-          (rank.level ? " " + rank.level : "") +
+          '<div class="leaderboard-detail-title"><span class="leaderboard-detail-title-icon">' +
+          rank.icon +
+          '</span><span>' +
+          leaderboardEscape(rank.name + (rank.level ? " " + rank.level : "")) +
+          '</span></div>' +
           "</div>" +
           '<div class="leaderboard-detail-rank">Rank #' +
           (minamiLeaderboardCache.indexOf(p) + 1) +
