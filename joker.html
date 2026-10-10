@@ -3591,28 +3591,32 @@ async function loadJokerAchievements(){
   return false;
 }
 async function syncJokerAchievements(keys=[],levels={}){
-const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
-if(!token)return false;
-const ids=(Array.isArray(keys)?keys:[]).map(x=>JOKER_ACH_CODE_MAP[x]||x);
-try{
-  const r=await fetch(JOKER_API_URL+"?action=achievement",{
-    method:"POST",headers:{"Content-Type":"text/plain;charset=UTF-8"},
-    body:JSON.stringify({
-      token,
-      achievement_ids:[...new Set(ids)],
-      achievement_levels:levels&&typeof levels==="object"?levels:{}
-    })
-  });
-  const d=await r.json().catch(()=>({ok:false}));
-  if(r.ok&&d?.ok){
-    ids.forEach(x=>jokerServerAchievementCodes.add(x));
-    Object.keys(levels||{}).forEach(k=>{jokerServerAchievementLevels[JOKER_ACH_CODE_MAP[k]||k]=Math.max(1,Math.min(3,Number(levels[k])||1))});
-    return true
+  const token=localStorage.getItem(JOKER_API_TOKEN_KEY);
+  if(!token)return false;
+  const ids=(Array.isArray(keys)?keys:[]).map(x=>JOKER_ACH_CODE_MAP[x]||x);
+  try{
+    const r=await fetch(JOKER_API_URL+"?action=achievement",{
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=UTF-8"},
+      body:JSON.stringify({
+        token,
+        achievement_ids:[...new Set(ids)],
+        achievement_levels:levels&&typeof levels==="object"?levels:{}
+      })
+    });
+    const d=await r.json().catch(()=>({ok:false}));
+    if(r.ok&&d?.ok){
+      ids.forEach(x=>jokerServerAchievementCodes.add(x));
+      Object.keys(levels||{}).forEach(k=>{
+        jokerServerAchievementLevels[JOKER_ACH_CODE_MAP[k]||k]=Math.max(1,Math.min(3,Number(levels[k])||1));
+      });
+      return true;
+    }
+  }catch(e){
+    console.warn("sync Joker achievements",e);
   }
-}catch(e){}
-return false
-}catch(e){}
-return false}
+  return false;
+}
 async function loadJokerAccountStats(){const token=localStorage.getItem(JOKER_API_TOKEN_KEY);if(!token)return false;try{const d=await jokerApiPost("stats",{token});jokerAccountStats.global=d?.stats||{};jokerAccountStats.mode=d?.mode_stats?.joker||{};await loadJokerAchievements();await syncJokerAchievementLevelsFromStats();return true}catch(e){return false}}
 function syncJokerAchievementLevelsFromStats(){
   const s=jokerAccountStats.mode||{},g0=jokerAccountStats.global||{},jc=jokerAchievementCounters();
