@@ -14059,6 +14059,44 @@
         }
         if (_startJokerOriginal) await _startJokerOriginal();
       };
+    
+      // Pemeriksa versi ringan: tidak menghapus token, statistik, atau save lokal.
+      const CARD_ARENA_BUILD_VERSION = "2026.10.10.1";
+      (function installCardArenaVersionCheck() {
+        let checking = false;
+        async function checkForNewBuild() {
+          if (checking || document.visibilityState === "hidden") return;
+          checking = true;
+          try {
+            const response = await fetch(
+              window.location.pathname + "?__ca_version_check=" + Date.now(),
+              { cache: "no-store", credentials: "same-origin" },
+            );
+            if (!response.ok) return;
+            const html = await response.text();
+            const match = html.match(/CARD_ARENA_BUILD_VERSION\s*=\s*["']([^"']+)["']/);
+            const latestVersion = match && match[1];
+            if (!latestVersion || latestVersion === CARD_ARENA_BUILD_VERSION) return;
+            try {
+              if (typeof saveGameState === "function") saveGameState();
+            } catch (e) {}
+            await new Promise((resolve) => setTimeout(resolve, 900));
+            window.location.replace(
+              window.location.pathname + "?__ca_build=" + encodeURIComponent(latestVersion),
+            );
+          } catch (e) {
+            // Kegagalan jaringan tidak mengganggu permainan.
+          } finally {
+            checking = false;
+          }
+        }
+        window.setInterval(checkForNewBuild, 60000);
+        window.setTimeout(checkForNewBuild, 20000);
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") checkForNewBuild();
+        });
+      })();
+
     </script>
 
     <style id="achievement-card-stat-size">
