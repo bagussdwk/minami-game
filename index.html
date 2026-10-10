@@ -4367,6 +4367,10 @@
       #menuModal {
         z-index: 10002 !important;
       }
+      /* Rincian profil/statistik harus berada di atas menu hamburger. */
+      #featureModal {
+        z-index: 10003 !important;
+      }
       .menu-modal-box {
         width: min(390px, calc(100% - 24px));
         max-height: 82vh;
@@ -10726,7 +10730,7 @@
           }
         }
         document.querySelectorAll(".menu-profile-option").forEach((el) => {
-          el.classList.toggle("active", (el.classList.contains("uploaded-photo") || el.classList.contains("custom-photo")) ? profile.custom_photo : el.dataset.profileId === profile.profile_id);
+          el.classList.toggle("active", profile.custom_photo ? (el.classList.contains("uploaded-photo") || el.classList.contains("custom-photo")) : (!el.classList.contains("uploaded-photo") && !el.classList.contains("custom-photo") && el.dataset.profileId === profile.profile_id));
         });
 
         const current = document.getElementById("profileCurrentName");
@@ -13256,6 +13260,9 @@
                     document.getElementById("featureAchievementsPanel").style.display = "none";
                     const leaderboardPanel = document.getElementById("featureLeaderboardPanel");
                     leaderboardPanel.style.display = "";
+                    // Tutup menu hamburger bila masih terbuka agar tidak menutupi rincian.
+                    closeMenu();
+                    document.getElementById("featureModal").style.zIndex = "10003";
                     document.getElementById("featureModal").classList.add("show");
                     renderLeaderboardPlayer(p);
                     const modalBox = document.querySelector("#featureModal .feature-modal-box");
